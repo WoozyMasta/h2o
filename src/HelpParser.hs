@@ -59,7 +59,7 @@ argWord = do
 
 description :: ReadP String
 description = do
-  xs <- sepBy word (munch1 (== ' '))
+  xs <- sepBy1 word (munch1 (== ' '))
   return (unwords xs)
 
 optWord :: ReadP String
@@ -116,13 +116,25 @@ optArgs = do
 skip :: ReadP a -> ReadP ()
 skip a = a >> return ()
 
+-- very heuristic handling of description separator
+-- because a wild case like following exists...
+--   "  -O INT[,INT] gap open penalty [4,24]"
+heuristicSep :: Maybe String -> ReadP String
+heuristicSep maybeArgs =
+  string ":" <++ string ";" <++ string args
+  where
+    args = case maybeArgs of
+      Nothing -> "  "
+      Just args -> if last args `elem` ">}])" then " " else "  "
+
 optItem :: ReadP ([OptName], String, Maybe String)
 optItem = do
   skipSpaces
   names <- optNames
   args <- fmap Just optArgs <++ pure Nothing
+  heuristicSep args -- hate this
   skipSpaces
-  char ':' <++ pure 'x' -- the latter is just a placeholder; consume the former if applies.
+  string ":" <++ string ";" <++ pure "x" -- just a placeholder; consume the former if applies
   char '\n' <++ pure 'x'
   skipSpaces
   desc <- description
