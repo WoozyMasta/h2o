@@ -31,6 +31,9 @@ ascii = satisfy $ \c -> c `elem` alphanum
 singleSpace :: ReadP Char
 singleSpace = char ' '
 
+isAscii :: Char -> Bool
+isAscii c = c `elem` alphanum
+
 isAllowedCharInName :: Char -> Bool
 isAllowedCharInName c = c `elem` ('-' : '_' : alphanum)
 
@@ -42,7 +45,7 @@ word = munch1 (`notElem` " \t\n")
 
 sentence :: ReadP String
 sentence = do
-  xs <- sepBy word (many1 singleSpace)
+  xs <- sepBy word (munch1 (== ' '))
   return (unwords xs)
 
 optionBase :: ReadP String
@@ -72,9 +75,14 @@ oldOptionName = do
 optionArg :: ReadP String
 optionArg = do
   singleSpace <|> char '='
-  arg <- many1 ascii
+  arg <- munch1 isAscii
   singleSpace
   return arg
+
+skip :: ReadP a -> ReadP ()
+skip a = do
+  a
+  return ()
 
 optionItem :: ReadP (String, String, Maybe String)
 optionItem = do
@@ -82,9 +90,9 @@ optionItem = do
   name <- longOptionName <|> (oldOptionName <++ shortOptionName)
   arg <- fmap Just optionArg <++ pure Nothing
   skipSpaces
-  char ':' <++ pure 'x' -- pure 'x' is just a placeholder that always succeeds
+  char ':' <++ pure 'x' -- the latter is just a placeholder; consume the former if applies.
   skipSpaces
   desc <- sentence
   skipSpaces
-  skipMany1 newline <|> eof
+  skip newline <++ eof
   return (name, desc, arg)
