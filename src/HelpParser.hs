@@ -18,7 +18,7 @@ data OptName = OptName
   deriving (Eq)
 
 instance Show OptName where
-  show (OptName raw t) = raw
+  show (OptName raw t) = show raw
 
 data OptNameType = LongType | ShortType | OldType deriving (Eq, Show)
 
@@ -28,7 +28,7 @@ allAlphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 alphanum = allAlphabets ++ allDigits
 
-extraSymbols = "+-_?"
+extraSymbols = "+-_!?"
 
 dash :: ReadP Char
 dash = satisfy (== '-')
@@ -42,8 +42,8 @@ singleSpace = char ' '
 isAscii :: Char -> Bool
 isAscii c = c `elem` alphanum
 
-isAllowedCharInName :: Char -> Bool
-isAllowedCharInName c = c `elem` (alphanum ++ extraSymbols)
+isAllowedOptChar :: Char -> Bool
+isAllowedOptChar c = c `elem` (alphanum ++ extraSymbols)
 
 newline :: ReadP Char
 newline = char '\n'
@@ -52,23 +52,26 @@ word :: ReadP String
 word = munch1 (`notElem` " \t\n")
 
 argWord :: ReadP String
-argWord = munch1 (\c -> c `elem` (alphanum ++ "[]<>{},"))
+argWord = do
+  head <- satisfy (\c -> c `elem` alphanum ++ "[({<")
+  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-[]<>{},"))
+  return (head : tail)
 
-sentence :: ReadP String
-sentence = do
+description :: ReadP String
+description = do
   xs <- sepBy word (munch1 (== ' '))
   return (unwords xs)
 
-optStem :: ReadP String
-optStem = do
+optWord :: ReadP String
+optWord = do
   head <- ascii
-  tail <- munch isAllowedCharInName
+  tail <- munch isAllowedOptChar
   return (head : tail)
 
 longOptName :: ReadP OptName
 longOptName = do
   _ <- count 2 dash
-  name <- optStem
+  name <- optWord
   let res = OptName ("--" ++ name) LongType
   return res
 
@@ -83,7 +86,7 @@ oldOptName :: ReadP OptName
 oldOptName = do
   _ <- dash
   head <- ascii
-  tail <- optStem
+  tail <- optWord
   let res = OptName ('-' : head : tail) OldType
   return res
 
@@ -122,8 +125,7 @@ optItem = do
   char ':' <++ pure 'x' -- the latter is just a placeholder; consume the former if applies.
   char '\n' <++ pure 'x'
   skipSpaces
-  desc <- sentence
+  desc <- description
   skipSpaces
   skip newline <++ eof
   return (names, desc, args)
-
