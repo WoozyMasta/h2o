@@ -136,14 +136,14 @@ skip a = a >> return ()
 --   "  -O INT[,INT] gap open penalty [4,24]"
 heuristicSep :: Maybe String -> ReadP String
 heuristicSep maybeArgs =
-  (optional singleSpace >> string ":") <++ (optional singleSpace >> string ";") <++ string spaces
+  f ":" <++ f ";" <++ f "\n" <++ string spaces
   where
+    f s = optional singleSpace >> string s
     spaces = case maybeArgs of
       Nothing -> twoSpaces
       Just args -> if last args `elem` ">}])" then oneSpace else twoSpaces
-      where
-        twoSpaces = "  "
-        oneSpace = " "
+    twoSpaces = "  "
+    oneSpace = " "
 
 optItem :: ReadP Opt
 optItem = do
