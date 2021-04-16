@@ -20,6 +20,7 @@ unitTests =
         readP_to_S optName "-azvhP" @?= [(OptName "-azvhP" OldType, "")],
       testCase "optName (double dash alone)" $
         readP_to_S optName "-- " @?= [(OptName "--" DoubleDashAlone, "")]
+
     ]
 
 propertyTests =
@@ -33,7 +34,7 @@ propertyTests =
 prop_longOpt :: Property
 prop_longOpt =
   property $ do
-    s <- forAll (Gen.string (Range.linear 2 10) Gen.alphaNum)
+    s <- forAll (Gen.string (Range.linear 1 10) Gen.alphaNum)
     let ddashed = "--" ++ s
     readP_to_S optName ddashed === [(OptName ddashed LongType, "")]
 
