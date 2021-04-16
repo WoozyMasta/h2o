@@ -6,16 +6,20 @@ import Control.Applicative ((<|>))
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
-  { _name :: OptName,
+  { _names :: [OptName],
     _desc :: String,
     _arg :: Maybe String
   }
+  deriving (Eq)
 
 data OptName = OptName
   { _raw :: String,
     _type :: OptNameType
   }
   deriving (Eq)
+
+instance Show Opt where
+  show (Opt names desc args) = show (names, desc, args)
 
 instance Show OptName where
   show (OptName raw t) = show raw
@@ -79,7 +83,7 @@ doubleDash :: ReadP OptName
 doubleDash = do
   _ <- count 2 dash
   singleSpace
-  let res = OptName "" DoubleDashAlone
+  let res = OptName "--" DoubleDashAlone
   return res
 
 shortOptName :: ReadP OptName
@@ -128,13 +132,13 @@ skip a = a >> return ()
 --   "  -O INT[,INT] gap open penalty [4,24]"
 heuristicSep :: Maybe String -> ReadP String
 heuristicSep maybeArgs =
-  string ":" <++ string ";" <++ string args
+  (optional singleSpace >> string ":") <++ (optional singleSpace >> string ";") <++ string args
   where
     args = case maybeArgs of
       Nothing -> "  "
       Just args -> if last args `elem` ">}])" then " " else "  "
 
-optItem :: ReadP ([OptName], String, Maybe String)
+optItem :: ReadP Opt
 optItem = do
   skipSpaces
   names <- optNames
@@ -147,4 +151,4 @@ optItem = do
   desc <- description
   skipSpaces
   skip newline <++ eof
-  return (names, desc, args)
+  return (Opt names desc args)
