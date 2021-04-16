@@ -3,12 +3,13 @@
 module HelpParser where
 
 import Control.Applicative ((<|>))
+import Data.Maybe (fromMaybe)
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
   { _names :: [OptName],
-    _desc :: String,
-    _arg :: Maybe String
+    _arg :: Maybe String,
+    _desc :: String
   }
   deriving (Eq)
 
@@ -19,7 +20,10 @@ data OptName = OptName
   deriving (Eq)
 
 instance Show Opt where
-  show (Opt names desc args) = show (names, desc, args)
+  show (Opt names args desc) =
+    show (names, argsStr, desc)
+    where
+      argsStr = fromMaybe "" args
 
 instance Show OptName where
   show (OptName raw t) = show raw
@@ -132,23 +136,26 @@ skip a = a >> return ()
 --   "  -O INT[,INT] gap open penalty [4,24]"
 heuristicSep :: Maybe String -> ReadP String
 heuristicSep maybeArgs =
-  (optional singleSpace >> string ":") <++ (optional singleSpace >> string ";") <++ string args
+  (optional singleSpace >> string ":") <++ (optional singleSpace >> string ";") <++ string spaces
   where
-    args = case maybeArgs of
-      Nothing -> "  "
-      Just args -> if last args `elem` ">}])" then " " else "  "
+    spaces = case maybeArgs of
+      Nothing -> twoSpaces
+      Just args -> if last args `elem` ">}])" then oneSpace else twoSpaces
+      where
+        twoSpaces = "  "
+        oneSpace = " "
 
 optItem :: ReadP Opt
 optItem = do
   skipSpaces
   names <- optNames
   args <- fmap Just optArgs <++ pure Nothing
-  heuristicSep args -- hate this
+  heuristicSep args -- [FIXME] hate this
   skipSpaces
-  string ":" <++ string ";" <++ pure "x" -- just a placeholder; consume the former if applies
+  string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
   char '\n' <++ pure 'x'
   skipSpaces
   desc <- description
   skipSpaces
   skip newline <++ eof
-  return (Opt names desc args)
+  return (Opt names args desc)
