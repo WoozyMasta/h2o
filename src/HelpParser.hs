@@ -20,7 +20,7 @@ data OptName = OptName
 instance Show OptName where
   show (OptName raw t) = show raw
 
-data OptNameType = LongType | ShortType | OldType deriving (Eq, Show)
+data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show)
 
 allDigits = "0123456789"
 
@@ -75,6 +75,13 @@ longOptName = do
   let res = OptName ("--" ++ name) LongType
   return res
 
+doubleDash :: ReadP OptName
+doubleDash = do
+  _ <- count 2 dash
+  singleSpace
+  let res = OptName "" DoubleDashAlone
+  return res
+
 shortOptName :: ReadP OptName
 shortOptName = do
   _ <- dash
@@ -91,7 +98,7 @@ oldOptName = do
   return res
 
 optName :: ReadP OptName
-optName = longOptName <|> (oldOptName <++ shortOptName)
+optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 altOptionName :: ReadP OptName
 altOptionName = do
