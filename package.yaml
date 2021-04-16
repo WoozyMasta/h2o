@@ -21,11 +21,6 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-- tasty
-- tasty-hunit
-- hedgehog
-- tasty-hedgehog
-- tasty-expected-failure
 
 library:
   source-dirs: src
@@ -51,3 +46,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - help-text-parser
+    - tasty
+    - tasty-hunit
+    - hedgehog
+    - tasty-hedgehog
