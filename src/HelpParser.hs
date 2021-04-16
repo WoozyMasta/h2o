@@ -3,12 +3,11 @@
 module HelpParser where
 
 import Control.Applicative ((<|>))
-import Data.Maybe (fromMaybe)
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
   { _names :: [OptName],
-    _arg :: Maybe String,
+    _arg :: String,
     _desc :: String
   }
   deriving (Eq)
@@ -21,9 +20,7 @@ data OptName = OptName
 
 instance Show Opt where
   show (Opt names args desc) =
-    show (names, argsStr, desc)
-    where
-      argsStr = fromMaybe "" args
+    show (names, args, desc)
 
 instance Show OptName where
   show (OptName raw t) = show raw
@@ -134,14 +131,14 @@ skip a = a >> return ()
 -- very heuristic handling of description separator
 -- because a wild case like following exists...
 --   "  -O INT[,INT] gap open penalty [4,24]"
-heuristicSep :: Maybe String -> ReadP String
-heuristicSep maybeArgs =
+heuristicSep :: String -> ReadP String
+heuristicSep args =
   f ":" <++ f ";" <++ f "\n" <++ string spaces
   where
     f s = optional singleSpace >> string s
-    spaces = case maybeArgs of
-      Nothing -> twoSpaces
-      Just args -> if last args `elem` ">}])" then oneSpace else twoSpaces
+    spaces = case args of
+      "" -> twoSpaces
+      args -> if last args `elem` ">}])" then oneSpace else twoSpaces
     twoSpaces = "  "
     oneSpace = " "
 
@@ -149,7 +146,7 @@ optItem :: ReadP Opt
 optItem = do
   skipSpaces
   names <- optNames
-  args <- fmap Just optArgs <++ pure Nothing
+  args <- optArgs <++ pure ""
   heuristicSep args -- [FIXME] hate this
   skipSpaces
   string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
