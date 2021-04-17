@@ -107,7 +107,7 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 altOptionName :: ReadP OptName
 altOptionName = do
-  char ','
+  char ',' <|> singleSpace
   optional singleSpace
   optName
 
