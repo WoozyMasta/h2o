@@ -59,7 +59,7 @@ word = munch1 (`notElem` " \t\n")
 argWord :: ReadP String
 argWord = do
   head <- satisfy (\c -> c `elem` alphanum ++ "[({<")
-  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-[]<>{},"))
+  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-|[]<>{},"))
   return (head : tail)
 
 description :: ReadP String
