@@ -51,12 +51,26 @@ unitTests =
       test_optItem
         "-w, --line-width int                  line width"
         (["-w", "--line-width"], "int", "line width"),
-      -- fails on these cases now...
-      --    conda install --help
       test_optItem
-        " -p PATH, --prefix PATH\n     Full path to environment location"
+        "--stderr=e|a|c           change stderr output mode"
+        (["--stderr"], "e|a|c", "change stderr output mode"),
+      --
+      ---- rsync ----
+      test_optItem
+        "--remote-option=OPT, -M  send OPTION to the remote side only"
+        (["--remote-option", "-M"], "OPT", "send OPTION to the remote side only"),
+      --
+      ---- conda ----
+      test_optItem
+        " -p PATH, --prefix PATH\n           Full path to environment location"
         (["-p", "--prefix"], "PATH", "Full path to environment location"),
-      --    minimap2 --help
+      --
+      ---- tar ----
+      test_optItem
+        "-A, --catenate, --concatenate   append tar files to an archive"
+        (["-A", "--catenate", "--concatenate"], "", "append tar files to an archive"),
+      --
+      ---- minimap2 ----
       test_optItem
         "--cs[=STR]   output the cs tag; STR is 'short' (if absent) or 'long' [none]"
         (["--cs"], "[STR]", "output the cs tag; STR is 'short' (if absent) or 'long' [none]")
