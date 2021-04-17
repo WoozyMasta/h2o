@@ -1,3 +1,4 @@
+import qualified Data.List as List
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -73,10 +74,15 @@ unitTests =
       ---- minimap2 ----
       test_optItem
         "--cs[=STR]   output the cs tag; STR is 'short' (if absent) or 'long' [none]"
-        (["--cs"], "[STR]", "output the cs tag; STR is 'short' (if absent) or 'long' [none]")
-        -- Also I have no idea how to handle case like following..
-        --   stack --help
-        --     "--[no-]dump-logs         Enable/disable dump the build output logs"
+        (["--cs"], "[STR]", "output the cs tag; STR is 'short' (if absent) or 'long' [none]"),
+      --
+      ---- stack ----
+      --        (I don't know how to handle such cases properly...)
+      test_optItemMult
+        "--[no-]dump-logs         Enable/disable dump the build output logs"
+        [ (["--dump-logs"], "", "Enable/disable dump the build output logs"),
+          (["--no-dump-logs"], "", "Enable/disable dump the build output logs")
+        ]
     ]
 
 propertyTests =
@@ -118,6 +124,17 @@ makeOpt names = Opt (map getOptName names)
 test_optItem :: String -> ([String], String, String) -> TestTree
 test_optItem s (names, args, desc) =
   testCase s $
-    readP_to_S optItem s @?= [(opt, "")]
+    actual @?= expected
   where
+    actual = readP_to_S optItem s
     opt = makeOpt names args desc
+    expected = [(opt, "")]
+
+test_optItemMult :: String -> [([String], String, String)] -> TestTree
+test_optItemMult s tuples =
+  testCase s $ do
+    List.sort actual @?= expected
+  where
+    actual = readP_to_S optItem s
+    opts = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]
+    expected = [(opt, "") | opt <- opts]

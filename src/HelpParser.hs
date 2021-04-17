@@ -25,7 +25,13 @@ instance Show Opt where
 instance Show OptName where
   show (OptName raw t) = show raw
 
-data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show)
+instance Ord OptName where
+  (OptName raw1 t1) `compare` (OptName raw2 t2) = (raw1, t1) `compare` (raw2, t2)
+
+instance Ord Opt where
+  Opt n1 a1 d1 `compare` Opt n2 a2 d2 = (n1, a1, d1) `compare` (n2, a2, d2)
+
+data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show, Ord)
 
 allDigits = "0123456789"
 
