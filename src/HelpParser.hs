@@ -2,7 +2,6 @@
 
 module HelpParser where
 
-import Control.Applicative ((<|>))
 import Data.List as List
 import Text.ParserCombinators.ReadP
 
@@ -114,7 +113,7 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 optArgs :: ReadP String
 optArgs = do
-  singleSpace <|> char '='
+  singleSpace +++ char '='
   args <- sepBy1 argWord singleSpace
   return (List.intercalate "," args)
 
