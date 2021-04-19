@@ -3,6 +3,7 @@
 module HelpParser where
 
 import Control.Applicative ((<|>))
+import Data.List as List
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
@@ -64,8 +65,8 @@ word = munch1 (`notElem` " \t\n")
 
 argWord :: ReadP String
 argWord = do
-  head <- satisfy (\c -> c `elem` alphanum ++ "[({<")
-  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-|[]<>{},"))
+  head <- satisfy (\c -> c `elem` alphanum ++ "({<")
+  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-|<>{}"))
   return (head : tail)
 
 description :: ReadP String
@@ -111,25 +112,11 @@ oldOptName = do
 optName :: ReadP OptName
 optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
-altOptionName :: ReadP OptName
-altOptionName = do
-  char ',' <|> singleSpace
-  optional singleSpace
-  optName
-
-optNames :: ReadP [OptName]
-optNames = do
-  name <- optName
-  maybeAlt <- fmap Just altOptionName <++ pure Nothing
-  case maybeAlt of
-    Just alt -> return [name, alt]
-    Nothing -> return [name]
-
 optArgs :: ReadP String
 optArgs = do
   singleSpace <|> char '='
   args <- sepBy1 argWord singleSpace
-  return (unwords args)
+  return (List.intercalate "," args)
 
 skip :: ReadP a -> ReadP ()
 skip a = a >> return ()
@@ -148,11 +135,28 @@ heuristicSep args =
     twoSpaces = "  "
     oneSpace = " "
 
+optNameArgPair :: ReadP (OptName, String)
+optNameArgPair = do
+  name <- optName
+  args <- optArgs <++ pure ""
+  return (name, args)
+
+optSep :: ReadP String
+optSep = sep +++ string " "
+  where
+    sep = do
+      s <- string ","
+      optional (string " ")
+      return s
+
 optItem :: ReadP Opt
 optItem = do
   skipSpaces
-  names <- optNames
-  args <- optArgs <++ pure ""
+  pairs <- sepBy1 optNameArgPair optSep
+  let names = map fst pairs
+  let args = case filter (not . null) (map snd pairs) of
+        [] -> ""
+        xs -> head xs
   heuristicSep args -- [FIXME] hate this
   skipSpaces
   string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
