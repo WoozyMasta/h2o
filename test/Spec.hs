@@ -13,8 +13,10 @@ main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTest
 currentTests =
   testGroup
     "Unit tests"
-    [ test_parser "--help   baba keke" (["--help"], "", "baba keke"),
+    [
+      test_parser "--help   baba keke" (["--help"], "", "baba keke"),
       test_parser "-h,--help   baba keke" (["-h", "--help"], "", "baba keke"),
+      test_parser "--           baba" (["--"], "", "baba"),
       test_parser "-h, --help   baba" (["-h", "--help"], "", "baba"),
       test_parser "-o ARG   baba" (["-o"], "ARG", "baba"),
       test_parser "-o,--out ARG   baba" (["-o", "--out"], "ARG", "baba"),

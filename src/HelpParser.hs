@@ -100,8 +100,8 @@ longOptName = do
 doubleDash :: ReadP OptName
 doubleDash = do
   _ <- count 2 dash
-  singleSpace
   let res = OptName "--" DoubleDashAlone
+  singleSpace <++ pure 'x'  -- dummy 'x'
   return res
 
 shortOptName :: ReadP OptName
