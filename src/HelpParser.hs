@@ -128,7 +128,7 @@ heuristicSep :: String -> ReadP String
 heuristicSep args =
   f ":" <++ f ";" <++ f "\n" <++ string spaces
   where
-    f s = optional singleSpace >> string s
+    f s = optional singleSpace *> string s
     spaces = case args of
       "" -> twoSpaces
       args -> if last args `elem` ">}])" then oneSpace else twoSpaces
@@ -160,7 +160,7 @@ surroundedBySquareBraket = between (char '[') (char ']') nonBraketLettersForSure
 failWithBraket :: ReadP String
 failWithBraket = unwords <$> sepBy1 w singleSpace
   where
-    w = munch1 (`notElem` " []\n\t")
+    w = munch1 (`notElem` " []\n\t;:")
 
 discardSquareBraket :: ReadP String
 discardSquareBraket = do
@@ -185,11 +185,11 @@ squareBraketHandler :: ReadP String
 squareBraketHandler = choice [failWithBraket, discardSquareBraket, unwrapSquareBraket]
 
 
-preprocess :: ReadP (String, String)
-preprocess = do
+preprocessor :: ReadP (String, String)
+preprocessor = do
   skipSpaces
-  opt <- squareBraketHandler
-  string "  "
+  (consumed, opt) <- gather squareBraketHandler
+  heuristicSep consumed
   skipSpaces
   string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
   char '\n' <++ pure 'x'
@@ -212,10 +212,10 @@ optPart desc = do
   return (Opt names args desc)
 
 
-process :: String -> [Opt]
-process s = foldl1 (++) results
+runner :: String -> [Opt]
+runner s = concat results
   where
-    xs = readP_to_S preprocess s
+    xs = readP_to_S preprocessor s
     desc = snd . fst . head $ xs
     candidates = map (fst . fst) xs
     results = map (map fst . readP_to_S (optPart desc)) candidates
