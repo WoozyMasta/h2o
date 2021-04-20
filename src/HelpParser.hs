@@ -2,7 +2,8 @@
 
 module HelpParser where
 
-import Data.List as List
+import qualified Data.List as List
+import qualified Data.Foldable as Foldable
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
@@ -114,7 +115,7 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 optArgs :: ReadP String
 optArgs = do
   singleSpace +++ char '='
-  args <- sepBy1 argWord singleSpace
+  args <- sepBy1 argWord argSep
   return (List.intercalate "," args)
 
 skip :: ReadP a -> ReadP ()
@@ -148,6 +149,80 @@ optSep = sep +++ string " "
       optional (string " ")
       return s
 
+argSep :: ReadP String
+argSep = string ","
+
+surroundedBySquareBraket :: ReadP String
+surroundedBySquareBraket = between (char '[') (char ']') nonBraketLettersForSure
+  where
+    nonBraketLettersForSure = munch1 (`notElem` "[]\n")
+
+failWithBraket :: ReadP String
+failWithBraket = unwords <$> sepBy1 w singleSpace
+  where
+    w = munch1 (`notElem` " []\n\t")
+
+discardSquareBraket :: ReadP String
+discardSquareBraket = do
+  first <- optionNonBraket
+  surroundedBySquareBraket
+  second <- optionNonBraket
+  return (first ++ second)
+  where
+    optionNonBraket = option "" failWithBraket
+
+unwrapSquareBraket :: ReadP String
+unwrapSquareBraket = do
+  first <- optionNonBraket
+  content <- surroundedBySquareBraket
+  second <- optionNonBraket
+  return (first ++ content ++ second)
+  where
+    optionNonBraket = option "" failWithBraket
+
+
+squareBraketHandler :: ReadP String
+squareBraketHandler = choice [failWithBraket, discardSquareBraket, unwrapSquareBraket]
+
+
+preprocess :: ReadP (String, String)
+preprocess = do
+  skipSpaces
+  opt <- squareBraketHandler
+  string "  "
+  skipSpaces
+  string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
+  char '\n' <++ pure 'x'
+  skipSpaces
+  ss <- sepBy word singleSpace
+  skipSpaces
+  skip newline <++ eof
+  let desc = unwords ss
+  return (opt, desc)
+
+
+optPart :: String -> ReadP Opt
+optPart desc = do
+  pairs <- sepBy1 optNameArgPair optSep
+  let names = map fst pairs
+  let args = case filter (not . null) (map snd pairs) of
+        [] -> ""
+        xs -> head xs
+  eof
+  return (Opt names args desc)
+
+
+process :: String -> [Opt]
+process s = foldl1 (++) results
+  where
+    xs = readP_to_S preprocess s
+    desc = snd . fst . head $ xs
+    candidates = map (fst . fst) xs
+    results = map (map fst . readP_to_S (optPart desc)) candidates
+
+
+-----------------
+-- no longer used
 optItem :: ReadP Opt
 optItem = do
   skipSpaces
