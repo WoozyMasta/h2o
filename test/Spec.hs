@@ -104,7 +104,10 @@ currentTests =
         " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
         [ (["--input-fmt-option"], "OPT", "Specify a single input file format option in the form"),
           (["--input-fmt-option"], "OPT=VAL", "Specify a single input file format option in the form")
-        ]
+        ],
+      test_parser
+        "-@, --threads INT\n           Number of additional threads to use [0]"
+        (["-@", "--threads"], "INT", "Number of additional threads to use [0]")
     ]
 
 unsupportedCases =

@@ -34,28 +34,29 @@ instance Ord Opt where
 
 data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show, Ord)
 
-allDigits = "0123456789"
+digitChars = "0123456789"
 
-allAlphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+alphChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-alphanum = allAlphabets ++ allDigits
+alphanumChars :: [Char]
+alphanumChars = alphChars ++ digitChars
 
-extraSymbols = "+-_!?"
+extraSymbolChars = "+-_!?@"
 
 dash :: ReadP Char
 dash = satisfy (== '-')
 
-ascii :: ReadP Char
-ascii = satisfy $ \c -> c `elem` alphanum
+alphanum :: ReadP Char
+alphanum = satisfy $ \c -> c `elem` alphanumChars
 
 singleSpace :: ReadP Char
 singleSpace = char ' '
 
-isAscii :: Char -> Bool
-isAscii c = c `elem` alphanum
+isAlphanum :: Char -> Bool
+isAlphanum c = c `elem` alphanumChars
 
 isAllowedOptChar :: Char -> Bool
-isAllowedOptChar c = c `elem` (alphanum ++ extraSymbols)
+isAllowedOptChar c = c `elem` (alphanumChars ++ extraSymbolChars)
 
 newline :: ReadP Char
 newline = char '\n'
@@ -65,8 +66,8 @@ word = munch1 (`notElem` " \t\n")
 
 argWordBare :: ReadP String
 argWordBare = do
-  head <- satisfy (\c -> c `elem` alphanum ++ "({#")
-  tail <- munch (\c -> c `elem` (alphanum ++ "+-*/|{}#.="))
+  head <- satisfy (\c -> c `elem` alphanumChars ++ "({#")
+  tail <- munch (\c -> c `elem` (alphanumChars ++ "+-*/|{}#.="))
   return (head : tail)
 
 argWordAngleBracketed :: ReadP String
@@ -86,7 +87,7 @@ description = do
 
 optWord :: ReadP String
 optWord = do
-  head <- ascii
+  head <- alphanum
   tail <- munch isAllowedOptChar
   return (head : tail)
 
@@ -107,14 +108,14 @@ doubleDash = do
 shortOptName :: ReadP OptName
 shortOptName = do
   _ <- dash
-  c <- ascii
+  c <- alphanum +++ char '@'
   let res = OptName ('-' : c : "") ShortType
   return res
 
 oldOptName :: ReadP OptName
 oldOptName = do
   _ <- dash
-  head <- ascii
+  head <- alphanum
   tail <- optWord
   let res = OptName ('-' : head : tail) OldType
   return res
