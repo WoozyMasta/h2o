@@ -22,15 +22,21 @@ currentTests =
       test_parser "-o,--out=ARG   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out ARG: baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out ARG\n   baba" (["-o", "--out"], "ARG", "baba"),
-      test_parser "-o,--out ARG:  baba" (["-o", "--out"], "ARG", "baba"),
-      test_parser "-o ARG   baba" (["-o"], "ARG", "baba"),
       test_parser "-o <ARG1, ARG2>   baba" (["-o"], "<ARG1, ARG2>", "baba"),
       test_parser "-o <ARG1>,<ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
       test_parser "-o=ARG   baba" (["-o"], "ARG", "baba"),
-      test_parserMult "--out=ARG[,ARG2] baba" [(["--out"], "ARG", "baba"), (["--out"], "ARG,ARG2", "baba")],
+      test_parserMult
+        "--out=ARG[,ARG2] baba"
+        [(["--out"], "ARG", "baba"), (["--out"], "ARG,ARG2", "baba")],
       test_parser "--out, -o ARG    baba" (["--out", "-o"], "ARG", "baba"),
       test_parser "-out: baba" (["-out"], "", "baba"),
       test_parser "-out:\n baba" (["-out"], "", "baba"),
+      test_parser
+        "-o FILE --out=FILE    without comma, with = sign"
+        (["-o", "--out"], "FILE", "without comma, with = sign"),
+      test_parser
+        "-i <file>, --input <file>   with comma, without = sign"
+        (["-i", "--input"], "<file>", "with comma, without = sign"),
       -- examples in the wild
       test_parser
         "  -E, --show-ends          display $ at end of each line"
@@ -113,7 +119,9 @@ currentTests =
 unsupportedCases =
   testGroup
     "\n ============= Unsupported corner cases against parse ============= "
-    [ ---- samtools ----
+    [ -- BAD case illustrated in docopt
+      test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
+      ---- samtools ----
       test_parser
         "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
         (["-d"], "STR:STR", "only include reads with tag STR and associated value STR [null]"),
