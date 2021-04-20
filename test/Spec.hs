@@ -23,6 +23,8 @@ currentTests =
       test_parser "-o,--out ARG\n   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out ARG:  baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o ARG   baba" (["-o"], "ARG", "baba"),
+      test_parser "-o <ARG1, ARG2>   baba" (["-o"], "<ARG1, ARG2>", "baba"),
+      test_parser "-o <ARG1>,<ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
       test_parser "-o=ARG   baba" (["-o"], "ARG", "baba"),
       test_parserMult "--out=ARG[,ARG2] baba" [(["--out"], "ARG", "baba"), (["--out"], "ARG,ARG2", "baba")],
       test_parser "--out, -o ARG    baba" (["--out", "-o"], "ARG", "baba"),
@@ -58,7 +60,6 @@ currentTests =
       test_parser
         " -p PATH, --prefix PATH\n           Full path to environment location"
         (["-p", "--prefix"], "PATH", "Full path to environment location"),
-      --
       ---- minimap2 ----
       test_parserMult
         "--cs[=STR]   output the cs tag; STR is 'short' (if absent) or 'long' [none]"
@@ -70,13 +71,24 @@ currentTests =
         [ (["-O"], "INT", "gap open penalty [4,24]"),
           (["-O"], "INT,INT", "gap open penalty [4,24]")
         ],
-      --
       ---- stack ----
       test_parserMult
         "--[no-]dump-logs         Enable/disable dump the build output logs"
         [ (["--dump-logs"], "", "Enable/disable dump the build output logs"),
           (["--no-dump-logs"], "", "Enable/disable dump the build output logs")
-        ]
+        ],
+
+      ---- youtube-dl ---
+      test_parser
+        "    -4, --force-ipv4                     Make all connections via IPv4"
+        (["-4", "--force-ipv4"], "", "Make all connections via IPv4"),
+      test_parser
+        "    -u, --username USERNAME              Login with this account ID"
+        (["-u", "--username"], "USERNAME", "Login with this account ID"),
+      ---- blastn ----
+      test_parser
+        " -template_type <String, `coding', `coding_and_optimal', `optimal'>\n    Discontiguous MegaBLAST template type"
+        (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>", "Discontiguous MegaBLAST template type")
     ]
 
 optNameTests =

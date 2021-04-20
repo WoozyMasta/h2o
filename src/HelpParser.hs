@@ -63,11 +63,21 @@ newline = char '\n'
 word :: ReadP String
 word = munch1 (`notElem` " \t\n")
 
-argWord :: ReadP String
-argWord = do
-  head <- satisfy (\c -> c `elem` alphanum ++ "({<")
-  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-|<>{}"))
+argWordBare :: ReadP String
+argWordBare = do
+  head <- satisfy (\c -> c `elem` alphanum ++ "({")
+  tail <- munch1 (\c -> c `elem` (alphanum ++ "+-|{}"))
   return (head : tail)
+
+argWordAngleBracketed :: ReadP String
+argWordAngleBracketed = do
+  (consumed, _) <- gather $ between (char '<') (char '>') nonBracketLettersForSure
+  return consumed
+  where
+    nonBracketLettersForSure = munch1 (`notElem` "<>\n")
+
+argWord :: ReadP String
+argWord = argWordBare +++ argWordAngleBracketed
 
 description :: ReadP String
 description = do
@@ -150,42 +160,43 @@ optSep = sep +++ string " "
 argSep :: ReadP String
 argSep = string ","
 
-surroundedBySquareBraket :: ReadP String
-surroundedBySquareBraket = between (char '[') (char ']') nonBraketLettersForSure
+surroundedBySquareBracket :: ReadP String
+surroundedBySquareBracket = do
+  between (char '[') (char ']') nonBracketLettersForSure
   where
-    nonBraketLettersForSure = munch1 (`notElem` "[]\n")
+    nonBracketLettersForSure = munch1 (`notElem` "[]\n")
 
-failWithBraket :: ReadP String
-failWithBraket = unwords <$> sepBy1 w singleSpace
+failWithBracket :: ReadP String
+failWithBracket = unwords <$> sepBy1 w singleSpace
   where
     w = munch1 (`notElem` " []\n\t;:")
 
-discardSquareBraket :: ReadP String
-discardSquareBraket = do
-  first <- optionNonBraket
-  surroundedBySquareBraket
-  second <- optionNonBraket
+discardSquareBracket :: ReadP String
+discardSquareBracket = do
+  first <- optionNonBracket
+  surroundedBySquareBracket
+  second <- optionNonBracket
   return (first ++ second)
   where
-    optionNonBraket = option "" failWithBraket
+    optionNonBracket = option "" failWithBracket
 
-unwrapSquareBraket :: ReadP String
-unwrapSquareBraket = do
-  first <- optionNonBraket
-  content <- surroundedBySquareBraket
-  second <- optionNonBraket
+unwrapSquareBracket :: ReadP String
+unwrapSquareBracket = do
+  first <- optionNonBracket
+  content <- surroundedBySquareBracket
+  second <- optionNonBracket
   return (first ++ content ++ second)
   where
-    optionNonBraket = option "" failWithBraket
+    optionNonBracket = option "" failWithBracket
 
-squareBraketHandler :: ReadP String
-squareBraketHandler = choice [failWithBraket, discardSquareBraket, unwrapSquareBraket]
+squareBracketHandler :: ReadP String
+squareBracketHandler = choice [failWithBracket, discardSquareBracket, unwrapSquareBracket]
 
 -- Extract (optionPart, description) matches
 preprocessor :: ReadP (String, String)
 preprocessor = do
   skipSpaces
-  (consumed, opt) <- gather squareBraketHandler
+  (consumed, opt) <- gather squareBracketHandler
   heuristicSep consumed
   skipSpaces
   string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
@@ -197,6 +208,9 @@ preprocessor = do
   let desc = unwords ss
   return (opt, desc)
 
+-- takes description as external info
+-- the first option argument ARG1 is extracted when you have a case like
+--    "-o ARG1, --out=ARG2"
 optPart :: String -> ReadP Opt
 optPart desc = do
   pairs <- sepBy1 optNameArgPair optSep
@@ -210,7 +224,9 @@ optPart desc = do
 parse :: String -> [Opt]
 parse s = concat results
   where
+    -- thanks to lazy evaluation, desc is NOT evaluated when xs == []
+    -- so don't worry about calling (head xs).
     xs = readP_to_S preprocessor s
-    desc = snd . fst . head $ xs
     candidates = map (fst . fst) xs
     results = map (map fst . readP_to_S (optPart desc)) candidates
+    desc = snd . fst . head $ xs
