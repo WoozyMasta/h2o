@@ -8,13 +8,12 @@ import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
 
-main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests]
+main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, unsupportedCases]
 
 currentTests =
   testGroup
-    "Unit tests"
-    [
-      test_parser "--help   baba keke" (["--help"], "", "baba keke"),
+    "\n ============= unit tests of parse  ============= "
+    [ test_parser "--help   baba keke" (["--help"], "", "baba keke"),
       test_parser "-h,--help   baba keke" (["-h", "--help"], "", "baba keke"),
       test_parser "--           baba" (["--"], "", "baba"),
       test_parser "-h, --help   baba" (["-h", "--help"], "", "baba"),
@@ -79,7 +78,6 @@ currentTests =
         [ (["--dump-logs"], "", "Enable/disable dump the build output logs"),
           (["--no-dump-logs"], "", "Enable/disable dump the build output logs")
         ],
-
       ---- youtube-dl ---
       test_parser
         "    -4, --force-ipv4                     Make all connections via IPv4"
@@ -93,9 +91,21 @@ currentTests =
         (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>", "Discontiguous MegaBLAST template type")
     ]
 
+unsupportedCases =
+  testGroup
+    "\n ============= Unsupported corner cases against parse ============= "
+    [
+      test_parser
+        " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
+        (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>", "Task to execute"),
+      test_parser
+        " -window_size <Integer, >=0>\n      Multiple hits window size, use 0 to specify 1-hit algorithm"
+        (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm")
+    ]
+
 optNameTests =
   testGroup
-    "Test optName"
+    "\n ============= Test optName ============= "
     [ testCase "optName (long)" $
         readP_to_S optName "--help" @?= [(OptName "--help" LongType, "")],
       testCase "optName (short)" $
