@@ -88,7 +88,11 @@ currentTests =
       ---- blastn ----
       test_parser
         " -template_type <String, `coding', `coding_and_optimal', `optimal'>\n    Discontiguous MegaBLAST template type"
-        (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>", "Discontiguous MegaBLAST template type")
+        (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>", "Discontiguous MegaBLAST template type"),
+      ---- readseq ----
+      test_parserMult
+        " -wid[th]=#            sequence line width"
+        [(["-wid"], "#", "sequence line width"), (["-width"], "#", "sequence line width")]
     ]
 
 unsupportedCases =
