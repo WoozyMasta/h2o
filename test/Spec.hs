@@ -95,13 +95,26 @@ currentTests =
         [(["-wid"], "#", "sequence line width"), (["-width"], "#", "sequence line width")],
       test_parser
         "-extract=1000..9999  * extract all features, sequence from given base range"
-        (["-extract"], "1000..9999", "* extract all features, sequence from given base range")
+        (["-extract"], "1000..9999", "* extract all features, sequence from given base range"),
+      test_parserMult
+        "-feat[ures]=exon,CDS...   extract sequence of selected features"
+        [(["-feat"], "exon,CDS...", "extract sequence of selected features"), (["-features"], "exon,CDS...", "extract sequence of selected features")],
+      ---- samtools ----
+      test_parserMult
+        " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
+        [ (["--input-fmt-option"], "OPT", "Specify a single input file format option in the form"),
+          (["--input-fmt-option"], "OPT=VAL", "Specify a single input file format option in the form")
+        ]
     ]
 
 unsupportedCases =
   testGroup
     "\n ============= Unsupported corner cases against parse ============= "
-    [
+    [ ---- samtools ----
+      test_parser
+        "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
+        (["-d"], "STR:STR", "only include reads with tag STR and associated value STR [null]"),
+      ---- blastn ----
       test_parser
         " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
         (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>", "Task to execute"),
