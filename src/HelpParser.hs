@@ -2,8 +2,8 @@
 
 module HelpParser where
 
-import qualified Data.List as List
 import qualified Data.Foldable as Foldable
+import qualified Data.List as List
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
@@ -121,9 +121,7 @@ optArgs = do
 skip :: ReadP a -> ReadP ()
 skip a = a >> return ()
 
--- very heuristic handling of description separator
--- because a wild case like following exists...
---   "  -O INT[,INT] gap open penalty [4,24]"
+-- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
   f ":" <++ f ";" <++ f "\n" <++ string spaces
@@ -180,11 +178,10 @@ unwrapSquareBraket = do
   where
     optionNonBraket = option "" failWithBraket
 
-
 squareBraketHandler :: ReadP String
 squareBraketHandler = choice [failWithBraket, discardSquareBraket, unwrapSquareBraket]
 
-
+-- Extract (optionPart, description) matches
 preprocessor :: ReadP (String, String)
 preprocessor = do
   skipSpaces
@@ -200,7 +197,6 @@ preprocessor = do
   let desc = unwords ss
   return (opt, desc)
 
-
 optPart :: String -> ReadP Opt
 optPart desc = do
   pairs <- sepBy1 optNameArgPair optSep
@@ -211,32 +207,10 @@ optPart desc = do
   eof
   return (Opt names args desc)
 
-
-runner :: String -> [Opt]
-runner s = concat results
+parse :: String -> [Opt]
+parse s = concat results
   where
     xs = readP_to_S preprocessor s
     desc = snd . fst . head $ xs
     candidates = map (fst . fst) xs
     results = map (map fst . readP_to_S (optPart desc)) candidates
-
-
------------------
--- no longer used
-optItem :: ReadP Opt
-optItem = do
-  skipSpaces
-  pairs <- sepBy1 optNameArgPair optSep
-  let names = map fst pairs
-  let args = case filter (not . null) (map snd pairs) of
-        [] -> ""
-        xs -> head xs
-  heuristicSep args -- [FIXME] hate this
-  skipSpaces
-  string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
-  char '\n' <++ pure 'x'
-  skipSpaces
-  desc <- description
-  skipSpaces
-  skip newline <++ eof
-  return (Opt names args desc)
