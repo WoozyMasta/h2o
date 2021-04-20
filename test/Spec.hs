@@ -92,7 +92,10 @@ currentTests =
       ---- readseq ----
       test_parserMult
         " -wid[th]=#            sequence line width"
-        [(["-wid"], "#", "sequence line width"), (["-width"], "#", "sequence line width")]
+        [(["-wid"], "#", "sequence line width"), (["-width"], "#", "sequence line width")],
+      test_parser
+        "-extract=1000..9999  * extract all features, sequence from given base range"
+        (["-extract"], "1000..9999", "* extract all features, sequence from given base range")
     ]
 
 unsupportedCases =

@@ -65,8 +65,8 @@ word = munch1 (`notElem` " \t\n")
 
 argWordBare :: ReadP String
 argWordBare = do
-  head <- satisfy (\c -> c `elem` alphanum ++ "({#")
-  tail <- munch (\c -> c `elem` (alphanum ++ "+-|{}#"))
+  head <- satisfy (\c -> c `elem` alphanum ++ "({#.")
+  tail <- munch (\c -> c `elem` (alphanum ++ "+-|{}#."))
   return (head : tail)
 
 argWordAngleBracketed :: ReadP String
