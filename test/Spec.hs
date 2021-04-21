@@ -135,16 +135,16 @@ unsupportedCases =
         (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm")
     ]
 
-
 devTests =
   testGroup
     "\n ============= tests against parseMany  ============= "
-    [
-      test_parseMany
+    [ test_parseMany
         "--help   baba\n    -i <file>, --input=<file>   keke"
+        [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
+      test_parseMany
+        "--help   baba\n      !!!JUNK LINE!!!\n    -i <file>, --input=<file>   keke"
         [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")]
     ]
-
 
 optNameTests =
   testGroup

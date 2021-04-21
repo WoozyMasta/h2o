@@ -208,6 +208,10 @@ preprocessor = do
   let desc = unwords ss
   return (opt, desc)
 
+preprocessorWithFallback :: ReadP (String, String)
+preprocessorWithFallback = do
+  preprocessor <++ (munch (/= '\n') >> skip newline >> pure ("", ""))
+
 -- takes description as external info
 -- the first option argument ARG1 is extracted when you have a case like
 --    "-o ARG1, --out=ARG2"
@@ -234,9 +238,9 @@ parse s = concat results
 parseMany :: String -> [Opt]
 parseMany s = concatMap (map fst) results
   where
-    xs = readP_to_S (many1 preprocessor) s
+    xs = readP_to_S (many1 preprocessorWithFallback) s
     results = case xs of
       [] -> []
       xs -> [readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
         where
-          pairs = fst (last xs)
+          pairs = filter (("", "") /=) $ fst (last xs) -- remove results from fallback
