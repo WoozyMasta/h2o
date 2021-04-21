@@ -120,7 +120,11 @@ unsupportedCases :: TestTree
 unsupportedCases =
   testGroup
     "\n ============= Unsupported corner cases against parse ============= "
-    [ -- BAD case illustrated in docopt
+    [ ---- stack ----
+      test_parser
+        "--docker*                Run 'stack --docker-help' for details"
+        (["--docker*"], "", "Run 'stack --docker-help' for details"),
+      -- BAD case illustrated in docopt
       test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
       ---- samtools ----
       test_parser
