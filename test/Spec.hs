@@ -3,12 +3,13 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser
+import Subcommand
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
 
-main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases]
+main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests]
 
 currentTests =
   testGroup
@@ -164,6 +165,33 @@ optNameTests =
         readP_to_S optName "-azvhP" @?= [(OptName "-azvhP" OldType, "")],
       testCase "optName (double dash alone)" $
         readP_to_S optName "-- " @?= [(OptName "--" DoubleDashAlone, "")]
+    ]
+
+miscTests =
+  testGroup
+    "\n ============ misc tests =============="
+    [ testCase "firstTwoWordsLoc: empty" $
+        firstTwoWordsLoc
+          "  "
+          @?= (-1, -1),
+      testCase "firstTwoWordsLoc: single word" $
+        firstTwoWordsLoc
+          " hi"
+          @?= (1, -1),
+      testCase "firstTwoWordsLoc 0" $
+        firstTwoWordsLoc
+          "  stop        Stop one or more running containers   "
+          @?= (2, 14),
+      testCase "firstTwoWordsLoc 1" $
+        firstTwoWordsLoc
+          "stop        Stop one or more running containers   "
+          @?= (0, 12),
+      testCase "firstTwoWordsLoc 2" $
+        firstTwoWordsLoc
+          "   hi               there   "
+          @?= (3, 20),
+      testCase "getMostFrequent" $
+        getMostFrequent [1, 4, 2, 9, 4, -3, 7, 4, 4, 1, 4] @?= 4
     ]
 
 propertyTests :: TestTree
