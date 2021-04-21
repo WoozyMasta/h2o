@@ -147,7 +147,10 @@ devTests =
         [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
         "--help   baba\n      !!!JUNK LINE!!!\n    -i <file>, --input=<file>   keke"
-        [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")]
+        [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
+      test_parseMany
+        "--he[lp]   baba\n      !!!JUNK LINE!!!\n    -i <file>, --input=<file>   keke"
+        [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")]
     ]
 
 optNameTests =

@@ -236,11 +236,16 @@ parse s = concat results
     desc = snd . fst . head $ xs
 
 parseMany :: String -> [Opt]
-parseMany s = concatMap (map fst) results
+parseMany "" = []
+parseMany s = concat results
   where
-    xs = readP_to_S (many1 preprocessorWithFallback) s
-    results = case xs of
-      [] -> []
-      xs -> [readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
-        where
-          pairs = filter (("", "") /=) $ fst (last xs) -- remove results from fallback
+    pairs = preprocessAll s
+    results = [(map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs]
+
+preprocessAll :: String -> [(String, String)]
+preprocessAll "" = []
+preprocessAll s = case xs of
+  [] -> []
+  (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAll rest
+  where
+    xs = readP_to_S preprocessorWithFallback s
