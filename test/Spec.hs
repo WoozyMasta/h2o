@@ -8,11 +8,11 @@ import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
 
-main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, unsupportedCases]
+main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases]
 
 currentTests =
   testGroup
-    "\n ============= unit tests of parse  ============= "
+    "\n ============= unit tests against parse  ============= "
     [ test_parser "--help   baba keke" (["--help"], "", "baba keke"),
       test_parser "-h,--help   baba keke" (["-h", "--help"], "", "baba keke"),
       test_parser "--           baba" (["--"], "", "baba"),
@@ -116,6 +116,7 @@ currentTests =
         (["-@", "--threads"], "INT", "Number of additional threads to use [0]")
     ]
 
+unsupportedCases :: TestTree
 unsupportedCases =
   testGroup
     "\n ============= Unsupported corner cases against parse ============= "
@@ -133,6 +134,17 @@ unsupportedCases =
         " -window_size <Integer, >=0>\n      Multiple hits window size, use 0 to specify 1-hit algorithm"
         (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm")
     ]
+
+
+devTests =
+  testGroup
+    "\n ============= tests against parseMany  ============= "
+    [
+      test_parseMany
+        "--help   baba\n    -i <file>, --input=<file>   keke"
+        [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")]
+    ]
+
 
 optNameTests =
   testGroup
@@ -198,4 +210,12 @@ test_parserMult s tuples =
     List.sort actual @?= expected
   where
     actual = parse s
+    expected = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]
+
+test_parseMany :: String -> [([String], String, String)] -> TestTree
+test_parseMany s tuples =
+  testCase s $ do
+    List.sort actual @?= expected
+  where
+    actual = parseMany s
     expected = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]

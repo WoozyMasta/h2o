@@ -102,7 +102,7 @@ doubleDash :: ReadP OptName
 doubleDash = do
   _ <- count 2 dash
   let res = OptName "--" DoubleDashAlone
-  singleSpace <++ pure 'x'  -- dummy 'x'
+  singleSpace <++ pure 'x' -- dummy 'x'
   return res
 
 shortOptName :: ReadP OptName
@@ -202,9 +202,8 @@ preprocessor = do
   skipSpaces
   string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
   char '\n' <++ pure 'x'
-  skipSpaces
-  ss <- sepBy word singleSpace
-  skipSpaces
+  ss <- sepBy1 word singleSpace
+  skip (munch (`elem` " \t"))
   skip newline <++ eof
   let desc = unwords ss
   return (opt, desc)
@@ -231,3 +230,13 @@ parse s = concat results
     candidates = map (fst . fst) xs
     results = map (map fst . readP_to_S (optPart desc)) candidates
     desc = snd . fst . head $ xs
+
+parseMany :: String -> [Opt]
+parseMany s = concatMap (map fst) results
+  where
+    xs = readP_to_S (many1 preprocessor) s
+    results = case xs of
+      [] -> []
+      xs -> [readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
+        where
+          pairs = fst (last xs)
