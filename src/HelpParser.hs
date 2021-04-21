@@ -41,7 +41,7 @@ alphChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 alphanumChars :: [Char]
 alphanumChars = alphChars ++ digitChars
 
-extraSymbolChars = "+-_!?@*/"
+extraSymbolChars = "+-_!?@"
 
 dash :: ReadP Char
 dash = satisfy (== '-')
@@ -89,6 +89,8 @@ optWord :: ReadP String
 optWord = do
   head <- alphanum
   tail <- munch isAllowedOptChar
+  -- For example docker run --help has "--docker*"
+  _ <- char '*' <++ pure '*'
   return (head : tail)
 
 longOptName :: ReadP OptName
@@ -249,8 +251,7 @@ parseMany s = concat results
 
 preprocessAll :: String -> [(String, String)]
 preprocessAll "" = []
-preprocessAll s = case xs of
+preprocessAll s = case readP_to_S (preprocessor <++ fallback) s of
   [] -> []
   (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAll rest
-  where
-    xs = readP_to_S (preprocessor <++ fallback) s
+
