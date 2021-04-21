@@ -191,7 +191,10 @@ unwrapSquareBracket = do
     optionNonBracket = option "" failWithBracket
 
 squareBracketHandler :: ReadP String
-squareBracketHandler = choice [failWithBracket, discardSquareBracket, unwrapSquareBracket]
+squareBracketHandler = do
+  x <- dash -- let if fail if not starting with '-'
+  xs <- choice [failWithBracket, discardSquareBracket, unwrapSquareBracket]
+  return (x : xs)
 
 -- Extract (optionPart, description) matches
 preprocessor :: ReadP (String, String)
@@ -208,9 +211,11 @@ preprocessor = do
   let desc = unwords ss
   return (opt, desc)
 
-preprocessorWithFallback :: ReadP (String, String)
-preprocessorWithFallback = do
-  preprocessor <++ (munch (/= '\n') >> skip newline >> pure ("", ""))
+fallback :: ReadP (String, String)
+fallback = do
+  _ <- munch ('\n' /=)
+  skip newline
+  return ("", "")
 
 -- takes description as external info
 -- the first option argument ARG1 is extracted when you have a case like
@@ -248,4 +253,4 @@ preprocessAll s = case xs of
   [] -> []
   (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAll rest
   where
-    xs = readP_to_S preprocessorWithFallback s
+    xs = readP_to_S (preprocessor <++ fallback) s
