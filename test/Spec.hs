@@ -133,8 +133,8 @@ currentTests =
         "-t/--time          print wall-clock time taken by search phases"
         (["-t", "--time"], "", "print wall-clock time taken by search phases"),
       test_parser
-        "-I/--minins <int>  minimum fragment length (0)"
-        (["-I", "--minins"], "<int>", "minimum fragment length (0)"),
+        " -p/--threads <int> number of alignment threads to launch (1)"
+        (["-p", "--threads"], "<int>", "number of alignment threads to launch (1)"),
       ---- samtools ----
       test_parserMult
         " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
@@ -160,6 +160,10 @@ unsupportedCases =
       test_parser
         "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
         (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
+      ---- bowtie2 ----
+      test_parser
+        "-F k:<int>,i:<int> query input files are continuous FASTA where reads"
+        (["-F"], "k:<int>,i:<int>", "query input files are continuous FASTA where reads"),
       ---- samtools ----
       test_parser
         "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
