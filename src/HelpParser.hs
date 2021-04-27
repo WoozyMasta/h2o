@@ -165,7 +165,7 @@ optNameArgPair = do
   return (name, args)
 
 optSep :: ReadP String
-optSep = sep +++ string " "
+optSep = (sep +++ string " ") <++ string "/"
   where
     sep = do
       s <- string ","

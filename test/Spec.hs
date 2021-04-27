@@ -117,6 +117,13 @@ currentTests =
       test_parserMult
         "-feat[ures]=exon,CDS...   extract sequence of selected features"
         [(["-feat"], "exon,CDS...", "extract sequence of selected features"), (["-features"], "exon,CDS...", "extract sequence of selected features")],
+      ---- bowtie2 ----
+      test_parser
+        "-t/--time          print wall-clock time taken by search phases"
+        (["-t", "--time"], "", "print wall-clock time taken by search phases"),
+      test_parser
+        "-I/--minins <int>  minimum fragment length (0)"
+        (["-I", "--minins"], "<int>", "minimum fragment length (0)"),
       ---- samtools ----
       test_parserMult
         " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
