@@ -67,7 +67,7 @@ word = munch1 (`notElem` " \t\n")
 argWordBare :: ReadP String
 argWordBare = do
   head <- satisfy (\c -> c `elem` alphanumChars ++ "(#.")
-  tail <- munch (\c -> c `elem` (alphanumChars ++ ")+-*/|#.="))
+  tail <- munch (\c -> c `elem` (alphanumChars ++ ":<>)+-*/|#.="))
   return (head : tail)
 
 argWordBracketedHelper :: Char -> Char -> ReadP String
@@ -149,7 +149,7 @@ skip a = a *> pure ()
 -- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
-  f ":" <++ f ";" <++ f "\n" <++ string varSpaces
+  f "\n" <++ string varSpaces
   where
     f s = optional singleSpace *> string s
     varSpaces = case args of
@@ -184,7 +184,7 @@ surroundedBySquareBracket = do
 failWithBracket :: ReadP String
 failWithBracket = unwords <$> sepBy1 w singleSpace
   where
-    w = munch1 (`notElem` " []\n\t;:")
+    w = munch1 (`notElem` " []\n\t")
 
 discardSquareBracket :: ReadP String
 discardSquareBracket = do
@@ -217,8 +217,6 @@ preprocessor = do
   (consumed, opt) <- gather squareBracketHandler
   heuristicSep consumed -- this is the separator between optionPart and description
   skipSpaces
-  string ":" <++ string ";" <++ pure "x"
-  char '\n' <++ pure 'x'
   ss <- sepBy1 word singleSpace
   skip (munch (`elem` " \t"))
   skip newline <++ eof

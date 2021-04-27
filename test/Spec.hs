@@ -34,7 +34,7 @@ currentTests =
         [(["--out"], "ARG", "baba"), (["--out"], "ARG,ARG2", "baba")],
       test_parser "--out, -o ARG    baba" (["--out", "-o"], "ARG", "baba"),
       test_parser "-out: baba" (["-out"], "", "baba"),
-      test_parser "-out:\n baba" (["-out"], "", "baba"),
+      test_parser "--out=ARG:\n baba" (["--out"], "ARG:", "baba"),
       test_parser
         "-o FILE --out=FILE    without comma, with = sign"
         (["-o", "--out"], "FILE", "without comma, with = sign"),
