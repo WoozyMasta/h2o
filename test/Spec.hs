@@ -21,7 +21,6 @@ currentTests =
       test_parser "-o ARG   baba" (["-o"], "ARG", "baba"),
       test_parser "-o,--out ARG   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out=ARG   baba" (["-o", "--out"], "ARG", "baba"),
-      test_parser "-o,--out ARG: baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out ARG\n   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o <ARG1, ARG2>   baba" (["-o"], "<ARG1, ARG2>", "baba"),
       test_parser "-o <ARG1>,<ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
@@ -33,8 +32,7 @@ currentTests =
         "--out=ARG[,ARG2] baba"
         [(["--out"], "ARG", "baba"), (["--out"], "ARG,ARG2", "baba")],
       test_parser "--out, -o ARG    baba" (["--out", "-o"], "ARG", "baba"),
-      test_parser "-out: baba" (["-out"], "", "baba"),
-      test_parser "--out=ARG:\n baba" (["--out"], "ARG:", "baba"),
+      test_parser "--out=ARG1:ARG2\n baba" (["--out"], "ARG1:ARG2", "baba"),
       test_parser
         "-o FILE --out=FILE    without comma, with = sign"
         (["-o", "--out"], "FILE", "without comma, with = sign"),
@@ -96,13 +94,6 @@ currentTests =
       test_parser
         "-o{Directory}\n       Set Output directory"
         (["-o"], "{Directory}", "Set Output directory"),
-      ---- 7z --help ----
-      test_parser
-        " -slp : set Large Pages mode"
-        (["-slp"], "", "set Large Pages mode"),
-      test_parserMult
-        "-si[{name}] : read data from stdin"
-        [(["-si"], "", "read data from stdin"), (["-si"], "{name}", "read data from stdin")],
       ---- youtube-dl ---
       test_parser
         "    -4, --force-ipv4                     Make all connections via IPv4"
@@ -135,7 +126,13 @@ currentTests =
       test_parser
         " -p/--threads <int> number of alignment threads to launch (1)"
         (["-p", "--threads"], "<int>", "number of alignment threads to launch (1)"),
+      test_parser
+        "-F k:<int>,i:<int> query input files are continuous FASTA where reads"
+        (["-F"], "k:<int>,i:<int>", "query input files are continuous FASTA where reads"),
       ---- samtools ----
+      test_parser
+        "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
+        (["-d"], "STR:STR", "only include reads with tag STR and associated value STR [null]"),
       test_parserMult
         " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
         [ (["--input-fmt-option"], "OPT", "Specify a single input file format option in the form"),
@@ -154,20 +151,15 @@ unsupportedCases =
       test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
       ---- 7z --help ----
       test_parserMult
+        "-si[{name}] : read data from stdin"
+        [(["-si"], "", "read data from stdin"), (["-si"], "{name}", "read data from stdin")],
+      test_parserMult
         " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
         [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
       ---- parallel ----
       test_parser
         "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
         (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
-      ---- bowtie2 ----
-      test_parser
-        "-F k:<int>,i:<int> query input files are continuous FASTA where reads"
-        (["-F"], "k:<int>,i:<int>", "query input files are continuous FASTA where reads"),
-      ---- samtools ----
-      test_parser
-        "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
-        (["-d"], "STR:STR", "only include reads with tag STR and associated value STR [null]"),
       ---- blastn ----
       test_parser
         " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
