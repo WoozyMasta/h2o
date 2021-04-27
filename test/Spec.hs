@@ -96,10 +96,21 @@ currentTests =
       test_parser
         "-o{Directory}\n       Set Output directory"
         (["-o"], "{Directory}", "Set Output directory"),
+      ---- 7z --help ----
+      test_parser
+        " -slp : set Large Pages mode"
+        (["-slp"], "", "set Large Pages mode"),
+      test_parserMult
+        "-si[{name}] : read data from stdin"
+        [(["-si"], "", "read data from stdin"), (["-si"], "{name}", "read data from stdin")],
       ---- youtube-dl ---
       test_parser
         "    -4, --force-ipv4                     Make all connections via IPv4"
         (["-4", "--force-ipv4"], "", "Make all connections via IPv4"),
+      ---- stack ----
+      test_parser
+        "--docker*                Run 'stack --docker-help' for details"
+        (["--docker*"], "", "Run 'stack --docker-help' for details"),
       test_parser
         "    -u, --username USERNAME              Login with this account ID"
         (["-u", "--username"], "USERNAME", "Login with this account ID"),
@@ -138,13 +149,17 @@ currentTests =
 unsupportedCases :: TestTree
 unsupportedCases =
   testGroup
-    "\n ============= Unsupported corner cases against parse ============= "
-    [ ---- stack ----
-      test_parser
-        "--docker*                Run 'stack --docker-help' for details"
-        (["--docker*"], "", "Run 'stack --docker-help' for details"),
-      -- BAD case illustrated in docopt
+    "\n ============= Unsupported corner cases parse fail ============= "
+    [ -- BAD case illustrated in docopt
       test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
+      ---- 7z --help ----
+      test_parserMult
+        " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
+        [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
+      ---- parallel ----
+      test_parser
+        "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
+        (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
       ---- samtools ----
       test_parser
         "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
@@ -187,7 +202,7 @@ optNameTests =
 
 miscTests =
   testGroup
-    "\n ============ misc tests =============="
+    "\n ============ misc =============="
     [ testCase "firstTwoWordsLoc: empty" $
         firstTwoWordsLoc
           "  "
@@ -208,8 +223,8 @@ miscTests =
         firstTwoWordsLoc
           "   hi               there   "
           @?= (3, 20),
-      testCase "getMostFrequent" $
-        getMostFrequent [1, 4, 2, 9, 4, -3, 7, 4, 4, 1, 4] @?= 4
+      testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == -4" $
+        getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= -4
     ]
 
 propertyTests :: TestTree

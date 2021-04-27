@@ -144,15 +144,15 @@ optArgsInBraket = do
   return (List.intercalate "," args)
 
 skip :: ReadP a -> ReadP ()
-skip a = a >> return ()
+skip a = a *> pure ()
 
 -- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
-  f ":" <++ f ";" <++ f "\n" <++ string spaces
+  f ":" <++ f ";" <++ f "\n" <++ string varSpaces
   where
     f s = optional singleSpace *> string s
-    spaces = case args of
+    varSpaces = case args of
       "" -> twoSpaces
       args -> if last args `elem` ">}])" then oneSpace else twoSpaces
     twoSpaces = "  "
@@ -215,9 +215,9 @@ preprocessor :: ReadP (String, String)
 preprocessor = do
   skipSpaces
   (consumed, opt) <- gather squareBracketHandler
-  heuristicSep consumed
+  heuristicSep consumed -- this is the separator between optionPart and description
   skipSpaces
-  string ":" <++ string ";" <++ pure "x" -- always succeeds; consume the former if possible
+  string ":" <++ string ";" <++ pure "x"
   char '\n' <++ pure 'x'
   ss <- sepBy1 word singleSpace
   skip (munch (`elem` " \t"))
