@@ -48,6 +48,10 @@ currentTests =
       test_parser
         "--min_length    Sets an artificial lower limit"
         (["--min_length"], "", "Sets an artificial lower limit"),
+      ---- gzip ----
+      test_parser
+        "-S .suf --suffix .suf\n       When compressing, use suffix .suf instead of .gz."
+        (["-S", "--suffix"], ".suf", "When compressing, use suffix .suf instead of .gz."),
       ---- tar ----
       test_parser
         "-A, --catenate, --concatenate   append tar files to an archive"
