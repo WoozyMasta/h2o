@@ -25,6 +25,9 @@ currentTests =
       test_parser "-o,--out ARG\n   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o <ARG1, ARG2>   baba" (["-o"], "<ARG1, ARG2>", "baba"),
       test_parser "-o <ARG1>,<ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
+      test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
+      test_parser "-o arg --output arg    baba" (["-o", "--output"], "arg", "baba"),
+      test_parser "-o{arg} --output{arg}    baba" (["-o", "--output"], "{arg}", "baba"),
       test_parser "-o=ARG   baba" (["-o"], "ARG", "baba"),
       test_parserMult
         "--out=ARG[,ARG2] baba"
@@ -89,6 +92,10 @@ currentTests =
         [ (["--dump-logs"], "", "Enable/disable dump the build output logs"),
           (["--no-dump-logs"], "", "Enable/disable dump the build output logs")
         ],
+      ---- 7z ----
+      test_parser
+        "-o{Directory}\n       Set Output directory"
+        (["-o"], "{Directory}", "Set Output directory"),
       ---- youtube-dl ---
       test_parser
         "    -4, --force-ipv4                     Make all connections via IPv4"

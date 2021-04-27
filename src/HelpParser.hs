@@ -66,19 +66,25 @@ word = munch1 (`notElem` " \t\n")
 
 argWordBare :: ReadP String
 argWordBare = do
-  head <- satisfy (\c -> c `elem` alphanumChars ++ "({#.")
-  tail <- munch (\c -> c `elem` (alphanumChars ++ "+-*/|{}#.="))
+  head <- satisfy (\c -> c `elem` alphanumChars ++ "(#.")
+  tail <- munch (\c -> c `elem` (alphanumChars ++ ")+-*/|#.="))
   return (head : tail)
 
-argWordAngleBracketed :: ReadP String
-argWordAngleBracketed = do
-  (consumed, _) <- gather $ between (char '<') (char '>') nonBracketLettersForSure
+argWordBracketedHelper :: Char -> Char -> ReadP String
+argWordBracketedHelper bra ket = do
+  (consumed, _) <- gather $ between (char bra) (char ket) nonBracketLettersForSure
   return consumed
   where
-    nonBracketLettersForSure = munch1 (`notElem` "<>\n")
+    nonBracketLettersForSure = munch1 (`notElem` ['\n', bra, ket])
+
+argWordAngleBracketed :: ReadP String
+argWordAngleBracketed = argWordBracketedHelper '<' '>'
+
+argWordCurlyBracketed :: ReadP String
+argWordCurlyBracketed = argWordBracketedHelper '{' '}'
 
 argWord :: ReadP String
-argWord = argWordBare +++ argWordAngleBracketed
+argWord = argWordBare
 
 description :: ReadP String
 description = do
@@ -131,6 +137,12 @@ optArgs = do
   args <- sepBy1 argWord argSep
   return (List.intercalate "," args)
 
+optArgsInBraket :: ReadP String
+optArgsInBraket = do
+  char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
+  args <- sepBy1 (argWordCurlyBracketed +++ argWordAngleBracketed) (char ',' +++ char ' ') -- to keep { and }
+  return (List.intercalate "," args)
+
 skip :: ReadP a -> ReadP ()
 skip a = a >> return ()
 
@@ -149,7 +161,7 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  args <- optArgs <++ pure ""
+  args <- optArgs <++ optArgsInBraket <++ pure ""
   return (name, args)
 
 optSep :: ReadP String
@@ -254,4 +266,3 @@ preprocessAll "" = []
 preprocessAll s = case readP_to_S (preprocessor <++ fallback) s of
   [] -> []
   (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAll rest
-
