@@ -182,24 +182,43 @@ surroundedBySquareBracket = do
     nonBracketLettersForSure = munch1 (`notElem` "[]\n")
 
 failWithBracket :: ReadP String
-failWithBracket = unwords <$> sepBy1 w singleSpace
+failWithBracket = do
+  (s, _) <- gather (sepBy1 w singleSpace)
+  return s
   where
     w = munch1 (`notElem` " []\n\t")
 
+beforeSquareBraket :: ReadP String
+beforeSquareBraket = do
+  s <- option "" failWithBracket
+  space <- option "" (string " ")
+  rest <- look
+  case rest of
+    "" -> pure ()
+    '[' : _ -> pure ()
+    _ -> pfail
+  return (s ++ space)
+
+afterSquareBraket :: ReadP String
+afterSquareBraket = do
+  space <- option "" (string " ")
+  s <- option "" failWithBracket
+  return (space ++ s)
+
 discardSquareBracket :: ReadP String
 discardSquareBracket = do
-  first <- optionNonBracket
-  surroundedBySquareBracket
-  second <- optionNonBracket
+  first <- beforeSquareBraket
+  _ <- surroundedBySquareBracket
+  second <- afterSquareBraket
   return (first ++ second)
   where
     optionNonBracket = option "" failWithBracket
 
 unwrapSquareBracket :: ReadP String
 unwrapSquareBracket = do
-  first <- optionNonBracket
+  first <- beforeSquareBraket
   content <- surroundedBySquareBracket
-  second <- optionNonBracket
+  second <- afterSquareBraket
   return (first ++ content ++ second)
   where
     optionNonBracket = option "" failWithBracket

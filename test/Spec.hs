@@ -140,7 +140,13 @@ currentTests =
         ],
       test_parser
         "-@, --threads INT\n           Number of additional threads to use [0]"
-        (["-@", "--threads"], "INT", "Number of additional threads to use [0]")
+        (["-@", "--threads"], "INT", "Number of additional threads to use [0]"),
+      ---- bcftools ----
+      test_parserMult
+        "-S, --samples-file [^]<file>   file of samples to annotate (or exclude with \"^\" prefix)"
+        [ (["-S", "--samples-file"], "<file>", "file of samples to annotate (or exclude with \"^\" prefix)"),
+          (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
+        ]
     ]
 
 unsupportedCases :: TestTree
@@ -180,13 +186,7 @@ unsupportedCases =
         "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
         [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")],
       ---- gridss ----
-      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF."),
-      ---- bcftools ----
-      test_parserMult
-        "-S, --samples-file [^]<file>   file of samples to annotate (or exclude with \"^\" prefix)"
-        [ (["-S", "--samples-file"], "<file>", "file of samples to annotate (or exclude with \"^\" prefix)"),
-          (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
-        ]
+      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF.")
     ]
 
 devTests =
