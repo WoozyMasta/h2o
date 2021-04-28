@@ -116,7 +116,7 @@ doubleDash = do
 shortOptName :: ReadP OptName
 shortOptName = do
   _ <- dash
-  c <- alphanum +++ char '@'
+  c <- alphanum +++ satisfy (`elem` "@$=")
   let res = OptName ('-' : c : "") ShortType
   return res
 
