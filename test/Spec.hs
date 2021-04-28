@@ -160,13 +160,33 @@ unsupportedCases =
       test_parser
         "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
         (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
+      ---- bwa -----
+      test_parserMult
+        "-I FLOAT[,FLOAT[,INT[,INT]]]\n     Specify  the  mean"
+        [(["-I"], "FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT,INT", "Specify  the  mean")],
       ---- blastn ----
       test_parser
         " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
         (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>", "Task to execute"),
       test_parser
         " -window_size <Integer, >=0>\n      Multiple hits window size, use 0 to specify 1-hit algorithm"
-        (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm")
+        (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm"),
+      ---- octopus ----
+      test_parser
+        " --inactive-flank-scoring arg (=1)     Disables additional calculation"
+        (["--inactive-flank-scoring"], "arg", "Disables additional calculation"),
+      ---- delly ----
+      test_parserMult
+        "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
+        [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")],
+      ---- gridss ----
+      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF."),
+      ---- bcftools ----
+      test_parserMult
+        "-S, --samples-file [^]<file>   file of samples to annotate (or exclude with \"^\" prefix)"
+        [ (["-S", "--samples-file"], "<file>", "file of samples to annotate (or exclude with \"^\" prefix)"),
+          (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
+        ]
     ]
 
 devTests =
