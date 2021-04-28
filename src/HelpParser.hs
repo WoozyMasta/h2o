@@ -149,7 +149,7 @@ skip a = a *> pure ()
 -- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
-  f "\n" <++ string varSpaces
+  f ":\n" <++  f "\n" <++ f ": " <++ string varSpaces
   where
     f s = optional singleSpace *> string s
     varSpaces = case args of
@@ -183,10 +183,10 @@ surroundedBySquareBracket = do
 
 failWithBracket :: ReadP String
 failWithBracket = do
-  (s, _) <- gather (sepBy1 w singleSpace)
+  (s, _) <- gather (sepBy1 w (singleSpace +++ char ':'))
   return s
   where
-    w = munch1 (`notElem` " []\n\t")
+    w = munch1 (`notElem` " :[]\n\t")
 
 beforeSquareBraket :: ReadP String
 beforeSquareBraket = do

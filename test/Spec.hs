@@ -22,6 +22,7 @@ currentTests =
       test_parser "-o,--out ARG   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out=ARG   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o,--out ARG\n   baba" (["-o", "--out"], "ARG", "baba"),
+      test_parser "-o,--out ARG:\n   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o <ARG1, ARG2>   baba" (["-o"], "<ARG1, ARG2>", "baba"),
       test_parser "-o <ARG1>,<ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
       test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
@@ -94,6 +95,9 @@ currentTests =
       test_parser
         "-o{Directory}\n       Set Output directory"
         (["-o"], "{Directory}", "Set Output directory"),
+      test_parserMult
+        "-si[{name}] : read data from stdin"
+        [(["-si"], "", "read data from stdin"), (["-si"], "{name}", "read data from stdin")],
       ---- youtube-dl ---
       test_parser
         "    -4, --force-ipv4                     Make all connections via IPv4"
@@ -146,7 +150,9 @@ currentTests =
         "-S, --samples-file [^]<file>   file of samples to annotate (or exclude with \"^\" prefix)"
         [ (["-S", "--samples-file"], "<file>", "file of samples to annotate (or exclude with \"^\" prefix)"),
           (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
-        ]
+        ],
+      ---- gridss ----
+      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF.")
     ]
 
 unsupportedCases :: TestTree
@@ -156,9 +162,6 @@ unsupportedCases =
     [ -- BAD case illustrated in docopt
       test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
       ---- 7z --help ----
-      test_parserMult
-        "-si[{name}] : read data from stdin"
-        [(["-si"], "", "read data from stdin"), (["-si"], "{name}", "read data from stdin")],
       test_parserMult
         " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
         [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
@@ -184,9 +187,7 @@ unsupportedCases =
       ---- delly ----
       test_parserMult
         "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
-        [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")],
-      ---- gridss ----
-      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF.")
+        [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")]
     ]
 
 devTests =
@@ -200,6 +201,9 @@ devTests =
         [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
         "--he[lp]   baba\n      !!!JUNK LINE!!!\n    -i <file>, --input=<file>   keke"
+        [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
+      test_parseMany
+        "--he[lp]\n       baba\n      !!!JUNK LINE!!!\n      !!!ANOTHER JUNK!!!\n       -i <file>, --input=<file>   keke"
         [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")]
     ]
 
