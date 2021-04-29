@@ -149,14 +149,15 @@ skip a = a *> pure ()
 -- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
-  f ":\n" <++ f "\n" <++ f ": " <++ f "\t " <++ string varSpaces
+  f ":\n" <++ f "\n" <++ f ": " <++ f "\t " <++ twoOrMoreSpaces <++ varSpaces
   where
     f s = optional singleSpace *> string s
+    twoOrMoreSpaces = string " " *> munch1 (== ' ')
     varSpaces = case args of
       "" -> twoSpaces
       args -> if last args `elem` ">}])" then oneSpace else twoSpaces
-    twoSpaces = "  "
-    oneSpace = " "
+    twoSpaces = string "  "
+    oneSpace = string " "
 
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
@@ -265,9 +266,8 @@ parse s = concat results
     -- thanks to lazy evaluation, desc is NOT evaluated when xs == []
     -- so don't worry about calling (head xs).
     xs = readP_to_S preprocessor s
-    candidates = map (fst . fst) xs
-    results = map (map fst . readP_to_S (optPart desc)) candidates
-    desc = snd . fst . head $ xs
+    pairs = map fst xs
+    results = [map fst (readP_to_S (optPart descStr) optStr) | (optStr, descStr) <- pairs]
 
 parseMany :: String -> [Opt]
 parseMany "" = []
