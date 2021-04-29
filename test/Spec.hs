@@ -152,7 +152,11 @@ currentTests =
           (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
         ],
       ---- gridss ----
-      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF.")
+      test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF."),
+      ---- minimap2 ----
+      test_parser
+        "-w INT\t Minimizer window size [2/3 of k-mer length]."
+        (["-w"], "INT", "Minimizer window size [2/3 of k-mer length].")
     ]
 
 unsupportedCases :: TestTree
@@ -204,7 +208,15 @@ devTests =
         [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
         "--he[lp]\n       baba\n      !!!JUNK LINE!!!\n      !!!ANOTHER JUNK!!!\n       -i <file>, --input=<file>   keke"
-        [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")]
+        [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
+      test_parseMany
+        "       -w INT\t Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-"
+        [(["-w"], "INT", "Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-")],
+      test_parseMany
+        "       -w INT\t Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-\n\t\t mers.\n\n       -H\t Use  homopolymer-compressed (HPC) minimizers. An HPC sequence is constructed by contracting homopolymer runs to\n\t\t a single base. An HPC minimizer is a minimizer on the HPC sequence.\n"
+        [ (["-w"], "INT", "Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-"),
+          (["-H"], "", "Use  homopolymer-compressed (HPC) minimizers. An HPC sequence is constructed by contracting homopolymer runs to")
+        ]
     ]
 
 optNameTests =

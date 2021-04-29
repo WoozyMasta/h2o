@@ -149,7 +149,7 @@ skip a = a *> pure ()
 -- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
-  f ":\n" <++  f "\n" <++ f ": " <++ string varSpaces
+  f ":\n" <++ f "\n" <++ f ": " <++ f "\t " <++ string varSpaces
   where
     f s = optional singleSpace *> string s
     varSpaces = case args of
@@ -236,15 +236,13 @@ preprocessor = do
   (consumed, opt) <- gather squareBracketHandler
   heuristicSep consumed -- this is the separator between optionPart and description
   skipSpaces
-  ss <- sepBy1 word singleSpace
-  skip (munch (`elem` " \t"))
+  desc <- munch1 ('\n' /=)
   skip newline <++ eof
-  let desc = unwords ss
   return (opt, desc)
 
 fallback :: ReadP (String, String)
 fallback = do
-  _ <- munch ('\n' /=)
+  line <- munch ('\n' /=)
   skip newline
   return ("", "")
 
