@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ffec7997136674f14486a797bd6b274a841922f32f5fcdc5568b1ca400329898
+-- hash: 9708a2051f9a0281ab314a7c9ce1a82d18aa03eef12bc8394008a9249251e66e
 
 name:           help-text-parser
 version:        0.1.0.0
@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      GenBashCompletions
       GenFishCompletions
       GenZshCompletions
       HelpParser
