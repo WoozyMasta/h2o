@@ -1,4 +1,6 @@
 import qualified Data.List as List
+import GenFishCompletions
+import GenZshCompletions
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -8,8 +10,9 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
+import Text.Printf
 
-main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests]
+main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests]
 
 currentTests =
   testGroup
@@ -258,6 +261,39 @@ miscTests =
       testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == -4" $
         getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= -4
     ]
+
+shellCompTests =
+  testGroup
+    "\n ============= Test Fish script generation ============"
+    [ testCase "basic fish comp" $
+        genFishLine cmd opt @?= fishExpected,
+      testCase "basic zsh comp" $
+        getZshStr opt @?= zshArgsExpected,
+      testCase "zsh script generation" $
+        genZshScript cmd opts @?= zshScriptExpected
+    ]
+  where
+    cmd = "nanachi"
+    names = [OptName "-o" ShortType, OptName "--output" LongType]
+    arg = "<file>"
+    desc = "Specify the filename to save"
+    opt = Opt names arg desc
+    fishExpected = printf "complete -c %s -s o -l output -d %s" cmd desc
+    zshArgsExpected = "'(-o --output)'{-o,--output}'[Specify the filename to save]'"
+
+    names2 = [OptName "-h" ShortType, OptName "--help" LongType]
+    args2 = ""
+    desc2 = "Help here."
+    opt2 = Opt names2 args2 desc2
+    opts = [opt, opt2]
+    zshScriptExpected =
+        "#compdef nanachi\n\n\
+        \local -a args\n\
+        \args=(\n\
+        \    '(-o --output)'{-o,--output}'[Specify the filename to save]'\n\
+        \    '(-h --help)'{-h,--help}'[Help here.]'\n\
+        \)\n\n\
+        \_arguments -s args\n"
 
 propertyTests :: TestTree
 propertyTests =
