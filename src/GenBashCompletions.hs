@@ -30,7 +30,7 @@ bashTemplate =
       "    ;;",
       "}",
       "## -o bashdefault and -o default are fallback",
-      "complete -F _f -o bashdefault -o default \"$_mycmd\""
+      "complete -F _f -o bashdefault -o default \"${_mycmd}\""
     ]
 
 getOptsArray :: [Opt] -> String
