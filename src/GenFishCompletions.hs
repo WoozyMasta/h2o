@@ -4,31 +4,35 @@ module GenFishCompletions where
 
 import qualified Data.List as List
 import HelpParser
+import Subcommand
 import Text.Printf (printf)
 
 type Command = String
 
-toFlag :: OptNameType -> String
-toFlag LongType = "-l"
-toFlag ShortType = "-s"
-toFlag OldType = "-o"
-toFlag _ = ""
-
-
-toFishCompPart :: OptName -> String
-toFishCompPart optName = flg ++ " " ++ name
+genFishLineOption :: Command -> Opt -> String
+genFishLineOption cmd (Opt names _ desc) = line
   where
-    name = dropWhile (== '-') (_raw optName)
-    flg = toFlag (_type optName)
+    parts = unwords $ map toFishCompPart names
+    line = printf "complete -c %s %s -d %s" cmd parts desc
 
+    toFishCompPart :: OptName -> String
+    toFishCompPart (OptName raw t) = toFlag t ++ " " ++ dashlessName
+      where
+        dashlessName = dropWhile (== '-') raw
 
-genFishLine :: Command -> Opt -> String
-genFishLine cmd opt = line
+    toFlag :: OptNameType -> String
+    toFlag LongType = "-l"
+    toFlag ShortType = "-s"
+    toFlag OldType = "-o"
+    toFlag _ = ""
+
+genFishLineSubcommand :: Command -> Subcommand -> String
+genFishLineSubcommand cmd (Subcommand subcmd desc) = line
   where
-    parts = unwords $ map toFishCompPart (_names opt)
-    description = _desc opt
-    line = printf "complete -c %s %s -d %s" cmd parts description
-
+    template = "complete -c %s -n __fish_use_subcommand -a %s -d '%s'"
+    line = printf template cmd subcmd desc
 
 genFishScript :: Command -> [Opt] -> String
-genFishScript cmd opts = unlines [genFishLine cmd opt | opt <- opts]
+genFishScript cmd opts = optionPart
+  where
+    optionPart = unlines [genFishLineOption cmd opt | opt <- opts]

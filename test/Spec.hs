@@ -267,9 +267,9 @@ shellCompTests =
   testGroup
     "\n ============= Test Fish script generation ============"
     [ testCase "basic fish comp" $
-        genFishLine cmd opt @?= fishExpected,
+        genFishLineOption cmd opt @?= fishExpected,
       testCase "basic zsh comp" $
-        getZshStr opt @?= zshArgsExpected,
+        getZshOptStr opt @?= zshArgsExpected,
       testCase "zsh script generation" $
         genZshScript cmd opts @?= zshScriptExpected,
       testCase "bash script generation" $

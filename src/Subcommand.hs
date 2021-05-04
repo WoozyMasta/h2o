@@ -8,6 +8,11 @@ import Text.ParserCombinators.ReadP
 
 type Layout = (Int, Int)
 
+data Subcommand = Subcommand
+  { _cmd :: String,
+    _desc :: String
+  }
+
 firstTwoWordsLoc :: String -> (Int, Int)
 firstTwoWordsLoc line = (firstLoc, secondLoc)
   where
@@ -36,7 +41,7 @@ getAlignedLines s = filter (\line -> firstTwoWordsLoc line == layout) xs
     xs = lines s
     layout = getLayout xs
 
-subcommand :: ReadP (String, String)
+subcommand :: ReadP Subcommand
 subcommand = do
   skipSpaces
   cmd <- optWord
@@ -45,7 +50,7 @@ subcommand = do
   skip (munch (`elem` " \t"))
   skip newline <++ eof
   let desc = unwords ss
-  return (cmd, desc)
+  return (Subcommand cmd desc)
 
 startingWithDash :: String -> Bool
 startingWithDash s = if null text then False else head text == '-'
@@ -57,7 +62,7 @@ removeOptionLines s = unlines xs
   where
     xs = filter (not . startingWithDash) (lines s)
 
-parseSubcommand :: String -> [(String, String)]
+parseSubcommand :: String -> [Subcommand]
 parseSubcommand s = results
   where
     s' = removeOptionLines s
