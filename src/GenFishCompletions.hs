@@ -30,5 +30,5 @@ genFishLine cmd opt = line
     line = printf "complete -c %s %s -d %s" cmd parts description
 
 
-genFish :: Command -> [Opt] -> String
-genFish cmd opts = List.intercalate "\n" [genFishLine cmd opt | opt <- opts]
+genFishScript :: Command -> [Opt] -> String
+genFishScript cmd opts = List.intercalate "\n" [genFishLine cmd opt | opt <- opts]
