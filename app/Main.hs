@@ -12,7 +12,7 @@ import Subcommand
 data Config = Config
   { input :: String,
     shell :: String,
-    command :: String,
+    name :: String,
     parseSubcommand :: Bool
   }
 
@@ -31,7 +31,8 @@ config =
           <> help "Select shell for a completions script (bash/zsh/fish/none)"
       )
     <*> strOption
-      ( long "command"
+      ( long "name"
+          <> short 'n'
           <> metavar "<COMMAND>"
           <> showDefault
           <> value "mycli"
@@ -54,13 +55,13 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell cmd _) = do
+run (Config f shell name _) = do
   content <- readFile f
   let opts = parseMany content
-  putStr $ gen shell cmd opts
+  putStr $ gen shell name opts
 
 gen :: String -> String -> [Opt] -> String
 gen "fish" = genFishScript
 gen "zsh" = genZshScript
 gen "bash" = genBashScript
-gen _ = \cmd opts -> unlines $ map show opts
+gen _ = \_ opts -> unlines $ map show opts
