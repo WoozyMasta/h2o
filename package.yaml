@@ -35,6 +35,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - help-text-parser
+    - optparse-applicative
+
 
 tests:
   help-text-parser-test:
