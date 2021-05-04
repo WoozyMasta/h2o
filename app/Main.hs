@@ -12,7 +12,8 @@ import Subcommand
 data Config = Config
   { input :: String,
     shell :: String,
-    subcommand :: Bool
+    command :: String,
+    parseSubcommand :: Bool
   }
 
 config :: Parser Config
@@ -24,15 +25,20 @@ config =
       )
     <*> strOption
       ( long "shell"
-          <> short 's'
           <> metavar "<SHELL>"
           <> showDefault
           <> value "none"
           <> help "Select shell for a completions script (bash/zsh/fish/none)"
       )
+    <*> strOption
+      ( long "command"
+          <> metavar "<COMMAND>"
+          <> showDefault
+          <> value "mycli"
+          <> help "Specify command name"
+      )
     <*> switch
-      ( long "subcommand"
-          <> short 'c'
+      ( long "with-subcommand"
           <> help "Enable subcommand parsing"
       )
 
@@ -48,10 +54,9 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell _) = do
+run (Config f shell cmd _) = do
   content <- readFile f
   let opts = parseMany content
-  let cmd = "nanachi"
   putStr $ gen shell cmd opts
 
 gen :: String -> String -> [Opt] -> String
