@@ -18,10 +18,8 @@ data Config = Config
 config :: Parser Config
 config =
   Config
-    <$> strOption
-      ( long "ipnut"
-          <> short 'i'
-          <> metavar "<FILE>"
+    <$> strArgument
+      ( metavar "<FILE>"
           <> help "Select a text file to parse."
       )
     <*> strOption
