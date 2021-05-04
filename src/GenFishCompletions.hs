@@ -31,4 +31,4 @@ genFishLine cmd opt = line
 
 
 genFishScript :: Command -> [Opt] -> String
-genFishScript cmd opts = List.intercalate "\n" [genFishLine cmd opt | opt <- opts]
+genFishScript cmd opts = unlines [genFishLine cmd opt | opt <- opts]

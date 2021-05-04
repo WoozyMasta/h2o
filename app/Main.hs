@@ -63,4 +63,4 @@ gen :: String -> String -> [Opt] -> String
 gen "fish" = genFishScript
 gen "zsh" = genZshScript
 gen "bash" = genBashScript
-gen _ = \cmd opts -> List.intercalate "\n" $ map show opts
+gen _ = \cmd opts -> unlines $ map show opts
