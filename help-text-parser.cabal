@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 00961dbfe198c341c3306cb901362ec1aadc981f1b8c5efe449d17a86c596812
+-- hash: 08d7bf37f10b2efdad38ee4692b76059b2bea87232325b2aa9681ee247dd3f0c
 
 name:           help-text-parser
 version:        0.1.0.0
@@ -68,6 +68,7 @@ test-suite help-text-parser-test
     , hedgehog
     , help-text-parser
     , tasty
+    , tasty-expected-failure
     , tasty-hedgehog
     , tasty-hunit
   default-language: Haskell2010

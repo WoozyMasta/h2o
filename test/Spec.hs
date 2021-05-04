@@ -13,6 +13,8 @@ import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
 import Text.Printf
 
+import Test.Tasty.ExpectedFailure
+
 main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests]
 
 currentTests =
@@ -164,7 +166,7 @@ currentTests =
     ]
 
 unsupportedCases :: TestTree
-unsupportedCases =
+unsupportedCases = expectFail $
   testGroup
     "\n ============= Unsupported corner cases parse fail ============= "
     [ -- BAD case illustrated in docopt
