@@ -13,7 +13,7 @@ genFishLineOption :: Command -> Opt -> String
 genFishLineOption cmd (Opt names _ desc) = line
   where
     parts = unwords $ map toFishCompPart names
-    line = printf "complete -c %s %s -d %s" cmd parts desc
+    line = printf "complete -c %s %s -d '%s'" cmd parts desc
 
     toFishCompPart :: OptName -> String
     toFishCompPart (OptName raw t) = toFlag t ++ " " ++ dashlessName

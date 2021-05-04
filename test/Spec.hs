@@ -283,7 +283,7 @@ shellCompTests =
     arg = "<file>"
     desc = "Specify the filename to save"
     opt = Opt names arg desc
-    fishExpected = printf "complete -c %s -s o -l output -d %s" cmd desc
+    fishExpected = "complete -c nanachi -s o -l output -d 'Specify the filename to save'"
     zshArgsExpected = "'(-o --output)'{-o,--output}'[Specify the filename to save]'"
 
     names2 = [OptName "-h" ShortType, OptName "--help" LongType]
