@@ -6,6 +6,7 @@ import qualified Data.List as List
 import HelpParser
 import Subcommand
 import Text.Printf (printf)
+import Data.String.Utils (replace)
 
 type Command = String
 
@@ -13,7 +14,8 @@ genFishLineOption :: Command -> Opt -> String
 genFishLineOption cmd (Opt names _ desc) = line
   where
     parts = unwords $ map toFishCompPart names
-    line = printf "complete -c %s %s -d '%s'" cmd parts desc
+    quotedDesc = replace "'" "\\'" desc
+    line = printf "complete -c %s %s -d '%s'" cmd parts quotedDesc
 
     toFishCompPart :: OptName -> String
     toFishCompPart (OptName raw t) = toFlag t ++ " " ++ dashlessName
@@ -30,7 +32,8 @@ genFishLineSubcommand :: Command -> Subcommand -> String
 genFishLineSubcommand cmd (Subcommand subcmd desc) = line
   where
     template = "complete -c %s -n __fish_use_subcommand -a %s -d '%s'"
-    line = printf template cmd subcmd desc
+    quotedDesc = replace "'" "\\'" desc
+    line = printf template cmd subcmd quotedDesc
 
 genFishScript :: Command -> [Opt] -> String
 genFishScript cmd opts = optionPart
