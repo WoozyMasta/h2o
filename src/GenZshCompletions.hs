@@ -14,15 +14,19 @@ zshHeader :: Command -> String
 zshHeader cmd = printf "#compdef %s\n\n" cmd :: String
 
 getZshOptStr :: Opt -> String
-getZshOptStr (Opt optnames args desc) = printf "'(%s)'{%s}'[%s]'" tag ops quotedDesc
+getZshOptStr (Opt optnames args desc) = case raws of
+  [raw] -> printf "'%s[%s]'" raw quotedDesc :: String
+  _ -> printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc :: String
   where
     raws = map _raw optnames
-    tag = unwords raws
-    ops = List.intercalate "," raws
-    quotedDesc = replace "'" "'\\''" desc
+    exclusionList = unwords raws
+    optionNames = List.intercalate "," raws
+    quotedDesc = replace "]" "\\]" . replace "[" "\\[" . replace "'" "'\\''" $ desc
 
 getZshDescStr :: Subcommand -> String
-getZshDescStr (Subcommand name desc) = printf "'%s:%s'" name desc
+getZshDescStr (Subcommand name desc) = printf "'%s:%s'" name quotedDesc
+  where
+    quotedDesc = replace "'" "'\\''" desc
 
 indent :: Int -> String -> String
 indent n s = replicate n ' ' ++ s
@@ -32,16 +36,16 @@ genZshBodyOptions cmd opts = res
   where
     args = unlines (map (indent 4 . getZshOptStr) opts)
     containsOldStyle = elem OldType $ concatMap (map _type . _names) opts
-    flags = if containsOldStyle then "" else "-s"
-    template = "local -a args\nargs=(\n%s)\n\n_arguments %s $args\n"
+    flags = if containsOldStyle then "" else "-s "
+    template = "args=(\n%s)\n\n_arguments %s$args\n"
     res = printf template args flags :: String
 
-genZshBodySubcommands :: Command -> [Subcommand] -> String
-genZshBodySubcommands cmd xs = res
+genZshBodyCommands :: Command -> [Subcommand] -> String
+genZshBodyCommands cmd xs = res
   where
     args = unlines (map (indent 4 . getZshDescStr) xs)
-    template = "local -a subcommands\nsubcommands=(\n%s)\n\n_describe %s subcommands\n"
-    res = printf template args
+    template = "cmds=(\n%s)\n\n_describe '%s commands' $cmds\n"
+    res = printf template args cmd
 
 genZshScript :: Command -> [Opt] -> String
 genZshScript cmd opts = header ++ body
