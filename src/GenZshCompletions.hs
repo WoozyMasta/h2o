@@ -3,6 +3,7 @@
 module GenZshCompletions where
 
 import qualified Data.List as List
+import Data.String.Utils (replace)
 import HelpParser
 import Subcommand
 import Text.Printf
@@ -13,11 +14,12 @@ zshHeader :: Command -> String
 zshHeader cmd = printf "#compdef %s\n\n" cmd :: String
 
 getZshOptStr :: Opt -> String
-getZshOptStr (Opt optnames args desc) = printf "'(%s)'{%s}'[%s]'" tag ops desc
+getZshOptStr (Opt optnames args desc) = printf "'(%s)'{%s}'[%s]'" tag ops quotedDesc
   where
     raws = map _raw optnames
     tag = unwords raws
     ops = List.intercalate "," raws
+    quotedDesc = replace "'" "'\\''" desc
 
 getZshDescStr :: Subcommand -> String
 getZshDescStr (Subcommand name desc) = printf "'%s:%s'" name desc
@@ -31,7 +33,7 @@ genZshBodyOptions cmd opts = res
     args = unlines (map (indent 4 . getZshOptStr) opts)
     containsOldStyle = elem OldType $ concatMap (map _type . _names) opts
     flags = if containsOldStyle then "" else "-s"
-    template = "local -a args\nargs=(\n%s)\n\n_arguments %s args\n"
+    template = "local -a args\nargs=(\n%s)\n\n_arguments %s $args\n"
     res = printf template args flags :: String
 
 genZshBodySubcommands :: Command -> [Subcommand] -> String

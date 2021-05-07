@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 08d7bf37f10b2efdad38ee4692b76059b2bea87232325b2aa9681ee247dd3f0c
+-- hash: 80ede7eb1db17c458d5ac562cdd2648c29fe63a5a8f7cb351b46844b99ef6a84
 
 name:           help-text-parser
 version:        0.1.0.0
@@ -36,7 +36,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      MissingH
+    , base >=4.7 && <5
     , containers
   default-language: Haskell2010
 
@@ -48,7 +49,8 @@ executable help-text-parser-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      MissingH
+    , base >=4.7 && <5
     , containers
     , help-text-parser
     , optparse-applicative
@@ -63,12 +65,15 @@ test-suite help-text-parser-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      MissingH
+    , base >=4.7 && <5
     , containers
     , hedgehog
     , help-text-parser
     , tasty
     , tasty-expected-failure
+    , tasty-golden
     , tasty-hedgehog
     , tasty-hunit
+    , utf8-string
   default-language: Haskell2010

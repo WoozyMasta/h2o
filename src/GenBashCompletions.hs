@@ -27,7 +27,6 @@ bashTemplate =
       "",
       "    COMPREPLY=( $(compgen -W \"${opts}\" -- \"${cur}\") )",
       "    return 0",
-      "    ;;",
       "}",
       "",
       "## -o bashdefault and -o default are fallback",

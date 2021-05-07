@@ -38,7 +38,6 @@ executables:
     - help-text-parser
     - optparse-applicative
 
-
 tests:
   help-text-parser-test:
     main:                Spec.hs
@@ -54,3 +53,5 @@ tests:
     - hedgehog
     - tasty-hedgehog
     - tasty-expected-failure
+    - tasty-golden
+    - utf8-string

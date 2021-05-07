@@ -1,3 +1,4 @@
+import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
 import GenBashCompletions
 import GenFishCompletions
@@ -8,14 +9,18 @@ import qualified Hedgehog.Range as Range
 import HelpParser
 import Subcommand
 import Test.Tasty
+import Test.Tasty.ExpectedFailure
+import Test.Tasty.Golden (goldenVsString)
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
 import Text.Printf
 
-import Test.Tasty.ExpectedFailure
-
-main = defaultMain $ testGroup "Tests" [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests]
+main =
+  defaultMain $
+    testGroup
+      "Tests"
+      [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests]
 
 currentTests =
   testGroup
@@ -166,39 +171,40 @@ currentTests =
     ]
 
 unsupportedCases :: TestTree
-unsupportedCases = expectFail $
-  testGroup
-    "\n ============= Unsupported corner cases parse fail ============= "
-    [ -- BAD case illustrated in docopt
-      test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
-      ---- 7z --help ----
-      test_parserMult
-        " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
-        [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
-      ---- parallel ----
-      test_parser
-        "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
-        (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
-      ---- bwa -----
-      test_parserMult
-        "-I FLOAT[,FLOAT[,INT[,INT]]]\n     Specify  the  mean"
-        [(["-I"], "FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT,INT", "Specify  the  mean")],
-      ---- blastn ----
-      test_parser
-        " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
-        (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>", "Task to execute"),
-      test_parser
-        " -window_size <Integer, >=0>\n      Multiple hits window size, use 0 to specify 1-hit algorithm"
-        (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm"),
-      ---- octopus ----
-      test_parser
-        " --inactive-flank-scoring arg (=1)     Disables additional calculation"
-        (["--inactive-flank-scoring"], "arg", "Disables additional calculation"),
-      ---- delly ----
-      test_parserMult
-        "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
-        [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")]
-    ]
+unsupportedCases =
+  expectFail $
+    testGroup
+      "\n ============= Unsupported corner cases parse fail ============= "
+      [ -- BAD case illustrated in docopt
+        test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
+        ---- 7z --help ----
+        test_parserMult
+          " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
+          [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
+        ---- parallel ----
+        test_parser
+          "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
+          (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
+        ---- bwa -----
+        test_parserMult
+          "-I FLOAT[,FLOAT[,INT[,INT]]]\n     Specify  the  mean"
+          [(["-I"], "FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT,INT", "Specify  the  mean")],
+        ---- blastn ----
+        test_parser
+          " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
+          (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>", "Task to execute"),
+        test_parser
+          " -window_size <Integer, >=0>\n      Multiple hits window size, use 0 to specify 1-hit algorithm"
+          (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm"),
+        ---- octopus ----
+        test_parser
+          " --inactive-flank-scoring arg (=1)     Disables additional calculation"
+          (["--inactive-flank-scoring"], "arg", "Disables additional calculation"),
+        ---- delly ----
+        test_parserMult
+          "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
+          [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")]
+      ]
 
 devTests =
   testGroup
@@ -318,6 +324,29 @@ shellCompTests =
       \}\n\n\
       \## -o bashdefault and -o default are fallback\n\
       \complete -F _f -o bashdefault -o default \"${_mycmd}\"\n"
+
+shellCompGoldenTests :: TestTree
+shellCompGoldenTests =
+  testGroup
+    "Golden Tests of shell completions"
+    [ goldenVsString
+        "minimap2 fish"
+        "golden/minimap2.fish"
+        actionFish,
+      goldenVsString
+        "minimap2 zsh"
+        "golden/minimap2.zsh"
+        actionZsh,
+      goldenVsString
+        "minimap2 bash"
+        "golden/minimap2.sh"
+        actionBash
+    ]
+  where
+    mantext = "samples/minimap2-man.txt"
+    actionFish = BLU.fromString . genFishScript "minimap2" . parseMany <$> readFile mantext
+    actionZsh = BLU.fromString . genZshScript "minimap2" . parseMany <$> readFile mantext
+    actionBash = BLU.fromString . genBashScript "minimap2" . parseMany <$> readFile mantext
 
 propertyTests :: TestTree
 propertyTests =
