@@ -289,7 +289,7 @@ shellCompTests =
     arg = "<file>"
     desc = "Specify the filename to save"
     opt = Opt names arg desc
-    fishExpected = "complete -c nanachi -s o -l output -d 'Specify the filename to save'"
+    fishExpected = "complete -c nanachi -s o -l output -d 'Specify the filename to save' -r"
     zshArgsExpected = "'(-o --output)'{-o,--output}'[Specify the filename to save]'"
 
     names2 = [OptName "--help" LongType]
@@ -340,7 +340,7 @@ shellCompGoldenTests =
         actionBash
     ]
   where
-    mantext = "samples/minimap2-man.txt"
+    mantext = "golden/minimap2-man.txt"
     actionFish = BLU.fromString . genFishScript "minimap2" . parseMany <$> readFile mantext
     actionZsh = BLU.fromString . genZshScript "minimap2" . parseMany <$> readFile mantext
     actionBash = BLU.fromString . genBashScript "minimap2" . parseMany <$> readFile mantext

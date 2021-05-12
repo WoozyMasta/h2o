@@ -5,17 +5,23 @@ module GenFishCompletions where
 import qualified Data.List as List
 import HelpParser
 import Subcommand
+import Data.List (isInfixOf)
+import Data.Char (toUpper)
 import Text.Printf (printf)
 import Data.String.Utils (replace)
 
 type Command = String
 
 genFishLineOption :: Command -> Opt -> String
-genFishLineOption cmd (Opt names _ desc) = line
+genFishLineOption cmd (Opt names arg desc) = line
   where
     parts = unwords $ map toFishCompPart names
     quotedDesc = replace "'" "\\'" desc
-    line = printf "complete -c %s %s -d '%s'" cmd parts quotedDesc
+    argFlag = case arg of
+      "" -> ""
+      arg | "FILE" `isInfixOf` map toUpper arg -> " -r"
+      _ -> " -x"
+    line = printf "complete -c %s %s -d '%s'%s" cmd parts quotedDesc argFlag
 
     toFishCompPart :: OptName -> String
     toFishCompPart (OptName raw t) = toFlag t ++ " " ++ dashlessName
