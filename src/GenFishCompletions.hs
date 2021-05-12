@@ -40,7 +40,14 @@ truncateAfterPeriod s
   | otherwise = s
   where
     (xs, ys) = span (\w -> last w /= '.') (words s)
-    zs = xs ++ [head ys]
+    zs = case ys of
+      [] -> xs
+      y:ys -> if criteria then  xs ++ [y, extra] else xs ++ [y]
+        where
+          len = length y
+          criteria = len >= 3 && y !! (len - 2) /= '.' && y !! (len - 3) == '.'   -- like "e.g."
+          extra = truncateAfterPeriod (unwords ys)
+
 
 genFishLineSubcommand :: Command -> Subcommand -> String
 genFishLineSubcommand cmd (Subcommand subcmd desc) = line
