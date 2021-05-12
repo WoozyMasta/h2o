@@ -17,11 +17,13 @@ genFishLineOption cmd (Opt names arg desc) = line
   where
     parts = unwords $ map toFishCompPart names
     quotedDesc = replace "'" "\\'" (truncateAfterPeriod desc)
-    argFlag = case arg of
-      "" -> ""
-      arg | "FILE" `isInfixOf` map toUpper arg -> " -r"
-      _ -> " -x"
-    line = printf "complete -c %s %s -d '%s'%s" cmd parts quotedDesc argFlag
+    flg "" = ""
+    flg s
+      | "FILE" `isInfixOf` strUpper = " -r"
+      | "DIR" `isInfixOf` strUpper = " -r"
+      | otherwise = " -x"
+      where strUpper = map toUpper s
+    line = printf "complete -c %s %s -d '%s'%s" cmd parts quotedDesc (flg arg)
 
     toFishCompPart :: OptName -> String
     toFishCompPart (OptName raw t) = toFlag t ++ " " ++ dashlessName
