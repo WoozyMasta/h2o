@@ -167,7 +167,14 @@ currentTests =
       ---- minimap2 ----
       test_parser
         "-w INT\t Minimizer window size [2/3 of k-mer length]."
-        (["-w"], "INT", "Minimizer window size [2/3 of k-mer length].")
+        (["-w"], "INT", "Minimizer window size [2/3 of k-mer length]."),
+      ---- parallel ----
+      test_parser
+        "--tmpl file=repl         Copy file to repl."
+        (["--tmpl"], "file=repl", "Copy file to repl."),
+      test_parser
+        " --tmux (Long beta testing)       Use tmux for output."
+        (["--tmux"], "(Long beta testing)", "Use tmux for output.")
     ]
 
 unsupportedCases :: TestTree

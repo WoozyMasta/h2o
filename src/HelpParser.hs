@@ -83,6 +83,9 @@ argWordAngleBracketed = argWordBracketedHelper '<' '>'
 argWordCurlyBracketed :: ReadP String
 argWordCurlyBracketed = argWordBracketedHelper '{' '}'
 
+argWordParenthesized :: ReadP String
+argWordParenthesized = argWordBracketedHelper '(' ')'
+
 argWord :: ReadP String
 argWord = argWordBare
 
@@ -140,7 +143,7 @@ optArgs = do
 optArgsInBraket :: ReadP String
 optArgsInBraket = do
   char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
-  args <- sepBy1 (argWordCurlyBracketed +++ argWordAngleBracketed) (char ',' +++ char ' ') -- to keep { and }
+  args <- sepBy1 (argWordCurlyBracketed <++ argWordAngleBracketed <++ argWordParenthesized) (char ',' +++ char ' ') -- to keep { and }
   return (List.intercalate "," args)
 
 skip :: ReadP a -> ReadP ()
@@ -162,7 +165,7 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  args <- optArgs <++ optArgsInBraket <++ pure ""
+  args <- optArgsInBraket <++ optArgs <++ pure ""
   return (name, args)
 
 optSep :: ReadP String
