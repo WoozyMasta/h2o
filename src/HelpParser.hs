@@ -4,6 +4,7 @@ module HelpParser where
 
 import qualified Data.Foldable as Foldable
 import qualified Data.List as List
+import Debug.Trace
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
@@ -270,14 +271,14 @@ parse s = concat results
     -- so don't worry about calling (head xs).
     xs = readP_to_S preprocessor s
     pairs = map fst xs
-    results = [map fst (readP_to_S (optPart descStr) optStr) | (optStr, descStr) <- pairs]
+    results = [(\xs -> if null xs then trace ("Parse failed: " ++ show (optStr, descStr)) xs else xs) $ map fst $ readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
 
 parseMany :: String -> [Opt]
 parseMany "" = []
 parseMany s = concat results
   where
     pairs = preprocessAll s
-    results = [(map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs]
+    results = [((\xs -> if null xs then trace ("Parse failed: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
 
 preprocessAll :: String -> [(String, String)]
 preprocessAll "" = []
