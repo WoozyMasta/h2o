@@ -14,7 +14,8 @@ data Config = Config
     shell :: String,
     name :: String,
     subname :: String,
-    isParsingSubcommand :: Bool
+    isParsingSubcommand :: Bool,
+    isPreprocessOnly :: Bool
   }
 
 config :: Parser Config
@@ -50,6 +51,10 @@ config =
       ( long "parse-subcommand"
           <> help "Parse subcommands (experimental)"
       )
+    <*> switch
+      ( long "debug"
+         <> help "Run preprocessing only"
+      )
 
 main :: IO ()
 main = run =<< execParser opts
@@ -63,11 +68,12 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell name subname isParsing) = do
+run (Config f shell name subname isParsing isPreprocessOnly) = do
   content <- readFile f
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
+        | isPreprocessOnly = unlines . map show $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands
         | null subname = genOptScript shell name opts
         | otherwise = genSubcommandOptScript name subname opts
