@@ -188,6 +188,19 @@ unsupportedCases =
         test_parserMult
           " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
           [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
+        ---- bcftools ----
+        test_parser
+          "-s, --samples [^]<list>       comma separated list of samples to include (or exclude with \"^\" prefix)"
+          (["-s", "--samples"], "[^]<list>", "comma separated list of samples to include (or exclude with \"^\" prefix)"),
+        test_parserMult
+          "-h/H, --header-only/--no-header     print the header only/suppress the header in VCF output"
+          [(["-h", "--header-only"], "", "print the header only"), (["-H", "--no-header"], "", "suppress the header in VCF output")],
+        test_parser
+          "--ploidy <assembly>[?]      predefined ploidy, 'list' to print available settings, append '?' for details"
+          (["--ploidy"], "<assembly>[?]", "predefined ploidy, 'list' to print available settings, append '?' for details"),
+        test_parser
+          " -g, --gvcf <int>,[...]          group non-variant sites into gVCF blocks by minimum per-sample DP"
+          (["-g", "--gvcf"], "<int>,[...]", "group non-variant sites into gVCF blocks by minimum per-sample DP"),
         ---- parallel ----
         test_parser
           "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
