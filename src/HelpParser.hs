@@ -261,6 +261,7 @@ optPart desc = do
   let args = case filter (not . null) (map snd pairs) of
         [] -> ""
         xs -> head xs
+  skipSpaces
   eof
   return (Opt names args desc)
 
@@ -271,14 +272,14 @@ parse s = List.nub . concat $ results
     -- so don't worry about calling (head xs).
     xs = readP_to_S preprocessor s
     pairs = map fst xs
-    results = [(\xs -> if null xs then trace ("Parse failed: " ++ show (optStr, descStr)) xs else xs) $ map fst $ readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
+    results = [(\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) $ map fst $ readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
 
 parseMany :: String -> [Opt]
 parseMany "" = []
 parseMany s = List.nub . concat $ results
   where
     pairs = preprocessAll s
-    results = [((\xs -> if null xs then trace ("Parse failed: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
+    results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
 
 preprocessAll :: String -> [(String, String)]
 preprocessAll "" = []
