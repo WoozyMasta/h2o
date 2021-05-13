@@ -153,7 +153,7 @@ skip a = a *> pure ()
 -- very heuristic handling in separating description part
 heuristicSep :: String -> ReadP String
 heuristicSep args =
-  f ":\n" <++ f "\n" <++ f ": " <++ f "\t " <++ twoOrMoreSpaces <++ varSpaces
+  f ":\n" <++ f "\n" <++ f ": " <++ f "\t" <++ twoOrMoreSpaces <++ varSpaces
   where
     f s = optional singleSpace *> string s
     twoOrMoreSpaces = string " " *> munch1 (== ' ')
