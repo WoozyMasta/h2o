@@ -42,7 +42,7 @@ alphChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 alphanumChars :: [Char]
 alphanumChars = alphChars ++ digitChars
 
-extraSymbolChars = "+-_!?@"
+extraSymbolChars = "+-_!?@."
 
 dash :: ReadP Char
 dash = satisfy (== '-')
