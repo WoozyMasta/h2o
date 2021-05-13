@@ -29,9 +29,11 @@ argToFlg s
     strUpper = map toUpper s
 
 toFishCompPart :: OptName -> String
-toFishCompPart (OptName raw t) = unwords $ filter (not . null) [toFlag t, dashlessName]
+toFishCompPart (OptName raw t) = quotedStr
   where
     dashlessName = dropWhile (== '-') raw
+    s = unwords $ filter (not . null) [toFlag t, dashlessName]
+    quotedStr = replace "?" "\\?" s
 
 toFlag :: OptNameType -> String
 toFlag LongType = "-l"
