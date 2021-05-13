@@ -265,7 +265,7 @@ optPart desc = do
   return (Opt names args desc)
 
 parse :: String -> [Opt]
-parse s = concat results
+parse s = List.nub . concat $ results
   where
     -- thanks to lazy evaluation, desc is NOT evaluated when xs == []
     -- so don't worry about calling (head xs).
@@ -275,7 +275,7 @@ parse s = concat results
 
 parseMany :: String -> [Opt]
 parseMany "" = []
-parseMany s = concat results
+parseMany s = List.nub . concat $ results
   where
     pairs = preprocessAll s
     results = [((\xs -> if null xs then trace ("Parse failed: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
