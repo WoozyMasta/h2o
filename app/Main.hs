@@ -13,7 +13,8 @@ data Config = Config
   { input :: String,
     shell :: String,
     name :: String,
-    parseSubcommand :: Bool
+    subname :: String,
+    isParsingSubcommand :: Bool
   }
 
 config :: Parser Config
@@ -38,9 +39,16 @@ config =
           <> value "mycli"
           <> help "Specify command name"
       )
+    <*> strOption
+      ( long "subname"
+          <> metavar "<SUBCOMMAND>"
+          <> showDefault
+          <> value ""
+          <> help "Specify subcommand name"
+      )
     <*> switch
-      ( long "with-subcommand"
-          <> help "Enable subcommand parsing"
+      ( long "parse-subcommand"
+          <> help "Parse subcommands (experimental)"
       )
 
 main :: IO ()
@@ -55,13 +63,24 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell name _) = do
+run (Config f shell name subname isParsing) = do
   content <- readFile f
+  let subcommands = parseSubcommand content
   let opts = parseMany content
-  putStr $ gen shell name opts
+  let s
+        | isParsing = genSubcommandScript name subcommands
+        | null subname = genOptScript shell name opts
+        | otherwise = genSubcommandOptScript name subname opts
+  putStr s
 
-gen :: String -> String -> [Opt] -> String
-gen "fish" = genFishScript
-gen "zsh" = genZshScript
-gen "bash" = genBashScript
-gen _ = \_ opts -> unlines $ map show opts
+genOptScript :: String -> String -> [Opt] -> String
+genOptScript "fish" = genFishScript
+genOptScript "zsh" = genZshScript
+genOptScript "bash" = genBashScript
+genOptScript _ = \_ opts -> unlines $ map show opts
+
+genSubcommandScript :: String -> [Subcommand] -> String
+genSubcommandScript cmd subcmds = unlines [genFishLineSubcommand cmd sub | sub <- subcmds]
+
+genSubcommandOptScript :: String -> String -> [Opt] -> String
+genSubcommandOptScript = genFishScriptUnderSubcommand

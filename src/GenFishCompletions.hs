@@ -17,24 +17,27 @@ genFishLineOption cmd (Opt names arg desc) = line
   where
     parts = unwords $ map toFishCompPart names
     quotedDesc = replace "'" "\\'" (truncateAfterPeriod desc)
-    flg "" = ""
-    flg s
-      | "FILE" `isInfixOf` strUpper = " -r"
-      | "DIR" `isInfixOf` strUpper = " -r"
-      | otherwise = " -x"
-      where strUpper = map toUpper s
-    line = printf "complete -c %s %s -d '%s'%s" cmd parts quotedDesc (flg arg)
+    line = printf "complete -c %s %s -d '%s'%s" cmd parts quotedDesc (argToFlg arg)
 
-    toFishCompPart :: OptName -> String
-    toFishCompPart (OptName raw t) = toFlag t ++ " " ++ dashlessName
-      where
-        dashlessName = dropWhile (== '-') raw
+argToFlg :: String -> String
+argToFlg "" = ""
+argToFlg s
+  | "FILE" `isInfixOf` strUpper = " -r"
+  | "DIR" `isInfixOf` strUpper = " -r"
+  | otherwise = " -x"
+  where
+    strUpper = map toUpper s
 
-    toFlag :: OptNameType -> String
-    toFlag LongType = "-l"
-    toFlag ShortType = "-s"
-    toFlag OldType = "-o"
-    toFlag _ = ""
+toFishCompPart :: OptName -> String
+toFishCompPart (OptName raw t) = unwords $ filter (not . null) [toFlag t, dashlessName]
+  where
+    dashlessName = dropWhile (== '-') raw
+
+toFlag :: OptNameType -> String
+toFlag LongType = "-l"
+toFlag ShortType = "-s"
+toFlag OldType = "-o"
+toFlag _ = ""
 
 truncateAfterPeriod :: String -> String
 truncateAfterPeriod s
@@ -44,12 +47,11 @@ truncateAfterPeriod s
     (xs, ys) = span (\w -> last w /= '.') (words s)
     zs = case ys of
       [] -> xs
-      y:ys -> if criteria then  xs ++ [y, extra] else xs ++ [y]
+      y : ys -> if criteria then xs ++ [y, extra] else xs ++ [y]
         where
           len = length y
-          criteria = len >= 3 && y !! (len - 2) /= '.' && y !! (len - 3) == '.'   -- like "e.g."
+          criteria = len >= 3 && y !! (len - 2) /= '.' && y !! (len - 3) == '.' -- like "e.g."
           extra = truncateAfterPeriod (unwords ys)
-
 
 genFishLineSubcommand :: Command -> Subcommand -> String
 genFishLineSubcommand cmd (Subcommand subcmd desc) = line
@@ -58,7 +60,16 @@ genFishLineSubcommand cmd (Subcommand subcmd desc) = line
     quotedDesc = replace "'" "\\'" desc
     line = printf template cmd subcmd quotedDesc
 
-genFishScript :: Command -> [Opt] -> String
-genFishScript cmd opts = optionPart
+genFishLineSubcommandOption :: Command -> Command -> Opt -> String
+genFishLineSubcommandOption cmd subcmd (Opt names arg desc) = line
   where
-    optionPart = unlines [genFishLineOption cmd opt | opt <- opts]
+    parts = unwords $ map toFishCompPart names
+    quotedDesc = replace "'" "\\'" (truncateAfterPeriod desc)
+    subcmdCondition = printf "-n \"__fish_seen_subcommand_from %s\"" subcmd :: String
+    line = printf "complete -c %s %s %s -d '%s'%s" cmd subcmdCondition parts quotedDesc (argToFlg arg)
+
+genFishScript :: Command -> [Opt] -> String
+genFishScript cmd opts = unlines [genFishLineOption cmd opt | opt <- opts]
+
+genFishScriptUnderSubcommand :: Command -> Command -> [Opt] -> String
+genFishScriptUnderSubcommand cmd subcmd opts = unlines [genFishLineSubcommandOption cmd subcmd opt | opt <- opts]

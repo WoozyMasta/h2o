@@ -210,7 +210,15 @@ unsupportedCases =
         ---- delly ----
         test_parserMult
           "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
-          [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")]
+          [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")],
+        ---- fastqc ----
+        test_parserMult
+          "    -c              Specifies a non-default file which contains the list of\n\
+          \    --contaminants  contaminants to screen overrepresented sequences against.\n\
+          \                    The file must contain sets of named contaminants in the\n\
+          \                    form name[tab]sequence.  Lines prefixed with a hash will\n\
+          \                    be ignored."
+          [(["-c", "--contaminants"], "", "Specifies a non-default file which contains the list of contaminants to screen overrepresented sequences against.")]
       ]
 
 devTests =

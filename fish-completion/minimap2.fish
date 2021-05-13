@@ -16,7 +16,7 @@ complete -c minimap2 -s n -d 'Discard chains consisting of . RI < INT number of 
 complete -c minimap2 -s m -d 'Discard chains with chaining score . RI < INT [40]' -x
 complete -c minimap2 -s D -d 'If query sequence name/length are identical to the target name/length, ignore…'
 complete -c minimap2 -s P -d 'Retain all chains and don\'t attempt to set primary chains'
-complete -c minimap2 -l dual -d 'If  no , skip query-target pairs wherein the query name is lexicographically …' -a "yes no" -x
+complete -c minimap2 -l dual -d 'If  no , skip query-target pairs wherein the query name is lexicographically …' -k -a "yes no" -x
 complete -c minimap2 -s X -d 'Equivalent to \'-DP --dual=no --no-long-join\''
 complete -c minimap2 -s p -d 'Minimal secondary-to-primary score ratio to output secondary mappings [0.8]'
 complete -c minimap2 -s N -d 'Output at most  INT secondary alignments [5]'
