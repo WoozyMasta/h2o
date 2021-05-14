@@ -12,6 +12,13 @@ import Text.Printf (printf)
 
 type Command = String
 
+-- https://unix.stackexchange.com/questions/296141/how-to-use-a-special-character-as-a-normal-one-in-unix-shells
+escapeSpecialSymbols :: String -> String
+escapeSpecialSymbols s = List.foldl' f s symbols
+  where
+      f s c = replace [c] ("\\" ++ [c]) s
+      symbols = "!?#$%&"
+
 genFishLineOption :: Command -> Opt -> String
 genFishLineOption cmd (Opt names arg desc) = line
   where
@@ -29,11 +36,11 @@ argToFlg s
     strUpper = map toUpper s
 
 toFishCompPart :: OptName -> String
-toFishCompPart (OptName raw t) = quotedStr
+toFishCompPart (OptName raw t) = escapedStr
   where
     dashlessName = dropWhile (== '-') raw
     s = unwords $ filter (not . null) [toFlag t, dashlessName]
-    quotedStr = replace "?" "\\?" s
+    escapedStr = escapeSpecialSymbols s
 
 toFlag :: OptNameType -> String
 toFlag LongType = "-l"
