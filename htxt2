@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+outfile="samples/$1-$2.txt"
+name="$(basename "$outfile")"
+if [[ -f "$outfile" ]]; then
+    read -rp "$name already exists: Overwirte? (y/N): " confirm
+	[[ "$confirm" != [yY] ]] && echo "exiting without opearation..." && exit 0
+fi
+
+"$1" "$2" -h 2>&1 | tee "$outfile"

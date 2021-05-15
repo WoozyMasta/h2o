@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+outfile="fish-completion/$1.fish"
+name="$(basename "$outfile")"
+if [[ -f "$outfile" ]]; then
+    read -rp "$name already exists: Overwirte? (y/N): " confirm
+	[[ "$confirm" != [yY] ]] && echo "exiting without opearation..." && exit 0
+fi
+
+stack exec help-text-parser-exe -- ./samples/"$1.txt" --name "$1" --shell fish > "$outfile"
