@@ -4,7 +4,7 @@ module HelpParser where
 
 import qualified Data.Foldable as Foldable
 import qualified Data.List as List
-import Debug.Trace
+import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
 
 data Opt = Opt
