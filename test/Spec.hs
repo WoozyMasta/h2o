@@ -7,6 +7,7 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser
+import Layout (getOptionLocations, getWidth)
 import Subcommand
 import Test.Tasty
 import Test.Tasty.ExpectedFailure
@@ -20,7 +21,7 @@ main =
   defaultMain $
     testGroup
       "Tests"
-      [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests]
+      [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
 
 currentTests =
   testGroup
@@ -433,3 +434,15 @@ test_parseMany s tuples =
   where
     actual = parseMany s
     expected = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]
+
+layoutTests :: TestTree
+layoutTests =
+  testGroup
+    "Test layouts"
+    [ testCase "tab width" $
+        getWidth "   \t          \t\t \t d" @?= 42,
+      testCase "tab width 2" $
+        getWidth "\t" @?= 8,
+      testCase "option location 1" $
+        getOptionLocations " \n\n  \t  --option here" @?= [(2, 10)]
+    ]
