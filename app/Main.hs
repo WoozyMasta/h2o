@@ -8,6 +8,7 @@ import GenZshCompletions
 import HelpParser
 import Options.Applicative
 import Subcommand
+import Utils (convertTabsToSpaces)
 
 data Config = Config
   { input :: String,
@@ -15,6 +16,7 @@ data Config = Config
     name :: String,
     subname :: String,
     isParsingSubcommand :: Bool,
+    isConvertingTabsToSpaces :: Bool,
     isPreprocessOnly :: Bool
   }
 
@@ -52,8 +54,12 @@ config =
           <> help "Parse subcommands (experimental)"
       )
     <*> switch
+      ( long "convert-tabs-to-spaces"
+          <> help "Convert tabs to spaces"
+      )
+    <*> switch
       ( long "debug"
-         <> help "Run preprocessing only"
+          <> help "Run preprocessing only"
       )
 
 main :: IO ()
@@ -68,11 +74,12 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell name subname isParsing isPreprocessOnly) = do
+run (Config f shell name subname isParsing isConvertingTabsToSpaces isPreprocessOnly) = do
   content <- readFile f
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
+        | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
         | isPreprocessOnly = unlines . map show $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands
         | null subname = genOptScript shell name opts
