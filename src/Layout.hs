@@ -3,7 +3,10 @@
 
 module Layout where
 
+import Control.Exception (assert)
 import qualified Data.List as List
+import Data.Maybe (fromJust)
+import Data.String.Utils (join, rstrip, split)
 import Debug.Trace (trace, traceShow)
 import Utils (getMostFrequent)
 
@@ -46,14 +49,18 @@ getOptionLocations = _getNonblankLocationTemplate startsWithDash
 getNonoptLocations :: String -> [Location]
 getNonoptLocations = _getNonblankLocationTemplate (not . startsWithDash)
 
--- | get presumed horizontal offset of options lines
-getOptionOffset :: String -> Int
-getOptionOffset s = traceShow droppedOptionLines res
+_getOffsetHelper :: (String -> [Location]) -> String -> Maybe Int
+_getOffsetHelper cond s = traceShow droppedOptionLines res
   where
-    locs = getOptionLocations s
-    res = getMostFrequent (map snd locs)
+    locs = cond s
+    xs = map snd locs
+    res = getMostFrequent xs
     locLinePairs = zip locs (lines s)
-    droppedOptionLines = [x | ((_, c), x) <- locLinePairs, c /= res]
+    droppedOptionLines = [x | ((_, c), x) <- locLinePairs, c /= fromJust res]
+
+-- | get presumed horizontal offset of options lines
+getOptionOffset :: String -> Maybe Int
+getOptionOffset = _getOffsetHelper getOptionLocations
 
 ----------------------------------------
 -- For 3-pane layout (short-option   long-option   description)
@@ -67,7 +74,7 @@ startsWithDoubleDash :: String -> Bool
 startsWithDoubleDash s = case ss of
   "" -> False
   [c] -> False
-  c1 : c2 : cs -> c1 == '-' && c2 == '-'
+  c1 : c2 : _ -> c1 == '-' && c2 == '-'
   where
     ss = dropWhile (`elem` " \t") s
 
@@ -76,27 +83,23 @@ getLongOptionLocations :: String -> [Location]
 getLongOptionLocations = _getNonblankLocationTemplate startsWithDoubleDash
 
 -- | get presumed horizontal offset of long options
-getLongOptionOffset :: String -> Int
-getLongOptionOffset s = traceShow droppedOptionLines res
-  where
-    locs = getLongOptionLocations s
-    res = getMostFrequent (map snd locs)
-    locLinePairs = zip locs (lines s)
-    droppedOptionLines = [x | ((_, c), x) <- locLinePairs, c /= res]
+getLongOptionOffset :: String -> Maybe Int
+getLongOptionOffset = _getOffsetHelper getLongOptionLocations
 
 ----------------------------------------
 
 -- | [FIXME] the argument is too rough implementing only 1)...
 --
 -- There are two independent ways to guess the horizontal offset of descriptions
---   1) A description line may be simply offset by space (or tabs)
---   2) A description line may be also an option line starting with '-'.
+--   1) A description line may be simply offset by space
+--   2) A description line may appear following an option
 --      Focus on the pattern that the description and the options+args
 --      may be split by 3 spaces
-descriptionOffset :: String -> Int
-descriptionOffset s = res
+descriptionOffset :: String -> Maybe Int
+descriptionOffset s =
+  assert ('\t' `notElem` s) res
   where
     locs = getNonoptLocations s
     optionOffset = getOptionOffset s
-    cols = [x | (_, x) <- locs, optionOffset + 3 <= x]
+    cols = [x | (_, x) <- locs, fromJust optionOffset + 3 <= x]
     res = getMostFrequent cols

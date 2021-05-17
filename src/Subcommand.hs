@@ -1,8 +1,9 @@
 module Subcommand where
 
+import Control.Monad (liftM2)
 import HelpParser
-import Utils (getMostFrequent)
 import Text.ParserCombinators.ReadP
+import Utils (getMostFrequent)
 
 type Layout = (Int, Int)
 
@@ -20,15 +21,17 @@ firstTwoWordsLoc line = (firstLoc, secondLoc)
     firstLoc = if null word then -1 else length spaces
     secondLoc = if null rest2 then -1 else firstLoc + length word + length midSpaces
 
-getLayout :: [String] -> Layout
-getLayout xs = (first, second)
+getLayout :: [String] -> Maybe Layout
+getLayout xs = liftM2 (,) first second
   where
     pairs = map firstTwoWordsLoc xs
     first = getMostFrequent [a | (a, _) <- pairs, a >= 0]
     second = getMostFrequent [b | (_, b) <- pairs, b >= 0]
 
 getAlignedLines :: String -> [String]
-getAlignedLines s = filter (\line -> firstTwoWordsLoc line == layout) xs
+getAlignedLines s = case layout of
+  Just lay -> filter (\line -> firstTwoWordsLoc line == lay) xs
+  _ -> []
   where
     xs = lines s
     layout = getLayout xs

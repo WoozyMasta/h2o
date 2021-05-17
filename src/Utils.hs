@@ -8,9 +8,11 @@ import qualified Data.Foldable as Foldable
 import Data.Function (on)
 import qualified Data.List as List
 import qualified Data.Map as Map
+import Control.Exception (assert)
 
-getMostFrequent :: (Ord a) => [a] -> a
-getMostFrequent xs = x
+getMostFrequent :: (Ord a) => [a] -> Maybe a
+getMostFrequent [] = Nothing
+getMostFrequent xs = Just x
   where
     counter = Map.toList $ Map.fromListWith (+) (map (,1) xs)
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter

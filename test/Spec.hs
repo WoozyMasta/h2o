@@ -297,8 +297,8 @@ miscTests =
         firstTwoWordsLoc
           "   hi               there   "
           @?= (3, 20),
-      testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == -4" $
-        getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= -4
+      testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == Just (-4)" $
+        getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= Just (-4)
     ]
 
 shellCompTests =
