@@ -1,9 +1,7 @@
 module Subcommand where
 
-import qualified Data.Foldable as Foldable
-import Data.Function (on)
-import qualified Data.Map.Strict as Map
 import HelpParser
+import Utils (getMostFrequent)
 import Text.ParserCombinators.ReadP
 
 type Layout = (Int, Int)
@@ -21,12 +19,6 @@ firstTwoWordsLoc line = (firstLoc, secondLoc)
     (midSpaces, rest2) = span (' ' ==) rest1
     firstLoc = if null word then -1 else length spaces
     secondLoc = if null rest2 then -1 else firstLoc + length word + length midSpaces
-
-getMostFrequent :: (Ord a) => [a] -> a
-getMostFrequent xs = x
-  where
-    counter = Map.toList $ Map.fromListWith (+) (map (\x -> (x, 1)) xs)
-    (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter
 
 getLayout :: [String] -> Layout
 getLayout xs = (first, second)

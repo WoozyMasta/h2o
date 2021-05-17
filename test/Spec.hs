@@ -8,7 +8,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser
 import Layout (getOptionLocations, getWidth)
-import Subcommand
+import Subcommand (firstTwoWordsLoc)
 import Test.Tasty
 import Test.Tasty.ExpectedFailure
 import Test.Tasty.Golden (goldenVsString)
@@ -16,6 +16,7 @@ import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Text.ParserCombinators.ReadP
 import Text.Printf
+import Utils (getMostFrequent)
 
 main =
   defaultMain $
