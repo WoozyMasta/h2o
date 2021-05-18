@@ -4,15 +4,18 @@
 -- | get statistical mode (= the most frequently appeareing item)
 module Utils where
 
+import Control.Exception (assert)
 import qualified Data.Foldable as Foldable
 import Data.Function (on)
 import qualified Data.List as List
 import qualified Data.Map as Map
-import Control.Exception (assert)
 
 getMostFrequent :: (Ord a) => [a] -> Maybe a
-getMostFrequent [] = Nothing
-getMostFrequent xs = Just x
+getMostFrequent = fmap fst . getMostFrequentWithCount
+
+getMostFrequentWithCount :: (Ord a) => [a] -> Maybe (a, Int)
+getMostFrequentWithCount [] = Nothing
+getMostFrequentWithCount xs = Just (x, maxCount)
   where
     counter = Map.toList $ Map.fromListWith (+) (map (,1) xs)
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter

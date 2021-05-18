@@ -6,6 +6,7 @@ import GenBashCompletions
 import GenFishCompletions
 import GenZshCompletions
 import HelpParser
+import Layout (getOptionDescriptionPairsFromLayout)
 import Options.Applicative
 import Subcommand
 import Utils (convertTabsToSpaces)
@@ -17,6 +18,7 @@ data Config = Config
     subname :: String,
     isParsingSubcommand :: Bool,
     isConvertingTabsToSpaces :: Bool,
+    isTestingLayout :: Bool,
     isPreprocessOnly :: Bool
   }
 
@@ -58,6 +60,10 @@ config =
           <> help "Convert tabs to spaces"
       )
     <*> switch
+      ( long "test-layout"
+          <> help "Test layout-based splitting"
+      )
+    <*> switch
       ( long "debug"
           <> help "Run preprocessing only"
       )
@@ -74,11 +80,12 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell name subname isParsing isConvertingTabsToSpaces isPreprocessOnly) = do
+run (Config f shell name subname isParsing isConvertingTabsToSpaces isTestingLayout isPreprocessOnly) = do
   content <- readFile f
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
+        | isTestingLayout = unlines $ map show $ getOptionDescriptionPairsFromLayout content
         | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
         | isPreprocessOnly = unlines . map show $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands
