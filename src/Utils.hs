@@ -9,6 +9,8 @@ import qualified Data.Foldable as Foldable
 import Data.Function (on)
 import qualified Data.List as List
 import qualified Data.Map as Map
+import Debug.Trace (trace)
+import Text.Printf (printf)
 
 getMostFrequent :: (Ord a) => [a] -> Maybe a
 getMostFrequent = fmap fst . getMostFrequentWithCount
@@ -33,3 +35,24 @@ convertTabsToSpaces n s = unlines $ map convertLine $ lines s
         offset = (w `div` n) * n + n
         spaceWidth = offset - w
     f c acc = c : acc
+
+
+debugMsg :: (Show a) => String -> a -> a
+debugMsg msg x = trace (printf ("[debug] " ++  msg ++ " %s\n") (show x)) x
+
+
+-- | hyphen-aware unlines
+-- Here supporting hypen as in unicode \8208 (decimal) = \2010 (hex)
+-- https://unicode-table.com/en/2010/
+smartUnwords :: [String] -> String
+smartUnwords =
+  foldr1 f
+  where
+    f "" acc = acc
+    f s "" = s
+    f s acc
+      | c == '-' || c == '\8208' = init s ++ acc
+      | c == ' ' = s ++ acc
+      | otherwise = s ++ (' ' : acc)
+      where
+        c = last s
