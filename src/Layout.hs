@@ -5,11 +5,12 @@ module Layout where
 
 import Control.Exception (assert)
 import qualified Data.List as List
+import Data.List.Extra (nubSort)
 import qualified Data.Maybe as Maybe
-import Data.String.Utils (join, rstrip, split)
+import Data.String.Utils (join, lstrip, rstrip, split, strip)
 import Debug.Trace (trace, traceShow, traceShowId)
-import Utils (convertTabsToSpaces, getMostFrequent, getMostFrequentWithCount)
 import Text.Printf (printf)
+import Utils (convertTabsToSpaces, debugMsg, getMostFrequent, getMostFrequentWithCount, smartUnwords)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -136,7 +137,6 @@ descOffsetWithCountInOptionLines s =
       where
         n = length sep
 
-
 isSpacesOnly :: String -> Bool
 isSpacesOnly = all (' ' ==)
 
@@ -159,6 +159,17 @@ isWordStartingAtOffset n x =
   where
     (before, after) = splitAt n x
 
+isSeparatedAtOffset :: Int -> String -> String -> Bool
+isSeparatedAtOffset _ _ "" = False
+isSeparatedAtOffset n sep x
+  | n <= w || length x <= w = False
+  | otherwise =
+    assert ('\n' `notElem` x && '\t' `notElem` x) $
+      sep `List.isSuffixOf` before && head after /= ' '
+  where
+    w = length sep
+    (before, after) = splitAt n x
+
 getOptionDescriptionPairsFromLayout :: String -> [(String, String)]
 getOptionDescriptionPairsFromLayout content
   | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = []
@@ -166,23 +177,31 @@ getOptionDescriptionPairsFromLayout content
   where
     s = convertTabsToSpaces 8 content
     xs = lines s
+    sep = "   "
     optionOffsetMay = getOptionOffset s
     optOffset = Maybe.fromJust optionOffsetMay
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
-    optLineNums = map fst optLocs
+    optLineNums = debugMsg "optLineNums" $ map fst optLocs
 
     descriptionOffsetMay = getDescriptionOffset s
     descOffset = Maybe.fromJust descriptionOffsetMay
 
-    descLineNums = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank descOffset x]
+    descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank descOffset x]
+    descLineNumsWithOption = [idx | idx <- optLineNums, isSeparatedAtOffset descOffset "   " (xs !! idx)]
+    descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
-    traceInfo = trace (
-      printf
-        (unlines (map ("[debug] " ++) ["option offset: %d", "description offset: %d", "optLocs: %s", "descLineNums: %s"]))
-        optOffset descOffset (show optLocs) (show descLineNums))
-    triples = toConsecutiveRangeTriples optLineNums descLineNums
-    quartets = [(a, b, getDescFrom a b, c) | (a, b, c) <- triples] -- [(optFrom, optTo, descFrom descTo)]
+    traceInfo =
+      trace
+        ( printf
+            (unlines (map ("[debug] " ++) ["option offset: %d", "description offset: %d", "optLocs: %s", "descLineNums: %s"]))
+            optOffset
+            descOffset
+            (show optLocs)
+            (show descLineNums)
+        )
+    triples = debugMsg "triples" $ toConsecutiveRangeTriples optLineNums descLineNums
+    quartets = debugMsg "quartets" $ [(a, b, getDescFrom a b, c) | (a, b, c) <- triples] -- [(optFrom, optTo, descFrom, descTo)]
     getDescFrom optFrom optTo
       | null ys = optTo
       | otherwise = descFrom
@@ -192,32 +211,50 @@ getOptionDescriptionPairsFromLayout content
         descFrom = last ys
 
 handleQuartet :: [String] -> Int -> (Int, Int, Int, Int) -> [(String, String)]
-handleQuartet xs descOffset (optFrom, optTo, descFrom, descTo)
-  | optFrom == descFrom = asrt $ ss ++ [s2]
-  | otherwise = [s1] ++ ss ++ [s2]
+handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
+  | optFrom == descFrom && optTo == descTo = debug $ onelinersF optFrom optTo
+  | optFrom == descFrom = debug $ onelinersF optFrom (optTo - 1) ++ [squashDescSideF (optTo - 1) descTo]
+  | optTo == descFrom = debug [squashDescTopF descFrom descTo]
+  | optTo == descTo = debug $ squashOptsF optFrom (descFrom + 1) : onelinersF (descFrom + 1) descTo
+  | otherwise = debug $ (s1 : ss) ++ [s2]
   where
-    asrt = assert (optFrom <= descFrom && descFrom <= optTo && optTo <= descTo)
-    s1 = squashOptions optFrom (descFrom + 1) xs descOffset
-    ss = oneliners (descFrom + 1) (optTo - 1) xs descOffset
-    s2 = squashDescriptions (optTo - 1) descTo xs descOffset
+    debug = trace (show (optFrom, optTo, descFrom, descTo) ++ " ")
+    squashOptsF = squashOptions xs offset
+    squashDescSideF = squashDescriptionsSide xs offset
+    squashDescTopF = squashDescriptionsTop xs offset
+    onelinersF = oneliners xs offset
+    s1 = squashOptsF optFrom (descFrom + 1)
+    ss = onelinersF (descFrom + 1) (optTo - 1)
+    s2 = squashDescSideF (optTo - 1) descTo
 
-squashOptions :: Int -> Int -> [String] -> Int -> (String, String)
-squashOptions a b xs offset = (opt, desc)
+squashOptions :: [String] -> Int -> Int -> Int -> (String, String)
+squashOptions xs offset a b = trace "[squashOptions] " (opt, desc)
   where
-    optLines = map (\i -> take offset (xs !! i)) [a, a + 1 .. b]
-    opt = join "," optLines
+    optLines = map (xs !!) $ take (b - a) [a, a + 1 ..]
+    optLinesLastTruncated = map strip (init optLines ++ [take offset (last optLines)])
+    opt = join "," optLinesLastTruncated
     desc = drop offset (xs !! (b - 1))
 
-squashDescriptions :: Int -> Int -> [String] -> Int -> (String, String)
-squashDescriptions a b xs offset = (opt, desc)
+squashDescriptionsSide :: [String] -> Int -> Int -> Int -> (String, String)
+squashDescriptionsSide xs offset a b = trace "[squashDescriptionsSide] " (opt, desc)
   where
-    descLines = map (\i -> drop offset (xs !! i)) [a, a + 1 .. b]
-    opt = take offset (xs !! a)
-    desc = unwords descLines
+    descLines = map (drop offset . (xs !!)) $ take (b - a) [a, a + 1 ..]
+    opt = strip $ take offset (xs !! a)
+    desc = smartUnwords descLines
 
-oneliners :: Int -> Int -> [String] -> Int -> [(String, String)]
-oneliners a b xs offset =
-  map (\i -> splitAt offset (xs !! i)) [a, a + 1 .. b]
+squashDescriptionsTop :: [String] -> Int -> Int -> Int -> (String, String)
+squashDescriptionsTop xs offset a b = trace "[squashDescriptionsTop] " (opt, desc)
+  where
+    descLines = map (drop offset . (xs !!)) $ take (b - a) [a, a + 1 ..]
+    opt = strip (xs !! (a - 1))
+    desc = smartUnwords descLines
+
+oneliners :: [String] -> Int -> Int -> Int -> [(String, String)]
+oneliners xs offset a b =
+  [ trace "[oneliners] " (strip former, latter)
+    | i <- take (b - a) [a, a + 1 ..],
+      let (former, latter) = splitAt offset (xs !! i)
+  ]
 
 -- | convert strictly-increasing ints to a list of left-inclusive right-exclusive ranges
 -- toRanges [1,2,3,4,6,9,10] == [(1, 5), (6, 7), (9, 11)]
@@ -234,7 +271,7 @@ toRanges = foldr f []
 -- [WARNING] O(N^2): rewrite if slow
 toConsecutiveRangeTriples :: [Int] -> [Int] -> [(Int, Int, Int)]
 toConsecutiveRangeTriples xs ys =
-  [(x1, y1, y1) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x2 == y1]
+  [(x1, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x2 == y1]
   where
     xRanges = toRanges xs
     yRanges = toRanges ys

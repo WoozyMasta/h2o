@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f833537202c50598e0d465efc64d4f920893a29fee495d2b8240ee9c95cd78f6
+-- hash: 3da97dc6116de0a3144ee05f90813a87e658ebb657b06be82c758ac80da57dc1
 
 name:           help-text-parser
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
       MissingH
     , base >=4.7 && <5
     , containers
+    , extra
   default-language: Haskell2010
 
 executable help-text-parser-exe
@@ -54,6 +55,7 @@ executable help-text-parser-exe
       MissingH
     , base >=4.7 && <5
     , containers
+    , extra
     , help-text-parser
     , optparse-applicative
   default-language: Haskell2010
@@ -70,6 +72,7 @@ test-suite help-text-parser-test
       MissingH
     , base >=4.7 && <5
     , containers
+    , extra
     , hedgehog
     , help-text-parser
     , tasty
