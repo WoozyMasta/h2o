@@ -7,6 +7,7 @@ import Control.Exception (assert)
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Maybe as Maybe
+import qualified Data.Set as Set
 import Data.String.Utils (join, lstrip, rstrip, split, strip)
 import Debug.Trace (trace, traceShow, traceShowId)
 import Text.Printf (printf)
@@ -152,7 +153,7 @@ isWordStartingAtOffsetAfterBlank n x =
 
 isWordStartingAtOffset :: Int -> String -> Bool
 isWordStartingAtOffset _ "" = False
-isWordStartingAtOffset 0 x = head x /= ' '
+isWordStartingAtOffset 0 (c : _) = c /= ' '
 isWordStartingAtOffset n x =
   assert ('\n' `notElem` x && '\t' `notElem` x) $
     last before == ' ' && head after /= ' '
@@ -170,45 +171,39 @@ isSeparatedAtOffset n sep x
     w = length sep
     (before, after) = splitAt n x
 
-getOptionDescriptionPairsFromLayout :: String -> [(String, String)]
+-- ============== Main stuff ======================
+
+-- | Get option-description pairs based on layouts
+getOptionDescriptionPairsFromLayout :: String -> ([(String, String)], [Int])
 getOptionDescriptionPairsFromLayout content
-  | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = []
-  | otherwise = traceInfo $ concatMap (handleQuartet xs descOffset) quartets
+  | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = ([], [])
+  | otherwise = traceInfo (res, dropped)
   where
     s = convertTabsToSpaces 8 content
     xs = lines s
-    sep = "   "
+    sep = replicate 3 ' '
     optionOffsetMay = getOptionOffset s
-    optOffset = Maybe.fromJust optionOffsetMay
+    optOffset = debugMsg "Option offset:" $ Maybe.fromJust optionOffsetMay
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
     optLineNums = debugMsg "optLineNums" $ map fst optLocs
 
     descriptionOffsetMay = getDescriptionOffset s
-    descOffset = Maybe.fromJust descriptionOffsetMay
+    offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay
 
-    descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank descOffset x]
-    descLineNumsWithOption = [idx | idx <- optLineNums, isSeparatedAtOffset descOffset "   " (xs !! idx)]
+    descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
+    -- [QUESTION] ??? isSeparatedAtOffset or isWordStartingAtOffset ???
+    descLineNumsWithOption = [idx | idx <- optLineNums, isWordStartingAtOffset offset (xs !! idx)]
     descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
-    traceInfo =
-      trace
-        ( printf
-            (unlines (map ("[debug] " ++) ["option offset: %d", "description offset: %d", "optLocs: %s", "descLineNums: %s"]))
-            optOffset
-            descOffset
-            (show optLocs)
-            (show descLineNums)
-        )
-    triples = debugMsg "triples" $ toConsecutiveRangeTriples optLineNums descLineNums
-    quartets = debugMsg "quartets" $ [(a, b, getDescFrom a b, c) | (a, b, c) <- triples] -- [(optFrom, optTo, descFrom, descTo)]
-    getDescFrom optFrom optTo
-      | null ys = optTo
-      | otherwise = descFrom
-      where
-        indices = [optTo - 1, optTo -2 .. optFrom]
-        ys = takeWhile (\i -> isWordStartingAtOffset descOffset (xs !! i)) indices
-        descFrom = last ys
+    (quartets, dropped) = debugMsg "quartets" $ toConsecutiveRangeQuartets optLineNums descLineNums
+    quartetsMod = debugMsg "quartetsMod" $ [(a, b, updateDescFrom xs offset a c, d) | (a, b, c, d) <- quartets] -- [(optFrom, optTo, descFrom, descTo)]
+    res = concatMap (handleQuartet xs offset) quartetsMod
+    traceInfo = trace ("[debug] Dropped option indices " ++ show dropped)
+
+-- xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
+-- dropped = filter (`Set.notMember` xRangesRes) xRanges
+-- traceInfo = trace ("[debug] Dropped option index ranges " ++ show dropped)
 
 handleQuartet :: [String] -> Int -> (Int, Int, Int, Int) -> [(String, String)]
 handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
@@ -256,6 +251,15 @@ oneliners xs offset a b =
       let (former, latter) = splitAt offset (xs !! i)
   ]
 
+updateDescFrom :: [String] -> Int -> Int -> Int -> Int
+updateDescFrom xs offset optFrom descFrom
+  | null ys = descFrom
+  | otherwise = debugMsg "updateDescFrom (res) =" res
+  where
+    indices = take (optFrom - descFrom) [descFrom - 1, descFrom - 2 ..]
+    ys = takeWhile (\i -> isWordStartingAtOffset offset (xs !! i)) indices
+    res = last ys
+
 -- | convert strictly-increasing ints to a list of left-inclusive right-exclusive ranges
 -- toRanges [1,2,3,4,6,9,10] == [(1, 5), (6, 7), (9, 11)]
 -- assert the input is sorted
@@ -267,14 +271,22 @@ toRanges = foldr f []
       | x + 1 == a = (x, b) : rest
       | otherwise = (x, x + 1) : (a, b) : rest
 
--- |
+-- | Returns (optFrom, optTo, descFrom, descTo) quartets AND dropped indices xs
 -- [WARNING] O(N^2): rewrite if slow
-toConsecutiveRangeTriples :: [Int] -> [Int] -> [(Int, Int, Int)]
-toConsecutiveRangeTriples xs ys =
-  [(x1, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x2 == y1]
+toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [Int])
+toConsecutiveRangeQuartets xs ys =
+  (res, dropped)
   where
     xRanges = toRanges xs
     yRanges = toRanges ys
+    res = [(x1, x2, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x1 <= y1 && y1 <= x2 && x2 <= y2]
+    xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
+    dropped = rangesToNums $ filter (`Set.notMember` xRangesRes) xRanges
+
+rangesToNums :: [(Int, Int)] -> [Int]
+rangesToNums = nubSort . concatMap f
+  where
+    f (a, b) = take (b - a) [a, a + 1 ..]
 
 -- |  idxRange idxColFrom (inclusive) lines
 --  extractRectangleToRight (2, 5) 3

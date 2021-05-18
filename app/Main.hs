@@ -85,7 +85,7 @@ run (Config f shell name subname isParsing isConvertingTabsToSpaces isTestingLay
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
-        | isTestingLayout = unlines $ map show $ getOptionDescriptionPairsFromLayout content
+        | isTestingLayout = unlines . map (\(a,b) -> unlines [a, b]) . fst $ getOptionDescriptionPairsFromLayout content
         | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
         | isPreprocessOnly = unlines . map show $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands
