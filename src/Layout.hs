@@ -277,8 +277,18 @@ toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [(Int, 
 toConsecutiveRangeQuartets xs ys =
   (res, dropped)
   where
-    xRanges = toRanges xs
-    yRanges = toRanges ys
+    xStarts = map fst (toRanges xs)
+    yEnds = map snd (toRanges ys)
+
+    (xssHead, xss) = List.mapAccumR f [] yEnds
+    f [] y = span (< y) xs
+    f acc y = span (< y) acc
+    xRanges = debugMsg "xRanges" $ concatMap toRanges (xssHead : xss)
+    (_, yss) = List.mapAccumR g [] xStarts
+    g [] x = span (< x) ys
+    g acc x = span (< x) acc
+    yRanges = debugMsg "yRanges" $ concatMap toRanges yss
+
     res = [(x1, x2, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x1 <= y1 && y1 <= x2 && x2 <= y2]
     xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
     dropped = filter (`Set.notMember` xRangesRes) xRanges
