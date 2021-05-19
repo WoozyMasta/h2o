@@ -68,8 +68,8 @@ word = munch1 (`notElem` " \t\n")
 
 argWordBare :: ReadP String
 argWordBare = do
-  head <- satisfy (\c -> c `elem` alphanumChars ++ "\"'_^(#.")
-  tail <- munch (\c -> c `elem` (alphanumChars ++ "\"'_:<>)+-*/|#.="))
+  head <- satisfy (\c -> c `elem` alphanumChars ++ "\"'_^(#.[")
+  tail <- munch (\c -> c `elem` (alphanumChars ++ "\"'_:<>)+-*/|#.=[]"))
   return (head : tail)
 
 argWordBracketedHelper :: Char -> Char -> ReadP String
@@ -138,6 +138,7 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 optArgs :: ReadP String
 optArgs = do
+  _ <- char '[' <++ pure ' '   -- for cases such as --cs[=STR]
   singleSpace +++ char '='
   args <- sepBy1 argWord argSep
   return (List.intercalate "," args)
