@@ -277,7 +277,7 @@ toConsecutiveRangeQuartets xs ys =
   (res, dropped)
   where
     (xRanges, yRanges) = makeRanges xs ys
-    res = mergeRanges xRanges yRanges
+    res = mergeRangesFast xRanges yRanges
     xsRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
     dropped = filter (`Set.notMember` xsRes) xRanges
 
@@ -292,14 +292,26 @@ makeRanges xs ys =
     yEnds = map snd (toRanges ys)
     (xssHead, xss) = List.mapAccumR f xs yEnds
     f acc y = span (< y) acc
-    xRanges = concatMap toRanges (xssHead : init xss)
+    xRanges = concatMap toRanges (xssHead : if null xss then [] else init xss)
     (_, yss) = List.mapAccumR g ys xStarts
     g acc x = span (< x) acc
     yRanges = concatMap toRanges yss
 
--- [WARNING] O(N^2): rewrite if slow
+-- [deprecated] O(N^2) so replaced with mergeRangesFast
 mergeRanges :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
 mergeRanges xs ys = [(x1, x2, y1, y2) | (x1, x2) <- xs, (y1, y2) <- ys, x1 <= y1 && y1 <= x2 && x2 <= y2]
+
+-- When two ranges (x1, x2) and (y1, y2) overlaps,
+-- they always satisfy   x1 <= y1 <= x2 <= y2
+mergeRangesFast :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
+mergeRangesFast xs [] = []
+mergeRangesFast [] ys = []
+mergeRangesFast ((x1, x2) : xs) ((y1, y2) : ys)
+  | x2 < y1 = mergeRangesFast xs ((y1, y2) : ys)
+  | y2 <= x1 = mergeRangesFast ((x1, x2) : xs) ys
+  | otherwise = assert cond $ (x1, x2, y1, y2) : mergeRangesFast xs ys
+  where
+    cond = x1 <= y1 && y1 <= x2 && x2 <= y2
 
 -- |  idxRange idxColFrom (inclusive) lines
 --  extractRectangleToRight (2, 5) 3

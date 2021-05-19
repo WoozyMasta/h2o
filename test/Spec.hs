@@ -1,5 +1,6 @@
 import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
+import Data.List.Extra (nubSort)
 import GenBashCompletions
 import GenFishCompletions
 import GenZshCompletions
@@ -7,7 +8,7 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser
-import Layout (getOptionLocations, getWidth)
+import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast)
 import Subcommand (firstTwoWordsLoc)
 import Test.Tasty
 import Test.Tasty.ExpectedFailure
@@ -381,7 +382,8 @@ propertyTests =
     "Hedgehog tests"
     [ testProperty "optName (long)" prop_longOpt,
       testProperty "optName (short)" prop_shortOpt,
-      testProperty "optName (old)" prop_oldOpt
+      testProperty "optName (old)" prop_oldOpt,
+      testProperty "merge ranges" prop_mergeRanges
     ]
 
 prop_longOpt :: Property
@@ -404,6 +406,15 @@ prop_oldOpt =
     s <- forAll (Gen.string (Range.constant 2 10) Gen.alphaNum)
     let dashed = "-" ++ s
     readP_to_S optName dashed === [(OptName dashed OldType, "")]
+
+prop_mergeRanges :: Property
+prop_mergeRanges =
+  property $ do
+    let num = Gen.int (Range.constant 0 200)
+    xs <- forAll $ Gen.list (Range.constant 0 300) num
+    ys <- forAll $ Gen.list (Range.constant 0 300) num
+    let (xRanges, yRanges) = makeRanges (nubSort xs) (nubSort ys)
+    mergeRanges xRanges yRanges === mergeRangesFast xRanges yRanges
 
 makeOpt :: [String] -> String -> String -> Opt
 makeOpt names = Opt (map getOptName names)
