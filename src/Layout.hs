@@ -188,10 +188,11 @@ isSeparatedAtOffset n sep x
 
 -- | Returns option-description pairs based on layouts AND also returns the dropped
 -- line index ranges that is uncaught in the process.
-getOptionDescriptionPairsFromLayout :: String -> ([(String, String)], [(Int, Int)])
+getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout content
-  | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = ([], [])
-  | otherwise = traceInfo (res, dropped)
+  | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = Nothing
+  | length optLineNums <= 3 = Nothing
+  | otherwise = Just $ traceInfo (res, dropped)
   where
     s = convertTabsToSpaces 8 content
     xs = lines s

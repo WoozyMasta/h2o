@@ -2,6 +2,7 @@ module Main where
 
 import qualified Data.List as List
 import Data.Semigroup ((<>))
+import qualified Data.Maybe as Maybe
 import GenBashCompletions
 import GenFishCompletions
 import GenZshCompletions
@@ -85,7 +86,7 @@ run (Config f shell name subname isParsing isConvertingTabsToSpaces isTestingLay
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
-        | isTestingLayout = formatStringPairs . fst $ getOptionDescriptionPairsFromLayout content
+        | isTestingLayout = formatStringPairs . fst . Maybe.fromJust $ getOptionDescriptionPairsFromLayout content
         | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
         | isPreprocessOnly = formatStringPairs $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands

@@ -289,9 +289,15 @@ preprocessAllFallback s = case readP_to_S (preprocessor <++ fallback) s of
   (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAllFallback rest
 
 preprocessAll :: String -> [(String, String)]
-preprocessAll content = layoutResults ++ fallbackResults
+preprocessAll content = res
   where
     xs = lines content
-    (layoutResults, droppedIdxRanges) = getOptionDescriptionPairsFromLayout content
-    paragraphs = map (getParagraph xs) droppedIdxRanges
-    fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
+    may = getOptionDescriptionPairsFromLayout content
+    res = case may of
+      Just (layoutResults, droppedIdxRanges) ->
+        layoutResults ++ fallbackResults
+        where
+          paragraphs = map (getParagraph xs) droppedIdxRanges
+          fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
+      Nothing ->
+        trace "[warning] ignore layout" $ preprocessAllFallback content
