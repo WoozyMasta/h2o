@@ -85,13 +85,15 @@ run (Config f shell name subname isParsing isConvertingTabsToSpaces isTestingLay
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
-        | isTestingLayout = unlines . map (\(a,b) -> unlines [a, b]) . fst $ getOptionDescriptionPairsFromLayout content
+        | isTestingLayout = formatStringPairs . fst $ getOptionDescriptionPairsFromLayout content
         | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
-        | isPreprocessOnly = unlines . map show $ preprocessAll content
+        | isPreprocessOnly = formatStringPairs $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands
         | null subname = genOptScript shell name opts
         | otherwise = genSubcommandOptScript name subname opts
   putStr s
+  where
+    formatStringPairs = unlines . map (\(a,b) -> unlines [a, b])
 
 genOptScript :: String -> String -> [Opt] -> String
 genOptScript "fish" = genFishScript

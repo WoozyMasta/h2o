@@ -2,10 +2,11 @@
 
 module HelpParser where
 
-import qualified Data.Foldable as Foldable
 import qualified Data.List as List
 import Debug.Trace (trace)
+import Layout (getOptionDescriptionPairsFromLayout)
 import Text.ParserCombinators.ReadP
+import Utils (getParagraph, debugMsg)
 
 data Opt = Opt
   { _names :: [OptName],
@@ -281,8 +282,16 @@ parseMany s = List.nub . concat $ results
     pairs = preprocessAll s
     results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
 
-preprocessAll :: String -> [(String, String)]
-preprocessAll "" = []
-preprocessAll s = case readP_to_S (preprocessor <++ fallback) s of
+preprocessAllFallback :: String -> [(String, String)]
+preprocessAllFallback "" = []
+preprocessAllFallback s = case readP_to_S (preprocessor <++ fallback) s of
   [] -> []
   (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAll rest
+
+preprocessAll :: String -> [(String, String)]
+preprocessAll content = layoutResults ++ fallbackResults
+  where
+    xs = lines content
+    (layoutResults, droppedIdxRanges) = getOptionDescriptionPairsFromLayout content
+    paragraphs = map (getParagraph xs) droppedIdxRanges
+    fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs

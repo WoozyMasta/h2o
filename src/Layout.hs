@@ -160,6 +160,18 @@ isWordStartingAtOffset n x =
   where
     (before, after) = splitAt n x
 
+isWordStartingAround :: Int -> Int -> String -> Bool
+isWordStartingAround _ _ "" = False
+isWordStartingAround margin idx x =
+  assert ('\n' `notElem` x && '\t' `notElem` x) $
+    any criteria indices
+  where
+    indices = [idx - margin, idx - margin + 1 .. idx + margin]
+    criteria i =
+      not (null before) && not (null after) && last before == ' ' && head after /= ' '
+      where
+        (before, after) = splitAt i x
+
 isSeparatedAtOffset :: Int -> String -> String -> Bool
 isSeparatedAtOffset _ _ "" = False
 isSeparatedAtOffset n sep x
@@ -171,10 +183,12 @@ isSeparatedAtOffset n sep x
     w = length sep
     (before, after) = splitAt n x
 
+-- ================================================
 -- ============== Main stuff ======================
 
--- | Get option-description pairs based on layouts
-getOptionDescriptionPairsFromLayout :: String -> ([(String, String)], [Int])
+-- | Returns option-description pairs based on layouts AND also returns the dropped
+-- line index ranges that is uncaught in the process.
+getOptionDescriptionPairsFromLayout :: String -> ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout content
   | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = ([], [])
   | otherwise = traceInfo (res, dropped)
@@ -185,6 +199,7 @@ getOptionDescriptionPairsFromLayout content
     optionOffsetMay = getOptionOffset s
     optOffset = debugMsg "Option offset:" $ Maybe.fromJust optionOffsetMay
     optLocsCandidates = getOptionLocations s
+    -- (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
     optLineNums = debugMsg "optLineNums" $ map fst optLocs
 
@@ -193,7 +208,7 @@ getOptionDescriptionPairsFromLayout content
 
     descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
     -- [QUESTION] ??? isSeparatedAtOffset or isWordStartingAtOffset ???
-    descLineNumsWithOption = [idx | idx <- optLineNums, isWordStartingAtOffset offset (xs !! idx)]
+    descLineNumsWithOption = [idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx)]
     descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
     (quartets, dropped) = debugMsg "quartets" $ toConsecutiveRangeQuartets optLineNums descLineNums
@@ -253,12 +268,12 @@ updateDescFrom xs offset optFrom descFrom
   | otherwise = debugMsg "updateDescFrom (res) =" res
   where
     indices = take (optFrom - descFrom) [descFrom - 1, descFrom - 2 ..]
-    ys = takeWhile (\i -> isWordStartingAtOffset offset (xs !! i)) indices
+    ys = takeWhile (\i -> isWordStartingAround 2 offset (xs !! i)) indices
     res = last ys
 
 -- | Returns (optFrom, optTo, descFrom, descTo) quartets AND dropped indices xs
 -- [WARNING] O(N^2): rewrite if slow
-toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [Int])
+toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [(Int, Int)])
 toConsecutiveRangeQuartets xs ys =
   (res, dropped)
   where
@@ -266,7 +281,7 @@ toConsecutiveRangeQuartets xs ys =
     yRanges = toRanges ys
     res = [(x1, x2, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x1 <= y1 && y1 <= x2 && x2 <= y2]
     xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
-    dropped = fromRanges $ filter (`Set.notMember` xRangesRes) xRanges
+    dropped = filter (`Set.notMember` xRangesRes) xRanges
 
 -- |  idxRange idxColFrom (inclusive) lines
 --  extractRectangleToRight (2, 5) 3

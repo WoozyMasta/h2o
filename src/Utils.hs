@@ -69,6 +69,12 @@ toRanges = foldr f []
 
 -- | convert from left-inclusive right-exclusive ranges to a list of integers
 fromRanges :: [(Int, Int)] -> [Int]
-fromRanges = nubSort . concatMap f
+fromRanges = nubSort . concatMap fromRange
+
+fromRange :: (Int, Int) -> [Int]
+fromRange (a, b) = take (b - a) [a, a + 1 ..]
+
+getParagraph :: [String] -> (Int, Int) -> String
+getParagraph xs range = unlines $ map (xs !!) indices
   where
-    f (a, b) = take (b - a) [a, a + 1 ..]
+    indices = fromRange range
