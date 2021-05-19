@@ -199,15 +199,14 @@ getOptionDescriptionPairsFromLayout content
     optionOffsetMay = getOptionOffset s
     optOffset = debugMsg "Option offset:" $ Maybe.fromJust optionOffsetMay
     optLocsCandidates = getOptionLocations s
-    -- (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
     optLineNums = debugMsg "optLineNums" $ map fst optLocs
 
     descriptionOffsetMay = getDescriptionOffset s
     offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay
 
+    -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
-    -- [QUESTION] ??? isSeparatedAtOffset or isWordStartingAtOffset ???
     descLineNumsWithOption = [idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx)]
     descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
@@ -281,9 +280,11 @@ toConsecutiveRangeQuartets xs ys =
     xsRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
     dropped = filter (`Set.notMember` xsRes) xRanges
 
--- | Make a pair of ranges such that
+-- | Make pairs of ranges such that
 -- when two ranges (x1, x2) and (y1, y2) overlaps,
 -- they always satisfy   x1 <= y1 <= x2 <= y2
+-- As a special case, x2 == y1 is considered as "overlap"
+-- although [x1, x2) and [y1, y2) have empty intersection.
 makeRanges :: [Int] -> [Int] -> ([(Int, Int)], [(Int, Int)])
 makeRanges xs ys =
   (xRanges, yRanges)
@@ -297,12 +298,13 @@ makeRanges xs ys =
     g acc x = span (< x) acc
     yRanges = concatMap toRanges yss
 
--- [deprecated] O(N^2) so replaced with mergeRangesFast
+-- | [deprecated] O(N^2) so replaced with mergeRangesFast
 mergeRanges :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
 mergeRanges xs ys = [(x1, x2, y1, y2) | (x1, x2) <- xs, (y1, y2) <- ys, x1 <= y1 && y1 <= x2 && x2 <= y2]
 
--- When two ranges (x1, x2) and (y1, y2) overlaps,
--- they always satisfy   x1 <= y1 <= x2 <= y2
+-- | Create quartets (x1, x2, y1, y2) as overlapping boundaries
+-- [Note] As a special case, x2 == y1 is considered as a overlap
+-- although [x1, x2) and [y1, y2) have empty intersection.
 mergeRangesFast :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
 mergeRangesFast xs [] = []
 mergeRangesFast [] ys = []
