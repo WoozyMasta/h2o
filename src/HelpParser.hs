@@ -280,7 +280,7 @@ parseMany :: String -> [Opt]
 parseMany "" = []
 parseMany s = List.nub . concat $ results
   where
-    pairs = preprocessAllFallback s
+    pairs = preprocessAll s
     results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
 
 preprocessAllFallback :: String -> [(String, String)]
