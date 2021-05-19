@@ -20,6 +20,8 @@ data OptName = OptName
   }
   deriving (Eq)
 
+type OptArg = String
+
 instance Show Opt where
   show (Opt names args desc) =
     show (names, args, desc)
@@ -255,8 +257,8 @@ fallback = do
 -- takes description as external info
 -- the first option argument ARG1 is extracted when you have a case like
 --    "-o ARG1, --out=ARG2"
-optPart :: String -> ReadP Opt
-optPart desc = do
+optPart :: ReadP ([OptName], OptArg)
+optPart = do
   pairs <- sepBy1 optNameArgPair optSep
   let names = map fst pairs
   let args = case filter (not . null) (map snd pairs) of
@@ -264,7 +266,7 @@ optPart desc = do
         xs -> head xs
   skipSpaces
   eof
-  return (Opt names args desc)
+  return (names, args)
 
 parse :: String -> [Opt]
 parse s = List.nub . concat $ results
@@ -273,7 +275,12 @@ parse s = List.nub . concat $ results
     -- so don't worry about calling (head xs).
     xs = readP_to_S preprocessor s
     pairs = map fst xs
-    results = [(\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) $ map fst $ readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
+    results =
+      [ (\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) $
+          map ((\(a, b) -> Opt a b descStr) . fst) $
+            readP_to_S optPart optStr
+        | (optStr, descStr) <- pairs
+      ]
 
 preprocessAllFallback :: String -> [(String, String)]
 preprocessAllFallback "" = []

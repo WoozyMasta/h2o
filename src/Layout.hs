@@ -10,7 +10,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Data.String.Utils (join, lstrip, rstrip, split, strip)
 import Debug.Trace (trace, traceShow, traceShowId)
-import HelpParser (Opt, optPart, parse, preprocessAllFallback)
+import HelpParser (Opt (..), optPart, parse, preprocessAllFallback)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
 import Utils (convertTabsToSpaces, debugMsg, fromRanges, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
@@ -365,4 +365,10 @@ parseMany "" = []
 parseMany s = List.nub . concat $ results
   where
     pairs = preprocessAll s
-    results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
+    results =
+      [ (\xs -> if null xs then trace ("[warning] Failed pair: " ++ show (optStr, descStr)) xs else xs) $
+          map ((\(a, b) -> Opt a b descStr) . fst) $
+            readP_to_S optPart optStr
+        | (optStr, descStr) <- pairs,
+          (optStr, descStr) /= ("", "")
+      ]
