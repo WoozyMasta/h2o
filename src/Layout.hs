@@ -308,7 +308,3 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
     ys = take (rowTo - rowFrom) (drop rowFrom xs)
     zs = map (drop idxCol) ys
 
-ifTrace :: (a -> Bool) -> (a -> String) -> a -> a
-ifTrace check exceptRun x
-  | check x = trace (exceptRun x) x
-  | otherwise = x

@@ -40,6 +40,11 @@ convertTabsToSpaces n s = unlines $ map convertLine $ lines s
 debugMsg :: (Show a) => String -> a -> a
 debugMsg msg x = trace (printf ("[debug] " ++ msg ++ " %s\n") (show x)) x
 
+traceIf :: (a -> Bool) -> (a -> String) -> a -> a
+traceIf check run x
+  | check x = trace (run x) x
+  | otherwise = x
+
 -- | hyphen-aware unlines
 -- Here supporting hypen as in unicode \8208 (decimal) = \2010 (hex)
 -- https://unicode-table.com/en/2010/
