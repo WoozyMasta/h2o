@@ -11,7 +11,7 @@ import qualified Data.Set as Set
 import Data.String.Utils (join, lstrip, rstrip, split, strip)
 import Debug.Trace (trace, traceShow, traceShowId)
 import Text.Printf (printf)
-import Utils (convertTabsToSpaces, debugMsg, getMostFrequent, getMostFrequentWithCount, smartUnwords)
+import Utils (convertTabsToSpaces, debugMsg, fromRanges, getMostFrequent, getMostFrequentWithCount, smartUnwords, toRanges)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -201,10 +201,6 @@ getOptionDescriptionPairsFromLayout content
     res = concatMap (handleQuartet xs offset) quartetsMod
     traceInfo = trace ("[debug] Dropped option indices " ++ show dropped)
 
--- xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
--- dropped = filter (`Set.notMember` xRangesRes) xRanges
--- traceInfo = trace ("[debug] Dropped option index ranges " ++ show dropped)
-
 handleQuartet :: [String] -> Int -> (Int, Int, Int, Int) -> [(String, String)]
 handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
   | optFrom == descFrom && optTo == descTo = debug $ onelinersF optFrom optTo
@@ -260,17 +256,6 @@ updateDescFrom xs offset optFrom descFrom
     ys = takeWhile (\i -> isWordStartingAtOffset offset (xs !! i)) indices
     res = last ys
 
--- | convert strictly-increasing ints to a list of left-inclusive right-exclusive ranges
--- toRanges [1,2,3,4,6,9,10] == [(1, 5), (6, 7), (9, 11)]
--- assert the input is sorted
-toRanges :: [Int] -> [(Int, Int)]
-toRanges = foldr f []
-  where
-    f x [] = [(x, x + 1)]
-    f x ((a, b) : rest)
-      | x + 1 == a = (x, b) : rest
-      | otherwise = (x, x + 1) : (a, b) : rest
-
 -- | Returns (optFrom, optTo, descFrom, descTo) quartets AND dropped indices xs
 -- [WARNING] O(N^2): rewrite if slow
 toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [Int])
@@ -281,12 +266,7 @@ toConsecutiveRangeQuartets xs ys =
     yRanges = toRanges ys
     res = [(x1, x2, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x1 <= y1 && y1 <= x2 && x2 <= y2]
     xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
-    dropped = rangesToNums $ filter (`Set.notMember` xRangesRes) xRanges
-
-rangesToNums :: [(Int, Int)] -> [Int]
-rangesToNums = nubSort . concatMap f
-  where
-    f (a, b) = take (b - a) [a, a + 1 ..]
+    dropped = fromRanges $ filter (`Set.notMember` xRangesRes) xRanges
 
 -- |  idxRange idxColFrom (inclusive) lines
 --  extractRectangleToRight (2, 5) 3

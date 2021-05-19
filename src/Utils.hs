@@ -8,6 +8,7 @@ import Control.Exception (assert)
 import qualified Data.Foldable as Foldable
 import Data.Function (on)
 import qualified Data.List as List
+import Data.List.Extra (nubSort)
 import qualified Data.Map as Map
 import Debug.Trace (trace)
 import Text.Printf (printf)
@@ -36,10 +37,8 @@ convertTabsToSpaces n s = unlines $ map convertLine $ lines s
         spaceWidth = offset - w
     f c acc = c : acc
 
-
 debugMsg :: (Show a) => String -> a -> a
-debugMsg msg x = trace (printf ("[debug] " ++  msg ++ " %s\n") (show x)) x
-
+debugMsg msg x = trace (printf ("[debug] " ++ msg ++ " %s\n") (show x)) x
 
 -- | hyphen-aware unlines
 -- Here supporting hypen as in unicode \8208 (decimal) = \2010 (hex)
@@ -56,3 +55,20 @@ smartUnwords =
       | otherwise = s ++ (' ' : acc)
       where
         c = last s
+
+-- | convert strictly-increasing ints to a list of left-inclusive right-exclusive ranges
+-- toRanges [1,2,3,4,6,9,10] == [(1, 5), (6, 7), (9, 11)]
+-- assert the input is sorted
+toRanges :: [Int] -> [(Int, Int)]
+toRanges = foldr f []
+  where
+    f x [] = [(x, x + 1)]
+    f x ((a, b) : rest)
+      | x + 1 == a = (x, b) : rest
+      | otherwise = (x, x + 1) : (a, b) : rest
+
+-- | convert from left-inclusive right-exclusive ranges to a list of integers
+fromRanges :: [(Int, Int)] -> [Int]
+fromRanges = nubSort . concatMap f
+  where
+    f (a, b) = take (b - a) [a, a + 1 ..]
