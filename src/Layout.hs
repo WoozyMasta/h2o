@@ -208,7 +208,16 @@ getOptionDescriptionPairsFromLayout content
 
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
-    descLineNumsWithOption = [idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx)]
+    linewidths = map (length . (xs !! )) descLineNumsWithoutOption
+    descriptionLineWidthMax = debugMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
+    descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
+
+    -- The line must be long when description starts at the option line and continues to the next line.
+    -- Here I mean "long" by the
+    descLineNumsWithOption =
+      [idx | idx <- optLineNums,
+        isWordStartingAround 2 offset (xs !! idx),
+        ((idx + 1) `Set.notMember` descLineNumsWithoutOptionSet) || (length (xs !! idx) + 5 > descriptionLineWidthMax)]
     descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
     (quartets, dropped) = debugMsg "quartets" $ toConsecutiveRangeQuartets optLineNums descLineNums
