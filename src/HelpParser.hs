@@ -279,14 +279,14 @@ parseMany :: String -> [Opt]
 parseMany "" = []
 parseMany s = List.nub . concat $ results
   where
-    pairs = preprocessAll s
+    pairs = preprocessAllFallback s
     results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
 
 preprocessAllFallback :: String -> [(String, String)]
 preprocessAllFallback "" = []
 preprocessAllFallback s = case readP_to_S (preprocessor <++ fallback) s of
   [] -> []
-  (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAll rest
+  (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAllFallback rest
 
 preprocessAll :: String -> [(String, String)]
 preprocessAll content = layoutResults ++ fallbackResults
