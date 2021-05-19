@@ -272,10 +272,9 @@ updateDescFrom xs offset optFrom descFrom
     res = last ys
 
 -- | Returns (optFrom, optTo, descFrom, descTo) quartets AND dropped indices xs
--- [WARNING] O(N^2): rewrite if slow
 toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [(Int, Int)])
 toConsecutiveRangeQuartets xs ys =
-  (res, dropped)
+  mergeRanges xRanges yRanges
   where
     xStarts = map fst (toRanges xs)
     yEnds = map snd (toRanges ys)
@@ -289,9 +288,13 @@ toConsecutiveRangeQuartets xs ys =
     g acc x = span (< x) acc
     yRanges = debugMsg "yRanges" $ concatMap toRanges yss
 
-    res = [(x1, x2, y1, y2) | (x1, x2) <- xRanges, (y1, y2) <- yRanges, x1 <= y1 && y1 <= x2 && x2 <= y2]
-    xRangesRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
-    dropped = filter (`Set.notMember` xRangesRes) xRanges
+-- [WARNING] O(N^2): rewrite if slow
+mergeRanges :: [(Int, Int)] -> [(Int, Int)] -> ([(Int, Int, Int, Int)], [(Int, Int)])
+mergeRanges xs ys = (res, dropped)
+  where
+    res = [(x1, x2, y1, y2) | (x1, x2) <- xs, (y1, y2) <- ys, x1 <= y1 && y1 <= x2 && x2 <= y2]
+    xsRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
+    dropped = filter (`Set.notMember` xsRes) xs
 
 -- |  idxRange idxColFrom (inclusive) lines
 --  extractRectangleToRight (2, 5) 3
@@ -307,4 +310,3 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
   where
     ys = take (rowTo - rowFrom) (drop rowFrom xs)
     zs = map (drop idxCol) ys
-
