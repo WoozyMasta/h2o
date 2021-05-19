@@ -428,7 +428,7 @@ test_parser s (names, args, desc) =
   testCase s $ do
     List.sort actual @?= expected
   where
-    actual = parse s
+    actual = parseMany s
     expected = List.sort [makeOpt names args desc]
 
 test_parserMult :: String -> [([String], String, String)] -> TestTree
@@ -436,7 +436,7 @@ test_parserMult s tuples =
   testCase s $ do
     List.sort actual @?= expected
   where
-    actual = parse s
+    actual = parseMany s
     expected = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]
 
 test_parseMany :: String -> [([String], String, String)] -> TestTree
