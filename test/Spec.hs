@@ -1,22 +1,21 @@
 import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
-import GenBashCompletions
-import GenFishCompletions
-import GenZshCompletions
-import Hedgehog
+import GenBashCompletions (genBashScript)
+import GenFishCompletions (genFishLineOption, genFishScript)
+import GenZshCompletions (genZshScript, getZshOptStr)
+import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser
-import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast)
+import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
 import Test.Tasty
 import Test.Tasty.ExpectedFailure
 import Test.Tasty.Golden (goldenVsString)
 import Test.Tasty.HUnit
-import Test.Tasty.Hedgehog
-import Text.ParserCombinators.ReadP
-import Text.Printf
+import Test.Tasty.Hedgehog (testProperty)
+import Text.ParserCombinators.ReadP (readP_to_S)
 import Utils (getMostFrequent)
 
 main =

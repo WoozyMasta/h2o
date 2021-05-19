@@ -4,9 +4,8 @@ module HelpParser where
 
 import qualified Data.List as List
 import Debug.Trace (trace)
-import Layout (getOptionDescriptionPairsFromLayout)
 import Text.ParserCombinators.ReadP
-import Utils (getParagraph, debugMsg)
+import Utils (debugMsg)
 
 data Opt = Opt
   { _names :: [OptName],
@@ -138,7 +137,7 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 optArgs :: ReadP String
 optArgs = do
-  _ <- char '[' <++ pure ' '   -- for cases such as --cs[=STR]
+  _ <- char '[' <++ pure ' ' -- for cases such as --cs[=STR]
   singleSpace +++ char '='
   args <- sepBy1 argWord argSep
   return (List.intercalate "," args)
@@ -276,29 +275,8 @@ parse s = List.nub . concat $ results
     pairs = map fst xs
     results = [(\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) $ map fst $ readP_to_S (optPart descStr) optStr | (optStr, descStr) <- pairs]
 
-parseMany :: String -> [Opt]
-parseMany "" = []
-parseMany s = List.nub . concat $ results
-  where
-    pairs = preprocessAll s
-    results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]
-
 preprocessAllFallback :: String -> [(String, String)]
 preprocessAllFallback "" = []
 preprocessAllFallback s = case readP_to_S (preprocessor <++ fallback) s of
   [] -> []
   (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAllFallback rest
-
-preprocessAll :: String -> [(String, String)]
-preprocessAll content = res
-  where
-    xs = lines content
-    may = getOptionDescriptionPairsFromLayout content
-    res = case may of
-      Just (layoutResults, droppedIdxRanges) ->
-        layoutResults ++ fallbackResults
-        where
-          paragraphs = map (getParagraph xs) droppedIdxRanges
-          fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
-      Nothing ->
-        trace "[warning] ignore layout" $ preprocessAllFallback content

@@ -10,8 +10,10 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Data.String.Utils (join, lstrip, rstrip, split, strip)
 import Debug.Trace (trace, traceShow, traceShowId)
+import HelpParser (Opt, optPart, parse, preprocessAllFallback)
+import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
-import Utils (convertTabsToSpaces, debugMsg, fromRanges, getMostFrequent, getMostFrequentWithCount, smartUnwords, toRanges)
+import Utils (convertTabsToSpaces, debugMsg, fromRanges, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -208,16 +210,20 @@ getOptionDescriptionPairsFromLayout content
 
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
-    linewidths = map (length . (xs !! )) descLineNumsWithoutOption
+    linewidths = map (length . (xs !!)) descLineNumsWithoutOption
     descriptionLineWidthMax = debugMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
 
     -- The line must be long when description starts at the option line and continues to the next line.
     -- Here I mean "long" by the
+    isOptionAndDescriptionLine idx =
+      ((idx + 1) `Set.notMember` descLineNumsWithoutOptionSet)
+        || (length (xs !! idx) + 5 > descriptionLineWidthMax)
+        || (not . null . parse $ (xs !! idx))
+
     descLineNumsWithOption =
-      [idx | idx <- optLineNums,
-        isWordStartingAround 2 offset (xs !! idx),
-        ((idx + 1) `Set.notMember` descLineNumsWithoutOptionSet) || (length (xs !! idx) + 5 > descriptionLineWidthMax)]
+      [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
+      ]
     descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
     (quartets, dropped) = debugMsg "quartets" $ toConsecutiveRangeQuartets optLineNums descLineNums
@@ -339,3 +345,24 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
   where
     ys = take (rowTo - rowFrom) (drop rowFrom xs)
     zs = map (drop idxCol) ys
+
+preprocessAll :: String -> [(String, String)]
+preprocessAll content = res
+  where
+    xs = lines content
+    may = getOptionDescriptionPairsFromLayout content
+    res = case may of
+      Just (layoutResults, droppedIdxRanges) ->
+        layoutResults ++ fallbackResults
+        where
+          paragraphs = map (getParagraph xs) droppedIdxRanges
+          fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
+      Nothing ->
+        trace "[warning] ignore layout" $ preprocessAllFallback content
+
+parseMany :: String -> [Opt]
+parseMany "" = []
+parseMany s = List.nub . concat $ results
+  where
+    pairs = preprocessAll s
+    results = [((\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) . map fst . readP_to_S (optPart descStr)) optStr | (optStr, descStr) <- pairs, (optStr, descStr) /= ("", "")]

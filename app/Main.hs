@@ -1,15 +1,19 @@
 module Main where
 
 import qualified Data.List as List
-import Data.Semigroup ((<>))
 import qualified Data.Maybe as Maybe
-import GenBashCompletions
+import Data.Semigroup ((<>))
+import GenBashCompletions (genBashScript)
 import GenFishCompletions
-import GenZshCompletions
-import HelpParser
-import Layout (getOptionDescriptionPairsFromLayout)
+  ( genFishLineSubcommand,
+    genFishScript,
+    genFishScriptUnderSubcommand,
+  )
+import GenZshCompletions (genZshScript)
+import HelpParser (Opt)
+import Layout (getOptionDescriptionPairsFromLayout, parseMany, preprocessAll)
 import Options.Applicative
-import Subcommand
+import Subcommand (Subcommand, parseSubcommand)
 import Utils (convertTabsToSpaces)
 
 data Config = Config
@@ -94,7 +98,7 @@ run (Config f shell name subname isParsing isConvertingTabsToSpaces isTestingLay
         | otherwise = genSubcommandOptScript name subname opts
   putStr s
   where
-    formatStringPairs = unlines . map (\(a,b) -> unlines [a, b])
+    formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
 
 genOptScript :: String -> String -> [Opt] -> String
 genOptScript "fish" = genFishScript
