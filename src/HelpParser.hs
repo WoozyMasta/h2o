@@ -268,8 +268,8 @@ optPart = do
   eof
   return (names, args)
 
-parse :: String -> [Opt]
-parse s = List.nub . concat $ results
+parseLine :: String -> [Opt]
+parseLine s = List.nub . concat $ results
   where
     -- thanks to lazy evaluation, desc is NOT evaluated when xs == []
     -- so don't worry about calling (head xs).

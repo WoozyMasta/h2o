@@ -22,9 +22,9 @@ main =
   defaultMain $
     testGroup
       "Tests"
-      [optNameTests, propertyTests, currentTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
+      [optNameTests, propertyTests, outdatedTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
 
-currentTests =
+outdatedTests =
   testGroup
     "\n ============= unit tests against parse  ============= "
     [ test_parser "--help   baba keke" (["--help"], "", "baba keke"),
@@ -38,11 +38,9 @@ currentTests =
       test_parser "-o,--out ARG:\n   baba" (["-o", "--out"], "ARG", "baba"),
       test_parser "-o <ARG1, ARG2>   baba" (["-o"], "<ARG1, ARG2>", "baba"),
       test_parser "-o <ARG1>,<ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
-      test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
       test_parser "-o arg --output arg    baba" (["-o", "--output"], "arg", "baba"),
-      test_parser "-o{arg} --output{arg}    baba" (["-o", "--output"], "{arg}", "baba"),
       test_parser "-o=ARG   baba" (["-o"], "ARG", "baba"),
-      test_parserMult
+      test_parseMany
         "--out=ARG[,ARG2] baba"
         [(["--out"], "ARG", "baba"), (["--out"], "ARG,ARG2", "baba")],
       test_parser "--out, -o ARG    baba" (["--out", "-o"], "ARG", "baba"),
@@ -88,18 +86,18 @@ currentTests =
         " -p PATH, --prefix PATH\n           Full path to environment location"
         (["-p", "--prefix"], "PATH", "Full path to environment location"),
       ---- minimap2 ----
-      test_parserMult
+      test_parseMany
         "--cs[=STR]   output the cs tag; STR is 'short' (if absent) or 'long' [none]"
         [ (["--cs"], "", "output the cs tag; STR is 'short' (if absent) or 'long' [none]"),
           (["--cs"], "STR", "output the cs tag; STR is 'short' (if absent) or 'long' [none]")
         ],
-      test_parserMult
+      test_parseMany
         " -O INT[,INT] gap open penalty [4,24]"
         [ (["-O"], "INT", "gap open penalty [4,24]"),
           (["-O"], "INT,INT", "gap open penalty [4,24]")
         ],
       ---- stack ----
-      test_parserMult
+      test_parseMany
         "--[no-]dump-logs         Enable/disable dump the build output logs"
         [ (["--dump-logs"], "", "Enable/disable dump the build output logs"),
           (["--no-dump-logs"], "", "Enable/disable dump the build output logs")
@@ -108,7 +106,7 @@ currentTests =
       test_parser
         "-o{Directory}\n       Set Output directory"
         (["-o"], "{Directory}", "Set Output directory"),
-      test_parserMult
+      test_parseMany
         "-si[{name}] : read data from stdin"
         [(["-si"], "", "read data from stdin"), (["-si"], "{name}", "read data from stdin")],
       ---- youtube-dl ---
@@ -127,13 +125,13 @@ currentTests =
         " -template_type <String, `coding', `coding_and_optimal', `optimal'>\n    Discontiguous MegaBLAST template type"
         (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>", "Discontiguous MegaBLAST template type"),
       ---- readseq ----
-      test_parserMult
+      test_parseMany
         " -wid[th]=#            sequence line width"
         [(["-wid"], "#", "sequence line width"), (["-width"], "#", "sequence line width")],
       test_parser
         "-extract=1000..9999  * extract all features, sequence from given base range"
         (["-extract"], "1000..9999", "* extract all features, sequence from given base range"),
-      test_parserMult
+      test_parseMany
         "-feat[ures]=exon,CDS...   extract sequence of selected features"
         [(["-feat"], "exon,CDS...", "extract sequence of selected features"), (["-features"], "exon,CDS...", "extract sequence of selected features")],
       ---- bowtie2 ----
@@ -150,7 +148,7 @@ currentTests =
       test_parser
         "-d STR:STR\n         only include reads with tag STR and associated value STR [null]"
         (["-d"], "STR:STR", "only include reads with tag STR and associated value STR [null]"),
-      test_parserMult
+      test_parseMany
         " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
         [ (["--input-fmt-option"], "OPT", "Specify a single input file format option in the form"),
           (["--input-fmt-option"], "OPT=VAL", "Specify a single input file format option in the form")
@@ -159,7 +157,7 @@ currentTests =
         "-@, --threads INT\n           Number of additional threads to use [0]"
         (["-@", "--threads"], "INT", "Number of additional threads to use [0]"),
       ---- bcftools ----
-      test_parserMult
+      test_parseMany
         "-S, --samples-file [^]<file>   file of samples to annotate (or exclude with \"^\" prefix)"
         [ (["-S", "--samples-file"], "<file>", "file of samples to annotate (or exclude with \"^\" prefix)"),
           (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
@@ -176,70 +174,9 @@ currentTests =
         (["--tmpl"], "file=repl", "Copy file to repl."),
       test_parser
         " --tmux (Long beta testing)       Use tmux for output."
-        (["--tmux"], "(Long beta testing)", "Use tmux for output.")
-    ]
-
-unsupportedCases :: TestTree
-unsupportedCases =
-  expectFail $
-    testGroup
-      "\n ============= Unsupported corner cases parse fail ============= "
-      [ -- BAD case illustrated in docopt
-        test_parser "--verbose MORE text." (["--verbose"], "MORE", "text."),
-        ---- 7z --help ----
-        test_parserMult
-          " -i[r[-|0]]{@listfile|!wildcard} : Include filenames"
-          [(["-i"], "{@listfile|!wildcard}", "Include filenames"), (["-ir"], "{@listfile|!wildcard}", "Include filenames")],
-        ---- bcftools ----
-        test_parser
-          "-s, --samples [^]<list>       comma separated list of samples to include (or exclude with \"^\" prefix)"
-          (["-s", "--samples"], "[^]<list>", "comma separated list of samples to include (or exclude with \"^\" prefix)"),
-        test_parserMult
-          "-h/H, --header-only/--no-header     print the header only/suppress the header in VCF output"
-          [(["-h", "--header-only"], "", "print the header only"), (["-H", "--no-header"], "", "suppress the header in VCF output")],
-        test_parser
-          "--ploidy <assembly>[?]      predefined ploidy, 'list' to print available settings, append '?' for details"
-          (["--ploidy"], "<assembly>[?]", "predefined ploidy, 'list' to print available settings, append '?' for details"),
-        test_parser
-          " -g, --gvcf <int>,[...]          group non-variant sites into gVCF blocks by minimum per-sample DP"
-          (["-g", "--gvcf"], "<int>,[...]", "group non-variant sites into gVCF blocks by minimum per-sample DP"),
-        ---- parallel ----
-        test_parser
-          "       --line-buffer\n       --lb\n           Buffer output on line basis. --group will keep the output together for a whole job."
-          (["--line-buffer", "--lb"], "", "Buffer output on line basis. --group will keep the output together for a whole job."),
-        ---- bwa -----
-        test_parserMult
-          "-I FLOAT[,FLOAT[,INT[,INT]]]\n     Specify  the  mean"
-          [(["-I"], "FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT", "Specify  the  mean"), (["-I"], "FLOAT,FLOAT,INT,INT", "Specify  the  mean")],
-        ---- blastn ----
-        test_parser
-          " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n         Task to execute"
-          (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>", "Task to execute"),
-        test_parser
-          " -window_size <Integer, >=0>\n      Multiple hits window size, use 0 to specify 1-hit algorithm"
-          (["-window_size"], "<Integer, >=0>", "Multiple hits window size, use 0 to specify 1-hit algorithm"),
-        ---- octopus ----
-        test_parser
-          " --inactive-flank-scoring arg (=1)     Disables additional calculation"
-          (["--inactive-flank-scoring"], "arg", "Disables additional calculation"),
-        ---- delly ----
-        test_parserMult
-          "-o [ --outfile ] arg (=\"sv.bcf\")   SV BCF output file"
-          [(["-o"], "arg (=\"sv.bcf\")", "SV BCF output file"), (["-o", "--outfile"], "arg (=\"sv.bcf\")", "SV BCF output file")],
-        ---- fastqc ----
-        test_parserMult
-          "    -c              Specifies a non-default file which contains the list of\n\
-          \    --contaminants  contaminants to screen overrepresented sequences against.\n\
-          \                    The file must contain sets of named contaminants in the\n\
-          \                    form name[tab]sequence.  Lines prefixed with a hash will\n\
-          \                    be ignored."
-          [(["-c", "--contaminants"], "", "Specifies a non-default file which contains the list of contaminants to screen overrepresented sequences against.")]
-      ]
-
-devTests =
-  testGroup
-    "\n ============= tests against parseMany  ============= "
-    [ test_parseMany
+        (["--tmux"], "(Long beta testing)", "Use tmux for output."),
+      ----------------
+      test_parseMany
         "--help   baba\n    -i <file>, --input=<file>   keke"
         [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
@@ -261,6 +198,190 @@ devTests =
         ]
     ]
 
+optPartTests =
+  testGroup
+    "\n ============= unit tests against parse  ============= "
+    [ test_optPart "--help   " (["--help"], ""),
+      test_optPart "-h,--help   " (["-h", "--help"], ""),
+      test_optPart "--           " (["--"], ""),
+      test_optPart "-h, --help   " (["-h", "--help"], ""),
+      test_optPart "-o ARG " (["-o"], "ARG"),
+      test_optPart "-o,--out ARG   " (["-o", "--out"], "ARG"),
+      test_optPart "-o,--out=ARG  " (["-o", "--out"], "ARG"),
+      test_optPart "-o,--out ARG\n" (["-o", "--out"], "ARG"),
+      test_optPart "-o,--out ARG:\n   " (["-o", "--out"], "ARG"),
+      test_optPart "-o <ARG1, ARG2>" (["-o"], "<ARG1, ARG2>"),
+      test_optPart "-o <ARG1>,<ARG2>" (["-o"], "<ARG1>,<ARG2>"),
+      test_optPart "-o<ARG1> <ARG2>" (["-o"], "<ARG1>,<ARG2>"),
+      test_optPart "-o arg --output arg " (["-o", "--output"], "arg"),
+      test_optPart "-o{arg} --output{arg} " (["-o", "--output"], "{arg}"),
+      test_optPart "-o=ARG  " (["-o"], "ARG"),
+      test_optPart "--out=ARG[,ARG2]  " (["--out"], "ARG[,ARG2]"),
+      test_optPart "--out, -o ARG    " (["--out", "-o"], "ARG"),
+      test_optPart "--out=ARG1:ARG2\n " (["--out"], "ARG1:ARG2"),
+      test_optPart
+        "-o FILE --out=FILE    without comma, with = sign"
+        (["-o", "--out"], "FILE"),
+      test_optPart
+        "-i <file>, --input <file>   with comma, without = sign"
+        (["-i", "--input"], "<file>"),
+      -- examples in the wild
+      test_optPart
+        "  -E, --show-ends          display $ at end of each line"
+        (["-E", "--show-ends"], ""),
+      test_optPart
+        " -h --help       Print this help file and exit"
+        (["-h", "--help"], ""),
+      test_optPart
+        "--min_length    Sets an artificial lower limit"
+        (["--min_length"], ""),
+      ---- gzip ----
+      test_optPart
+        "-S .suf --suffix .suf\n       "
+        (["-S", "--suffix"], ".suf"),
+      ---- tar ----
+      test_optPart
+        "-A, --catenate, --concatenate   "
+        (["-A", "--catenate", "--concatenate"], ""),
+      --
+      test_optPart
+        "-w, --line-width int             "
+        (["-w", "--line-width"], "int"),
+      test_optPart
+        "--stderr=e|a|c         "
+        (["--stderr"], "e|a|c"),
+      ---- rsync ----
+      test_optPart
+        "--remote-option=OPT, -M"
+        (["--remote-option", "-M"], "OPT"),
+      --
+      ---- conda ----
+      test_optPart
+        " -p PATH, --prefix PATH"
+        (["-p", "--prefix"], "PATH"),
+      ---- minimap2 ----
+      test_optPart
+        "--cs[=STR] "
+        (["--cs"], "STR"),
+      test_optPart
+        " -O INT[,INT]"
+        (["-O"], "INT"),
+      ---- 7z ----
+      test_optPart
+        "-o{Directory} "
+        (["-o"], "{Directory}"),
+      test_optPart
+        "-si[{name}] "
+        (["-si"], "[{name}]"),
+      ---- youtube-dl ---
+      test_optPart
+        "    -4, --force-ipv4"
+        (["-4", "--force-ipv4"], ""),
+      ---- stack ----
+      test_optPart
+        "--docker*"
+        (["--docker*"], ""),
+      test_optPart
+        "    -u, --username USERNAME"
+        (["-u", "--username"], "USERNAME"),
+      ---- blastn ----
+      test_optPart
+        " -template_type <String, `coding', `coding_and_optimal', `optimal'> \n "
+        (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>"),
+      ---- readseq ----
+      test_optPart
+        " -wid[th]=#            "
+        (["-wid"], "#"),
+      test_optPart
+        "-extract=1000..9999 "
+        (["-extract"], "1000..9999"),
+      test_optPart
+        "-feat[ures]=exon,CDS... "
+        (["-feat"], "exon,CDS..."),
+      ---- bowtie2 ----
+      test_optPart "-t/--time" (["-t", "--time"], ""),
+      test_optPart
+        " -p/--threads <int>"
+        (["-p", "--threads"], "<int>"),
+      test_optPart
+        "-F k:<int>,i:<int> "
+        (["-F"], "k:<int>,i:<int>"),
+      ---- samtools ----
+      test_optPart "-d STR:STR\n        " (["-d"], "STR:STR"),
+      test_optPart
+        " --input-fmt-option OPT[=VAL]"
+        (["--input-fmt-option"], "OPT[=VAL]"),
+      test_optPart "-@, --threads INT]" (["-@", "--threads"], "INT"),
+      ---- bcftools ----
+      test_optPart
+        "-S, --samples-file [^]<file>"
+        (["-S", "--samples-file"], "^<file>"),
+      ---- gridss ----
+      test_optPart "-o/--output" (["-o", "--output"], ""),
+      ---- minimap2 ----
+      test_optPart "-w INT\t " (["-w"], "INT"),
+      ---- bwa -----
+      test_optPart "-I FLOAT[,FLOAT[,INT[,INT]]]" (["-I"], "FLOAT[,FLOAT[,INT[,INT]]]"),
+      ---- parallel ----
+      test_optPart
+        "--tmpl file=repl   "
+        (["--tmpl"], "file=repl"),
+      test_optPart
+        " --tmux (Long beta testing) "
+        (["--tmux"], "(Long beta testing)")
+    ]
+
+unsupportedCases :: TestTree
+unsupportedCases =
+  expectFail $
+    testGroup
+      "\n ============= Unsupported corner cases parse fail ============= "
+      [ -- single-item parsing
+        test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
+        test_parser "-o{arg} --output{arg}    baba" (["-o", "--output"], "{arg}", "baba"),
+        ---- stack ----
+        test_optPartMany "--[no-]dump-logs" [(["--dump-logs"], ""), (["--no-dump-logs"], "")],
+        ---- 7z --help ----
+        test_optPart
+          " -i[r[-|0]]{@listfile|!wildcard}"
+          (["-i"], "[r[-|0]]{@listfile|!wildcard}"),
+        ---- bcftools ----
+        test_optPart
+          "-s, --samples [^]<list>"
+          (["-s", "--samples"], "[^]<list>"),
+        test_optPartMany "-h/H, --header-only/--no-header" [(["-h", "--header-only"], ""), (["-H", "--no-header"], "")],
+        test_optPart "--ploidy <assembly>[?]" (["--ploidy"], "<assembly>[?]"),
+        test_optPart " -g, --gvcf <int>,[...]" (["-g", "--gvcf"], "<int>,[...]"),
+        ---- blastn ----
+        test_optPart
+          " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n"
+          (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>"),
+        test_optPart
+          " -window_size <Integer, >=0>\n "
+          (["-window_size"], "<Integer, >=0>"),
+        ---- octopus ----
+        test_optPart
+          " --inactive-flank-scoring arg (=1)"
+          (["--inactive-flank-scoring"], "arg"),
+        ---- delly ----
+        test_optPart
+          "-o [ --outfile ] arg (=\"sv.bcf\") "
+          (["-o", "--outfile"], "arg"),
+        ---- fastqc ----
+        test_parser
+          "    -c              Specifies a non-default file which contains the list of\n\
+          \    --contaminants  contaminants to screen overrepresented sequences against.\n\
+          \                    The file must contain sets of named contaminants in the\n\
+          \                    form name[tab]sequence.  Lines prefixed with a hash will\n\
+          \                    be ignored."
+          (["-c", "--contaminants"], "", "Specifies a non-default file which contains the list of contaminants to screen overrepresented sequences against.")
+      ]
+
+devTests =
+  testGroup
+    "\n ============= tests against parseMany  ============= "
+    []
+
 optNameTests =
   testGroup
     "\n ============= Test optName ============= "
@@ -272,6 +393,17 @@ optNameTests =
         readP_to_S optName "-azvhP" @?= [(OptName "-azvhP" OldType, "")],
       testCase "optName (double dash alone)" $
         readP_to_S optName "-- " @?= [(OptName "--" DoubleDashAlone, "")]
+    ]
+
+layoutTests =
+  testGroup
+    "Test layouts"
+    [ testCase "tab width" $
+        getWidth "   \t          \t\t \t d" @?= 42,
+      testCase "tab width 2" $
+        getWidth "\t" @?= 8,
+      testCase "option location 1" $
+        getOptionLocations " \n\n  \t  --option here" @?= [(2, 10)]
     ]
 
 miscTests =
@@ -422,38 +554,34 @@ makeOpt names = Opt (map getOptName names)
       [(optname, _)] -> optname
       _ -> undefined
 
+test_optPart :: String -> ([String], String) -> TestTree
+test_optPart s (names, args) =
+  testCase s $ do
+    List.sort actual @?= expected
+  where
+    actual = map ((\(xs, y) -> (map _raw xs, y)) . fst) $ readP_to_S optPart s
+    expected = [(names, args)]
+
+test_optPartMany :: String -> [([String], String)] -> TestTree
+test_optPartMany s pairs =
+  testCase s $ do
+    actual @?= expected
+  where
+    actual = List.sort $ map ((\(xs, y) -> (map show xs, y)) . fst) $ readP_to_S optPart s
+    expected = List.sort pairs
+
 test_parser :: String -> ([String], String, String) -> TestTree
 test_parser s (names, args, desc) =
   testCase s $ do
-    List.sort actual @?= expected
+    actual @?= expected
   where
-    actual = parseMany s
+    actual = List.sort $ parseMany s
     expected = List.sort [makeOpt names args desc]
-
-test_parserMult :: String -> [([String], String, String)] -> TestTree
-test_parserMult s tuples =
-  testCase s $ do
-    List.sort actual @?= expected
-  where
-    actual = parseMany s
-    expected = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]
 
 test_parseMany :: String -> [([String], String, String)] -> TestTree
 test_parseMany s tuples =
   testCase s $ do
-    List.sort actual @?= expected
+    actual @?= expected
   where
-    actual = parseMany s
+    actual = List.sort $ parseMany s
     expected = List.sort [makeOpt names args desc | (names, args, desc) <- tuples]
-
-layoutTests :: TestTree
-layoutTests =
-  testGroup
-    "Test layouts"
-    [ testCase "tab width" $
-        getWidth "   \t          \t\t \t d" @?= 42,
-      testCase "tab width 2" $
-        getWidth "\t" @?= 8,
-      testCase "option location 1" $
-        getOptionLocations " \n\n  \t  --option here" @?= [(2, 10)]
-    ]

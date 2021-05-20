@@ -10,7 +10,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Data.String.Utils (join, lstrip, rstrip, split, strip)
 import Debug.Trace (trace, traceShow, traceShowId)
-import HelpParser (Opt (..), optPart, parse, preprocessAllFallback)
+import HelpParser (Opt (..), optPart, parseLine, preprocessAllFallback)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
 import Utils (convertTabsToSpaces, debugMsg, fromRanges, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
@@ -219,7 +219,7 @@ getOptionDescriptionPairsFromLayout content
     isOptionAndDescriptionLine idx =
       ((idx + 1) `Set.notMember` descLineNumsWithoutOptionSet)
         || (length (xs !! idx) + 5 > descriptionLineWidthMax)
-        || (not . null . parse $ (xs !! idx))
+        || (not . null . parseLine $ (xs !! idx))
 
     descLineNumsWithOption =
       [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
