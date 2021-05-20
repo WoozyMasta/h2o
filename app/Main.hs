@@ -23,7 +23,6 @@ data Config = Config
     subname :: String,
     isParsingSubcommand :: Bool,
     isConvertingTabsToSpaces :: Bool,
-    isTestingLayout :: Bool,
     isPreprocessOnly :: Bool
   }
 
@@ -65,10 +64,6 @@ config =
           <> help "Convert tabs to spaces"
       )
     <*> switch
-      ( long "test-layout"
-          <> help "Test layout-based splitting"
-      )
-    <*> switch
       ( long "debug"
           <> help "Run preprocessing only"
       )
@@ -85,12 +80,11 @@ main = run =<< execParser opts
         )
 
 run :: Config -> IO ()
-run (Config f shell name subname isParsing isConvertingTabsToSpaces isTestingLayout isPreprocessOnly) = do
+run (Config f shell name subname isParsing isConvertingTabsToSpaces isPreprocessOnly) = do
   content <- readFile f
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
-        | isTestingLayout = formatStringPairs . fst . Maybe.fromJust $ getOptionDescriptionPairsFromLayout content
         | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
         | isPreprocessOnly = formatStringPairs $ preprocessAll content
         | isParsing = genSubcommandScript name subcommands
