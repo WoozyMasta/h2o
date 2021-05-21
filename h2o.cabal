@@ -5,13 +5,13 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           h2o
-version:        0.1.0.1
+version:        0.1.0.2
 description:    Please see the README on GitHub at <https://github.com/yamaton/h2o#readme>
 homepage:       https://github.com/yamaton/h2o#readme
 bug-reports:    https://github.com/yamaton/h2o/issues
 author:         Yamato Matsuoka
 maintainer:     yamato.matsuoka@tetradresearch.com
-copyright:      2021 Author name here
+copyright:      2021 Yamato Matsuoka
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -48,7 +48,9 @@ executable h2o
       Paths_h2o
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -static -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=bfd
+  cc-options: -static
+  ld-options: -static -pthread
   build-depends:
       MissingH
     , base >=4.7 && <5

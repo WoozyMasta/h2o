@@ -1,13 +1,13 @@
 name:                h2o
-version:             0.1.0.1
+version:             0.1.0.2
 github:              "yamaton/h2o"
 license:             BSD3
 author:              "Yamato Matsuoka"
 maintainer:          "yamato.matsuoka@tetradresearch.com"
-copyright:           "2021 Author name here"
+copyright:           "2021 Yamato Matsuoka"
 
 extra-source-files:
-- README.md
+  - README.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -16,44 +16,52 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/yamaton/h2o#readme>
+description: Please see the README on GitHub at <https://github.com/yamaton/h2o#readme>
 
 dependencies:
-- base >= 4.7 && < 5
-- containers
-- MissingH
-- extra
+  - base >= 4.7 && < 5
+  - containers
+  - MissingH
+  - extra
 
 library:
   source-dirs: src
 
 executables:
   h2o:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs: app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -O2
+      - -static
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -optl-fuse-ld=bfd
+    cc-options:
+      - -static
+    ld-options:
+      - -static
+      - -pthread
     dependencies:
-    - h2o
-    - optparse-applicative
-    - filepath
+      - h2o
+      - optparse-applicative
+      - filepath
 
 tests:
   h2o-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - h2o
-    - tasty
-    - tasty-hunit
-    - hedgehog
-    - tasty-hedgehog
-    - tasty-expected-failure
-    - tasty-golden
-    - utf8-string
+      - h2o
+      - tasty
+      - tasty-hunit
+      - hedgehog
+      - tasty-hedgehog
+      - tasty-expected-failure
+      - tasty-golden
+      - utf8-string
