@@ -1,9 +1,9 @@
-name:                help-text-parser
-version:             0.1.0.0
-github:              "githubuser/help-text-parser"
+name:                h2o
+version:             0.1.0.1
+github:              "yamaton/h2o"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
+author:              "Yamato Matsuoka"
+maintainer:          "yamato.matsuoka@tetradresearch.com"
 copyright:           "2021 Author name here"
 
 extra-source-files:
@@ -16,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/help-text-parser#readme>
+description:         Please see the README on GitHub at <https://github.com/yamaton/h2o#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -28,7 +28,7 @@ library:
   source-dirs: src
 
 executables:
-  help-text-parser-exe:
+  h2oc:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -36,11 +36,11 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - help-text-parser
+    - h2o
     - optparse-applicative
 
 tests:
-  help-text-parser-test:
+  h2o-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -48,7 +48,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - help-text-parser
+    - h2o
     - tasty
     - tasty-hunit
     - hedgehog

@@ -4,15 +4,15 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3da97dc6116de0a3144ee05f90813a87e658ebb657b06be82c758ac80da57dc1
+-- hash: d9db95381cec03d007bcc07c76065d4d12b8546789d266615630101ae81becea
 
-name:           help-text-parser
-version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/help-text-parser#readme>
-homepage:       https://github.com/githubuser/help-text-parser#readme
-bug-reports:    https://github.com/githubuser/help-text-parser/issues
-author:         Author name here
-maintainer:     example@example.com
+name:           h2o
+version:        0.1.0.1
+description:    Please see the README on GitHub at <https://github.com/yamaton/h2o#readme>
+homepage:       https://github.com/yamaton/h2o#readme
+bug-reports:    https://github.com/yamaton/h2o/issues
+author:         Yamato Matsuoka
+maintainer:     yamato.matsuoka@tetradresearch.com
 copyright:      2021 Author name here
 license:        BSD3
 license-file:   LICENSE
@@ -22,7 +22,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/help-text-parser
+  location: https://github.com/yamaton/h2o
 
 library
   exposed-modules:
@@ -34,7 +34,7 @@ library
       Subcommand
       Utils
   other-modules:
-      Paths_help_text_parser
+      Paths_h2o
   hs-source-dirs:
       src
   build-depends:
@@ -44,10 +44,10 @@ library
     , extra
   default-language: Haskell2010
 
-executable help-text-parser-exe
+executable h2o
   main-is: Main.hs
   other-modules:
-      Paths_help_text_parser
+      Paths_h2o
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -56,15 +56,15 @@ executable help-text-parser-exe
     , base >=4.7 && <5
     , containers
     , extra
-    , help-text-parser
+    , h2o
     , optparse-applicative
   default-language: Haskell2010
 
-test-suite help-text-parser-test
+test-suite h2o-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_help_text_parser
+      Paths_h2o
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -74,7 +74,7 @@ test-suite help-text-parser-test
     , containers
     , extra
     , hedgehog
-    , help-text-parser
+    , h2o
     , tasty
     , tasty-expected-failure
     , tasty-golden
