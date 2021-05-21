@@ -118,7 +118,7 @@ outdatedTests =
       ---- stack ----
       test_parser
         "--docker*                Run 'stack --docker-help' for details"
-        (["--docker*"], "", "Run 'stack --docker-help' for details"),
+        (["--docker"], "", "Run 'stack --docker-help' for details"),
       test_parser
         "    -u, --username USERNAME              Login with this account ID"
         (["-u", "--username"], "USERNAME", "Login with this account ID"),
@@ -265,10 +265,10 @@ optPartTests =
       ---- minimap2 ----
       test_optPart
         "--cs[=STR] "
-        (["--cs"], "STR"),
+        (["--cs"], "[STR]"),
       test_optPart
         " -O INT[,INT]"
-        (["-O"], "INT"),
+        (["-O"], "INT[,INT]"),
       ---- 7z ----
       test_optPart
         "-o{Directory} "
@@ -283,7 +283,7 @@ optPartTests =
       ---- stack ----
       test_optPart
         "--docker*"
-        (["--docker*"], ""),
+        (["--docker"], ""),  -- optWord takes care of this
       test_optPart
         "    -u, --username USERNAME"
         (["-u", "--username"], "USERNAME"),
@@ -300,7 +300,7 @@ optPartTests =
         (["-extract"], "1000..9999"),
       test_optPart
         "-feat[ures]=exon,CDS... "
-        (["-feat"], "exon,CDS..."),
+        (["--feat[ures]"], "exon,CDS..."),
       ---- bowtie2 ----
       test_optPart "-t/--time" (["-t", "--time"], ""),
       test_optPart
@@ -314,11 +314,11 @@ optPartTests =
       test_optPart
         " --input-fmt-option OPT[=VAL]"
         (["--input-fmt-option"], "OPT[=VAL]"),
-      test_optPart "-@, --threads INT]" (["-@", "--threads"], "INT"),
+      test_optPart "-@, --threads INT" (["-@", "--threads"], "INT"),
       ---- bcftools ----
       test_optPart
         "-S, --samples-file [^]<file>"
-        (["-S", "--samples-file"], "^<file>"),
+        (["-S", "--samples-file"], "[^]<file>"),
       ---- gridss ----
       test_optPart "-o/--output" (["-o", "--output"], ""),
       ---- minimap2 ----
