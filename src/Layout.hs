@@ -71,7 +71,7 @@ getOptionOffsets s = case (short, long) of
   (Nothing, Nothing) -> []
   (Nothing, Just y) -> [y]
   (Just x, Nothing) -> [x]
-  (Just x, Just y) -> [x, y]
+  (Just x, Just y) -> if x == y then [x] else [x, y]
   where
     long = getLongOptionOffset s
     short = getShortOptionOffset s
@@ -129,9 +129,11 @@ getDescriptionOffset s =
     (p, Nothing) -> trace "Descriptions never appear in the lines with options" $ fmap fst p
     (Just (x1, c1), Just (x2, c2))
       | x1 == x2 -> Just x1
-      | otherwise -> traceMessage Nothing
+      | c1 <= 3 && 3 < c2 -> debug Just x2
+      | c2 <= 3 && 3 < c1 -> debug Just x1
+      | otherwise -> debug Nothing
       where
-        traceMessage = trace (printf "[WARNING] Disagreement (x1, c1, x2, c2) = (%d, %d, %d, %d)" x1 c1 x2 c2)
+        debug = debugShow "[WARNING] Disagreement (x1, c1, x2, c2) =" (x1, c1, x2, c2)
 
 -- | Estimate offset of description part from non-option lines
 -- | Returns Just (offset size, match count) if matches
@@ -226,6 +228,7 @@ getOptionDescriptionPairsFromLayout content
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
     optLineNums = debugShow "optLocsExcluded:" optLocsExcluded $ debugMsg "optLineNums" $ map fst optLocs
+    optLineNumsSet = Set.fromList optLineNums
 
     descriptionOffsetMay = getDescriptionOffset s
     offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay
@@ -238,10 +241,16 @@ getOptionDescriptionPairsFromLayout content
 
     -- The line must be long when description starts at the option line and continues to the next line.
     -- Here I mean "long" by the
-    isOptionAndDescriptionLine idx =
-      ((idx + 1) `Set.notMember` descLineNumsWithoutOptionSet)
-        || (length (xs !! idx) + 5 > descriptionLineWidthMax)
-        || (not . null . parseLine $ (xs !! idx))
+    isOptionAndDescriptionLine idx
+      | not (isOptionLine idx) = False
+      | otherwise =
+        (not (isOptionLine (idx + 1)) && not (isDescriptionOnly (idx + 1)))
+          || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descriptionLineWidthMax))
+          || (not . null . parseLine $ (xs !! idx))
+          || isOptionAndDescriptionLine (idx + 1)
+      where
+        isOptionLine idx = idx `Set.member` optLineNumsSet
+        isDescriptionOnly idx = idx `Set.member` descLineNumsWithoutOptionSet
 
     descLineNumsWithOption =
       [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
