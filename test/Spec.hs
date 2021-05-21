@@ -283,7 +283,7 @@ optPartTests =
       ---- stack ----
       test_optPart
         "--docker*"
-        (["--docker"], ""),  -- optWord takes care of this
+        (["--docker"], ""), -- optWord takes care of this
       test_optPart
         "    -u, --username USERNAME"
         (["-u", "--username"], "USERNAME"),
@@ -385,8 +385,8 @@ devTests =
   testGroup
     "\n ============= tests against parseMany  ============= "
     []
-optNameTests :: TestTree
 
+optNameTests :: TestTree
 optNameTests =
   testGroup
     "\n ============= Test optName ============= "

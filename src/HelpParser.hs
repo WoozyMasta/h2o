@@ -45,9 +45,6 @@ alphChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 alphanumChars :: [Char]
 alphanumChars = alphChars ++ digitChars
 
-extraSymbolChars :: [Char]
-extraSymbolChars = "+-_!?@."
-
 dash :: ReadP Char
 dash = satisfy (== '-')
 
@@ -61,7 +58,7 @@ isAlphanum :: Char -> Bool
 isAlphanum c = c `elem` alphanumChars
 
 isAllowedOptChar :: Char -> Bool
-isAllowedOptChar c = c `elem` (alphanumChars ++ extraSymbolChars)
+isAllowedOptChar c = c `elem` (alphanumChars ++ "+-_!?@.")
 
 newline :: ReadP Char
 newline = char '\n'
@@ -90,9 +87,6 @@ argWordCurlyBracketed = argWordBracketedHelper '{' '}'
 
 argWordParenthesized :: ReadP String
 argWordParenthesized = argWordBracketedHelper '(' ')'
-
-argWord :: ReadP String
-argWord = argWordBare
 
 description :: ReadP String
 description = do
@@ -143,7 +137,7 @@ optArgs :: ReadP String
 optArgs = do
   _ <- char '[' <++ pure ' ' -- for cases such as --cs[=STR]
   _ <- singleSpace +++ char '='
-  args <- sepBy1 argWord argSep
+  args <- sepBy1 argWordBare argSep
   return (List.intercalate "," args)
 
 optArgsInBraket :: ReadP String
@@ -263,7 +257,7 @@ optPart = do
   let names = map fst pairs
   let args = case filter (not . null) (map snd pairs) of
         [] -> ""
-        xs -> head xs
+        x : _ -> x
   skipSpaces
   eof
   return (names, args)

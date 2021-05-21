@@ -400,7 +400,7 @@ parseMany s = List.nub . concat $ results
   where
     pairs = preprocessAll s
     results =
-      [ (\xs -> if null xs then trace ("[warning] Failed pair: " ++ show (optStr, descStr)) xs else xs) $
+      [ (\xs -> if null xs then debugShow "[warning] Failed pair:" (optStr, descStr) xs else xs) $
           map ((\(a, b) -> Opt a b descStr) . fst) $
             readP_to_S optPart optStr
         | (optStr, descStr) <- pairs,
