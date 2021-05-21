@@ -56,11 +56,11 @@ truncateAfterPeriod line
     (xs, ys) = span (\w -> last w /= '.') (words line)
     zs = case ys of
       [] -> xs
-      s : _ -> if criteria then xs ++ [s, extra] else xs ++ [s]
+      s : ss -> if criteria then xs ++ [s, extra] else xs ++ [s]
         where
           len = length s
           criteria = len >= 3 && s !! (len - 2) /= '.' && s !! (len - 3) == '.' -- like "e.g."
-          extra = truncateAfterPeriod (unwords ys)
+          extra = truncateAfterPeriod (unwords ss)
 
 genFishLineSubcommand :: Command -> Subcommand -> String
 genFishLineSubcommand cmd (Subcommand subcmd desc) = line
