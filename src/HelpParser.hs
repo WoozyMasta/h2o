@@ -276,6 +276,17 @@ parseLine s = List.nub . concat $ results
         | (optStr, descStr) <- pairs
       ]
 
+-- | Parse when options+args and description are given separately
+-- Use optPart directly, but go back to preprocessor when
+-- the parse fails. Failure happens mostly when the option name
+-- contains [] such as `--[no-]copy`.
+parseWithOptPart :: String -> String -> [Opt]
+parseWithOptPart optStr descStr
+  | (not . null) res = map ((\(a, b) -> Opt a b descStr) . fst) res
+  | otherwise = trace "[warning] optPart fallback" $ parseLine (optStr ++ "   " ++ descStr) -- fallback
+  where
+    res = readP_to_S optPart optStr
+
 preprocessAllFallback :: String -> [(String, String)]
 preprocessAllFallback "" = []
 preprocessAllFallback s = case readP_to_S (preprocessor <++ fallback) s of
