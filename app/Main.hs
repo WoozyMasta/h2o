@@ -74,7 +74,7 @@ main = execParser opts >>= run
       info
         (config <**> helper)
         ( fullDesc
-            <> progDesc "Parse manpage/help and generate shell completion script"
+            <> progDesc "Parse help or manpage texts, extract command options, and generate shell completion scripts"
         )
 
 run :: Config -> IO ()
