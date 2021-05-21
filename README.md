@@ -14,7 +14,8 @@
 ## How to use
 
 ```
-h2o ./samples/h2o-help.txt --name h2o --shell fish
+h2o --help > ./h2o.txt
+h2o ./h2o.txt --name h2o --shell fish > h2o.fish
 ```
 
 
