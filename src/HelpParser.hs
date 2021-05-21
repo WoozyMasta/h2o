@@ -258,6 +258,7 @@ fallback = do
 --    "-o ARG1, --out=ARG2"
 optPart :: ReadP ([OptName], OptArg)
 optPart = do
+  skipSpaces
   pairs <- sepBy1 optNameArgPair optSep
   let names = map fst pairs
   let args = case filter (not . null) (map snd pairs) of
