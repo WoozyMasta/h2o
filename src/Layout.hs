@@ -13,7 +13,7 @@ import Debug.Trace (trace, traceShow, traceShowId)
 import HelpParser (Opt (..), optPart, parseLine, preprocessAllFallback)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
-import Utils (convertTabsToSpaces, debugMsg, fromRanges, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
+import Utils (convertTabsToSpaces, debugMsg, debugShow, fromRanges, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -55,24 +55,29 @@ getNonoptLocations :: String -> [Location]
 getNonoptLocations = _getNonblankLocationTemplate (not . startsWithDash)
 
 _getOffsetHelper :: (String -> [Location]) -> String -> Maybe Int
-_getOffsetHelper cond s = traceMessage res
+_getOffsetHelper getLocs s = traceMessage res
   where
-    locs = cond s
+    locs = getLocs s
     xs = map snd locs
     res = getMostFrequent xs
     droppedOptionLinesInfo = unlines [(printf "[Dropped] %03d: %s" r (lines s !! r) :: String) | (r, c) <- locs, Just c /= res]
     traceMessage = trace droppedOptionLinesInfo
 
--- | get presumed horizontal offset of options lines
-getOptionOffset :: String -> Maybe Int
-getOptionOffset = _getOffsetHelper getOptionLocations
+-- | get presumed horizontal offsets of options lines
+-- Here the number is plural as the short options and the long options
+-- can appear with different justifications (i.e. docker --help)
+getOptionOffsets :: String -> [Int]
+getOptionOffsets s = case (short, long) of
+  (Nothing, Nothing) -> []
+  (Nothing, Just y) -> [y]
+  (Just x, Nothing) -> [x]
+  (Just x, Just y) -> [x, y]
+  where
+    long = getLongOptionOffset s
+    short = getShortOptionOffset s
 
 ----------------------------------------
 -- For 3-pane layout (short-option   long-option   description)
-
--- | check if the layout appears 3-pane
-isThreePaneLayout :: String -> Bool
-isThreePaneLayout s = getOptionOffset s == getLongOptionOffset s
 
 -- | check if the string starts with -- possibly after spaces and tabs
 startsWithDoubleDash :: String -> Bool
@@ -83,13 +88,29 @@ startsWithDoubleDash s = case ss of
   where
     ss = dropWhile (`elem` " \t") s
 
+startsWithSingleDash :: String -> Bool
+startsWithSingleDash s = case ss of
+  "" -> False
+  [c] -> False
+  c1 : c2 : _ -> c1 == '-' && c2 /= '-'
+  where
+    ss = dropWhile (`elem` " \t") s
+
 -- | get location of long options
 getLongOptionLocations :: String -> [Location]
 getLongOptionLocations = _getNonblankLocationTemplate startsWithDoubleDash
 
+-- | get location of long options
+getShortOptionLocations :: String -> [Location]
+getShortOptionLocations = _getNonblankLocationTemplate startsWithSingleDash
+
 -- | get presumed horizontal offset of long options
 getLongOptionOffset :: String -> Maybe Int
 getLongOptionOffset = _getOffsetHelper getLongOptionLocations
+
+-- | get presumed horizontal offset of long options
+getShortOptionOffset :: String -> Maybe Int
+getShortOptionOffset = _getOffsetHelper getShortOptionLocations
 
 ----------------------------------------
 
@@ -119,8 +140,10 @@ descOffsetWithCountSimple s =
   assert ('\t' `notElem` s) res
   where
     locs = getNonoptLocations s
-    optionOffset = getOptionOffset s
-    cols = [x | (_, x) <- locs, Maybe.fromJust optionOffset + 3 <= x]
+    optionOffsets = getOptionOffsets s
+    -- optionOffsets must be non-empty as description offset is processed
+    -- AFTER option offset is settled.
+    cols = [x | (_, x) <- locs, List.maximum optionOffsets + 3 <= x]
     res = getMostFrequentWithCount cols
 
 -- | Estimate offset of description part from the lines with options
@@ -192,18 +215,17 @@ isSeparatedAtOffset n sep x
 -- line index ranges that is uncaught in the process.
 getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout content
-  | Maybe.isNothing descriptionOffsetMay || Maybe.isNothing optionOffsetMay = Nothing
+  | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
   | length optLineNums <= 3 = Nothing
   | otherwise = Just $ traceInfo (res, dropped)
   where
     s = convertTabsToSpaces 8 content
     xs = lines s
     sep = replicate 3 ' '
-    optionOffsetMay = getOptionOffset s
-    optOffset = debugMsg "Option offset:" $ Maybe.fromJust optionOffsetMay
+    optionOffsets = debugMsg "Option offsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
-    (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c == optOffset) optLocsCandidates
-    optLineNums = debugMsg "optLineNums" $ map fst optLocs
+    (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
+    optLineNums = debugShow "optLocsExcluded:" optLocsExcluded $ debugMsg "optLineNums" $ map fst optLocs
 
     descriptionOffsetMay = getDescriptionOffset s
     offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay

@@ -40,6 +40,9 @@ convertTabsToSpaces n s = unlines $ map convertLine $ lines s
 debugMsg :: (Show a) => String -> a -> a
 debugMsg msg x = trace (printf ("[debug] " ++ msg ++ " %s\n") (show x)) x
 
+debugShow :: (Show b) => String -> b -> a -> a
+debugShow msg var = trace (unwords ["[debug]", msg, show var] ++ "\n")
+
 traceIf :: (a -> Bool) -> (a -> String) -> a -> a
 traceIf check run x
   | check x = trace (run x) x
