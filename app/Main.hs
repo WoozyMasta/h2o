@@ -1,8 +1,5 @@
 module Main where
 
-import qualified Data.List as List
-import qualified Data.Maybe as Maybe
-import Data.Semigroup ((<>))
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
   ( genFishLineSubcommand,
@@ -11,20 +8,20 @@ import GenFishCompletions
   )
 import GenZshCompletions (genZshScript)
 import HelpParser (Opt)
-import Layout (getOptionDescriptionPairsFromLayout, parseMany, preprocessAll)
+import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (Subcommand, parseSubcommand)
 import System.FilePath (takeBaseName)
 import Utils (convertTabsToSpaces)
 
 data Config = Config
-  { input :: String,
-    shell :: String,
-    name :: String,
-    subname :: String,
-    isParsingSubcommand :: Bool,
-    isConvertingTabsToSpaces :: Bool,
-    isPreprocessOnly :: Bool
+  { _input :: String,
+    _shell :: String,
+    _name :: String,
+    _subname :: String,
+    _isParsingSubcommand :: Bool,
+    _isConvertingTabsToSpaces :: Bool,
+    _isPreprocessOnly :: Bool
   }
 
 config :: Parser Config

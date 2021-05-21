@@ -16,8 +16,8 @@ type Command = String
 escapeSpecialSymbols :: String -> String
 escapeSpecialSymbols s = List.foldl' f s symbols
   where
-      f s c = replace [c] ("\\" ++ [c]) s
-      symbols = "!?#$%&"
+    f acc c = replace [c] ("\\" ++ [c]) acc
+    symbols = "!?#$%&"
 
 genFishLineOption :: Command -> Opt -> String
 genFishLineOption cmd (Opt names arg desc) = line
@@ -49,17 +49,17 @@ toFlag OldType = "-o"
 toFlag _ = ""
 
 truncateAfterPeriod :: String -> String
-truncateAfterPeriod s
-  | ". " `isInfixOf` s = unwords zs
-  | otherwise = s
+truncateAfterPeriod line
+  | ". " `isInfixOf` line = unwords zs
+  | otherwise = line
   where
-    (xs, ys) = span (\w -> last w /= '.') (words s)
+    (xs, ys) = span (\w -> last w /= '.') (words line)
     zs = case ys of
       [] -> xs
-      y : ys -> if criteria then xs ++ [y, extra] else xs ++ [y]
+      s : _ -> if criteria then xs ++ [s, extra] else xs ++ [s]
         where
-          len = length y
-          criteria = len >= 3 && y !! (len - 2) /= '.' && y !! (len - 3) == '.' -- like "e.g."
+          len = length s
+          criteria = len >= 3 && s !! (len - 2) /= '.' && s !! (len - 3) == '.' -- like "e.g."
           extra = truncateAfterPeriod (unwords ys)
 
 genFishLineSubcommand :: Command -> Subcommand -> String

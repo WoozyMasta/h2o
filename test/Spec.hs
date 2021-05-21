@@ -18,12 +18,14 @@ import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Utils (getMostFrequent)
 
+main :: IO ()
 main =
   defaultMain $
     testGroup
       "Tests"
       [optNameTests, propertyTests, outdatedTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
 
+outdatedTests :: TestTree
 outdatedTests =
   testGroup
     "\n ============= unit tests against parse  ============= "
@@ -377,10 +379,12 @@ unsupportedCases =
           (["-c", "--contaminants"], "", "Specifies a non-default file which contains the list of contaminants to screen overrepresented sequences against.")
       ]
 
+devTests :: TestTree
 devTests =
   testGroup
     "\n ============= tests against parseMany  ============= "
     []
+optNameTests :: TestTree
 
 optNameTests =
   testGroup
@@ -395,6 +399,7 @@ optNameTests =
         readP_to_S optName "-- " @?= [(OptName "--" DoubleDashAlone, "")]
     ]
 
+layoutTests :: TestTree
 layoutTests =
   testGroup
     "Test layouts"
@@ -406,6 +411,7 @@ layoutTests =
         getOptionLocations " \n\n  \t  --option here" @?= [(2, 10)]
     ]
 
+miscTests :: TestTree
 miscTests =
   testGroup
     "\n ============ misc =============="
@@ -430,9 +436,10 @@ miscTests =
           "   hi               there   "
           @?= (3, 20),
       testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == Just (-4)" $
-        getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= Just (-4)
+        getMostFrequent [1 :: Int, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= Just (-4 :: Int)
     ]
 
+shellCompTests :: TestTree
 shellCompTests =
   testGroup
     "\n ============= Test Fish script generation ============"

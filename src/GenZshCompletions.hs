@@ -14,7 +14,7 @@ zshHeader :: Command -> String
 zshHeader cmd = printf "#compdef %s\n\n" cmd :: String
 
 getZshOptStr :: Opt -> String
-getZshOptStr (Opt optnames args desc) = case raws of
+getZshOptStr (Opt optnames _ desc) = case raws of
   [raw] -> printf "'%s[%s]'" raw quotedDesc :: String
   _ -> printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc :: String
   where
@@ -32,7 +32,7 @@ indent :: Int -> String -> String
 indent n s = replicate n ' ' ++ s
 
 genZshBodyOptions :: Command -> [Opt] -> String
-genZshBodyOptions cmd opts = res
+genZshBodyOptions _ opts = res
   where
     args = unlines (map (indent 4 . getZshOptStr) opts)
     containsOldStyle = elem OldType $ concatMap (map _type . _names) opts

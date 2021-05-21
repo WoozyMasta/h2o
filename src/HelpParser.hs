@@ -5,7 +5,6 @@ module HelpParser where
 import qualified Data.List as List
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
-import Utils (debugMsg)
 
 data Opt = Opt
   { _names :: [OptName],
@@ -27,7 +26,7 @@ instance Show Opt where
     show (names, args, desc)
 
 instance Show OptName where
-  show (OptName raw t) = show raw
+  show (OptName raw _) = show raw
 
 instance Ord OptName where
   (OptName raw1 t1) `compare` (OptName raw2 t2) = (raw1, t1) `compare` (raw2, t2)
@@ -37,13 +36,16 @@ instance Ord Opt where
 
 data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show, Ord)
 
+digitChars :: [Char]
 digitChars = "0123456789"
 
+alphChars :: [Char]
 alphChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 alphanumChars :: [Char]
 alphanumChars = alphChars ++ digitChars
 
+extraSymbolChars :: [Char]
 extraSymbolChars = "+-_!?@."
 
 dash :: ReadP Char
@@ -69,9 +71,9 @@ word = munch1 (`notElem` " \t\n")
 
 argWordBare :: ReadP String
 argWordBare = do
-  head <- satisfy (\c -> c `elem` alphanumChars ++ "\"'_^(#.[")
-  tail <- munch (\c -> c `elem` (alphanumChars ++ "\"'_:<>)+-*/|#.=[]"))
-  return (head : tail)
+  x <- satisfy (\c -> c `elem` alphanumChars ++ "\"'_^(#.[")
+  xs <- munch (\c -> c `elem` (alphanumChars ++ "\"'_:<>)+-*/|#.=[]"))
+  return (x : xs)
 
 argWordBracketedHelper :: Char -> Char -> ReadP String
 argWordBracketedHelper bra ket = do
@@ -99,11 +101,11 @@ description = do
 
 optWord :: ReadP String
 optWord = do
-  head <- alphanum
-  tail <- munch isAllowedOptChar
+  x <- alphanum
+  xs <- munch isAllowedOptChar
   -- For example docker run --help has "--docker*"
   _ <- char '*' <++ pure '*'
-  return (head : tail)
+  return (x : xs)
 
 longOptName :: ReadP OptName
 longOptName = do
@@ -116,7 +118,7 @@ doubleDash :: ReadP OptName
 doubleDash = do
   _ <- count 2 dash
   let res = OptName "--" DoubleDashAlone
-  singleSpace <++ pure 'x' -- dummy 'x'
+  _ <- singleSpace <++ pure 'x' -- dummy 'x'
   return res
 
 shortOptName :: ReadP OptName
@@ -129,9 +131,9 @@ shortOptName = do
 oldOptName :: ReadP OptName
 oldOptName = do
   _ <- dash
-  head <- alphanum
-  tail <- optWord
-  let res = OptName ('-' : head : tail) OldType
+  x <- alphanum
+  xs <- optWord
+  let res = OptName ('-' : x : xs) OldType
   return res
 
 optName :: ReadP OptName
@@ -140,13 +142,13 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 optArgs :: ReadP String
 optArgs = do
   _ <- char '[' <++ pure ' ' -- for cases such as --cs[=STR]
-  singleSpace +++ char '='
+  _ <- singleSpace +++ char '='
   args <- sepBy1 argWord argSep
   return (List.intercalate "," args)
 
 optArgsInBraket :: ReadP String
 optArgsInBraket = do
-  char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
+  _ <- char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
   args <- sepBy1 (argWordCurlyBracketed <++ argWordAngleBracketed <++ argWordParenthesized) (char ',' +++ char ' ') -- to keep { and }
   return (List.intercalate "," args)
 
@@ -160,9 +162,10 @@ heuristicSep args =
   where
     f s = optional singleSpace *> string s
     twoOrMoreSpaces = string " " *> munch1 (== ' ')
-    varSpaces = case args of
-      "" -> twoSpaces
-      args -> if last args `elem` ">}])" then oneSpace else twoSpaces
+    varSpaces
+      | null args = twoSpaces
+      | last args `elem` ">}])" = oneSpace
+      | otherwise = twoSpaces
     twoSpaces = string "  "
     oneSpace = string " "
 
@@ -219,8 +222,6 @@ discardSquareBracket = do
   _ <- surroundedBySquareBracket
   second <- afterSquareBraket
   return (first ++ second)
-  where
-    optionNonBracket = option "" failWithBracket
 
 unwrapSquareBracket :: ReadP String
 unwrapSquareBracket = do
@@ -228,8 +229,6 @@ unwrapSquareBracket = do
   content <- surroundedBySquareBracket
   second <- afterSquareBraket
   return (first ++ content ++ second)
-  where
-    optionNonBracket = option "" failWithBracket
 
 squareBracketHandler :: ReadP String
 squareBracketHandler = do
@@ -242,7 +241,7 @@ preprocessor :: ReadP (String, String)
 preprocessor = do
   skipSpaces
   (consumed, opt) <- gather squareBracketHandler
-  heuristicSep consumed -- this is the separator between optionPart and description
+  _ <- heuristicSep consumed -- this is the separator between optionPart and description
   skipSpaces
   desc <- munch1 ('\n' /=)
   skip newline <++ eof
@@ -250,7 +249,7 @@ preprocessor = do
 
 fallback :: ReadP (String, String)
 fallback = do
-  line <- munch ('\n' /=)
+  _ <- munch ('\n' /=)
   skip newline
   return ("", "")
 
@@ -276,7 +275,7 @@ parseLine s = List.nub . concat $ results
     xs = readP_to_S preprocessor s
     pairs = map fst xs
     results =
-      [ (\xs -> if null xs then trace ("Failed pair: " ++ show (optStr, descStr)) xs else xs) $
+      [ (\ys -> if null ys then trace ("Failed pair: " ++ show (optStr, descStr)) ys else ys) $
           map ((\(a, b) -> Opt a b descStr) . fst) $
             readP_to_S optPart optStr
         | (optStr, descStr) <- pairs

@@ -4,7 +4,6 @@
 -- | get statistical mode (= the most frequently appeareing item)
 module Utils where
 
-import Control.Exception (assert)
 import qualified Data.Foldable as Foldable
 import Data.Function (on)
 import qualified Data.List as List

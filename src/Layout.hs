@@ -8,12 +8,12 @@ import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
-import Data.String.Utils (join, lstrip, rstrip, split, strip)
-import Debug.Trace (trace, traceShow, traceShowId)
+import Data.String.Utils (join, rstrip, split, strip)
+import Debug.Trace (trace)
 import HelpParser (Opt (..), optPart, parseLine, preprocessAllFallback)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
-import Utils (convertTabsToSpaces, debugMsg, debugShow, fromRanges, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
+import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -83,7 +83,7 @@ getOptionOffsets s = case (short, long) of
 startsWithDoubleDash :: String -> Bool
 startsWithDoubleDash s = case ss of
   "" -> False
-  [c] -> False
+  [_] -> False
   c1 : c2 : _ -> c1 == '-' && c2 == '-'
   where
     ss = dropWhile (`elem` " \t") s
@@ -91,7 +91,7 @@ startsWithDoubleDash s = case ss of
 startsWithSingleDash :: String -> Bool
 startsWithSingleDash s = case ss of
   "" -> False
-  [c] -> False
+  [_] -> False
   c1 : c2 : _ -> c1 == '-' && c2 /= '-'
   where
     ss = dropWhile (`elem` " \t") s
@@ -149,7 +149,6 @@ descOffsetWithCountSimple s optLineNums optOffset =
             -- description can exist only around option lines
             head optLineNums < r, r < last optLineNums + 5
             -- previous line cannot be blank
-
       ]
     res = getMostFrequentWithCount cols
 
@@ -228,7 +227,6 @@ getOptionDescriptionPairsFromLayout content
   where
     s = convertTabsToSpaces 8 content
     xs = lines s
-    sep = replicate 3 ' '
     optionOffsets = debugMsg "Option offsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
@@ -254,8 +252,8 @@ getOptionDescriptionPairsFromLayout content
           || (not . null . parseLine $ (xs !! idx))
           || isOptionAndDescriptionLine (idx + 1)
       where
-        isOptionLine idx = idx `Set.member` optLineNumsSet
-        isDescriptionOnly idx = idx `Set.member` descLineNumsWithoutOptionSet
+        isOptionLine i = i `Set.member` optLineNumsSet
+        isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
 
     descLineNumsWithOption =
       [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
@@ -358,8 +356,8 @@ mergeRanges xs ys = [(x1, x2, y1, y2) | (x1, x2) <- xs, (y1, y2) <- ys, x1 <= y1
 -- [Note] As a special case, x2 == y1 is considered as a overlap
 -- although [x1, x2) and [y1, y2) have empty intersection.
 mergeRangesFast :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
-mergeRangesFast xs [] = []
-mergeRangesFast [] ys = []
+mergeRangesFast _ [] = []
+mergeRangesFast [] _ = []
 mergeRangesFast ((x1, x2) : xs) ((y1, y2) : ys)
   | x2 < y1 = mergeRangesFast xs ((y1, y2) : ys)
   | y2 <= x1 = mergeRangesFast ((x1, x2) : xs) ys

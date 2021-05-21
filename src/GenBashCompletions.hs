@@ -2,7 +2,6 @@
 
 module GenBashCompletions where
 
-import qualified Data.List as List
 import HelpParser
 import Text.Printf
 
@@ -35,6 +34,7 @@ bashTemplate =
 getOptsArray :: [Opt] -> String
 getOptsArray opts = unwords $ concatMap (map _raw . _names) opts
 
+indent :: Int -> String -> String
 indent n s = replicate n ' ' ++ s
 
 genBashScript :: Command -> [Opt] -> String

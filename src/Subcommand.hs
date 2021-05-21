@@ -1,7 +1,7 @@
 module Subcommand where
 
 import Control.Monad (liftM2)
-import HelpParser
+import HelpParser (newline, optWord, singleSpace, skip, word)
 import Text.ParserCombinators.ReadP
 import Utils (getMostFrequent)
 
@@ -16,10 +16,10 @@ firstTwoWordsLoc :: String -> (Int, Int)
 firstTwoWordsLoc line = (firstLoc, secondLoc)
   where
     (spaces, rest0) = span (' ' ==) line
-    (word, rest1) = span (' ' /=) rest0
+    (w, rest1) = span (' ' /=) rest0
     (midSpaces, rest2) = span (' ' ==) rest1
-    firstLoc = if null word then -1 else length spaces
-    secondLoc = if null rest2 then -1 else firstLoc + length word + length midSpaces
+    firstLoc = if null w then -1 else length spaces
+    secondLoc = if null rest2 then -1 else firstLoc + length w + length midSpaces
 
 getLayout :: [String] -> Maybe Layout
 getLayout xs = liftM2 (,) first second
