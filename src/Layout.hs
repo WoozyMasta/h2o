@@ -121,9 +121,9 @@ getShortOptionOffset = _getOffsetHelper getShortOptionLocations
 --      	may be separated by 3 or more spaces
 -- Returns Nothing if 1 and 2 disagrees, or no information in 1 and 2
 --
-getDescriptionOffset :: String -> Maybe Int
-getDescriptionOffset s =
-  case (descOffsetWithCountSimple s, descOffsetWithCountInOptionLines s) of
+getDescriptionOffset :: String -> [Int] -> Int -> Maybe Int
+getDescriptionOffset s optLineNums optOffset =
+  case (descOffsetWithCountSimple s optLineNums optOffset, descOffsetWithCountInOptionLines s optLineNums) of
     (Nothing, Nothing) -> trace "[WARNING] Retrieved absolutely zero information" Nothing
     (Nothing, q) -> trace "Descriptions always appear in the lines with options" $ fmap fst q
     (p, Nothing) -> trace "Descriptions never appear in the lines with options" $ fmap fst p
@@ -137,30 +137,35 @@ getDescriptionOffset s =
 
 -- | Estimate offset of description part from non-option lines
 -- | Returns Just (offset size, match count) if matches
-descOffsetWithCountSimple :: String -> Maybe (Int, Int)
-descOffsetWithCountSimple s =
+descOffsetWithCountSimple :: String -> [Int] -> Int -> Maybe (Int, Int)
+descOffsetWithCountSimple s optLineNums optOffset =
   assert ('\t' `notElem` s) res
   where
     locs = getNonoptLocations s
-    optionOffsets = getOptionOffsets s
-    -- optionOffsets must be non-empty as description offset is processed
-    -- AFTER option offset is settled.
-    cols = [x | (_, x) <- locs, List.maximum optionOffsets + 3 <= x]
+    cols =
+      [ x | (r, x) <- locs,
+            -- short option followed by a single space = 3
+            optOffset + 3 <= x,
+            -- description can exist only around option lines
+            head optLineNums < r, r < last optLineNums + 5
+            -- previous line cannot be blank
+
+      ]
     res = getMostFrequentWithCount cols
 
 -- | Estimate offset of description part from the lines with options
 -- | Returns Just (offset size, match count) if matches
-descOffsetWithCountInOptionLines :: String -> Maybe (Int, Int)
-descOffsetWithCountInOptionLines s =
+descOffsetWithCountInOptionLines :: String -> [Int] -> Maybe (Int, Int)
+descOffsetWithCountInOptionLines s optLineNums =
   assert ('\t' `notElem` s) res
   where
     sep = "   " -- Hardcode as 3 spaces for now
-    optLines = filter startsWithDash (lines s)
-    --
+    xs = lines s
+
     -- reversed to handle spacing not multiples of 3
-    -- for example `split "   " "--opt     desc"` gives ["--opt", "  desc"]`
-    -- but I don't want spaces before "desc"
-    xss = map (join sep . tail . split sep . reverse . rstrip) optLines
+    -- for example `split sep "--opt     desc"` == ["--opt", "  desc"]`
+    -- but I don't want spaces at the beginning of the description
+    xss = map (join sep . tail . split sep . reverse . rstrip . (xs !!)) optLineNums
     res = getMostFrequentWithCount $ map ((n +) . length) $ filter (not . isSpacesOnly) xss
       where
         n = length sep
@@ -230,7 +235,7 @@ getOptionDescriptionPairsFromLayout content
     optLineNums = debugShow "optLocsExcluded:" optLocsExcluded $ debugMsg "optLineNums" $ map fst optLocs
     optLineNumsSet = Set.fromList optLineNums
 
-    descriptionOffsetMay = getDescriptionOffset s
+    descriptionOffsetMay = getDescriptionOffset s optLineNums (List.maximum optionOffsets)
     offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay
 
     -- More accomodating description line matching seems to work better...
