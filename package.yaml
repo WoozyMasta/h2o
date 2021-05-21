@@ -38,6 +38,7 @@ executables:
     dependencies:
     - h2o
     - optparse-applicative
+    - filepath
 
 tests:
   h2o-test:

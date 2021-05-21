@@ -14,6 +14,7 @@ import HelpParser (Opt)
 import Layout (getOptionDescriptionPairsFromLayout, parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (Subcommand, parseSubcommand)
+import System.FilePath (takeBaseName)
 import Utils (convertTabsToSpaces)
 
 data Config = Config
@@ -44,14 +45,12 @@ config =
       ( long "name"
           <> short 'n'
           <> metavar "<COMMAND>"
-          <> showDefault
-          <> value "mycli"
+          <> value ""
           <> help "Specify command name"
       )
     <*> strOption
       ( long "subname"
           <> metavar "<SUBCOMMAND>"
-          <> showDefault
           <> value ""
           <> help "Specify subcommand name"
       )
@@ -69,7 +68,7 @@ config =
       )
 
 main :: IO ()
-main = run =<< execParser opts
+main = execParser opts >>= run
   where
     opts =
       info
@@ -87,12 +86,13 @@ run (Config f shell name subname isParsing isConvertingTabsToSpaces isPreprocess
   let s
         | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
         | isPreprocessOnly = formatStringPairs $ preprocessAll content
-        | isParsing = genSubcommandScript name subcommands
-        | null subname = genOptScript shell name opts
-        | otherwise = genSubcommandOptScript name subname opts
+        | isParsing = genSubcommandScript cmd subcommands
+        | null subname = genOptScript shell cmd opts
+        | otherwise = genSubcommandOptScript cmd subname opts
   putStr s
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
+    cmd = if null name then takeBaseName f else name
 
 genOptScript :: String -> String -> [Opt] -> String
 genOptScript "fish" = genFishScript
