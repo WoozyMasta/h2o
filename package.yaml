@@ -38,11 +38,8 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
       - -optl-fuse-ld=bfd
-    cc-options:
-      - -static
-    ld-options:
-      - -static
-      - -pthread
+      - -optl-static   # same as ld-options:  - -static
+      - -optl-pthread  #                      - -pthread
     dependencies:
       - h2o
       - optparse-applicative
