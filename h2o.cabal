@@ -11,7 +11,7 @@ homepage:       https://github.com/yamaton/h2o#readme
 bug-reports:    https://github.com/yamaton/h2o/issues
 author:         Yamato Matsuoka
 maintainer:     yamato.matsuoka@tetradresearch.com
-copyright:      2021 Yamato Matsuoka
+copyright:      2021 Tetrad Research
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -48,7 +48,7 @@ executable h2o
       Paths_h2o
   hs-source-dirs:
       app
-  ghc-options: -O2 -static -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=bfd
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=bfd
   cc-options: -static
   ld-options: -static -pthread
   build-depends:
@@ -68,7 +68,7 @@ test-suite h2o-test
       Paths_h2o
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MissingH
     , base >=4.7 && <5
