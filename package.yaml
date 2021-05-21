@@ -28,7 +28,7 @@ library:
   source-dirs: src
 
 executables:
-  h2oc:
+  h2o:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
