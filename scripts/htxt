@@ -7,4 +7,4 @@ if [[ -f "$outfile" ]]; then
 	[[ "$confirm" != [yY] ]] && echo "exiting without opearation..." && exit 0
 fi
 
-"$1" -h 2>&1 | tee "$outfile"
+"$1" --help 2>&1 | tee "$outfile"
