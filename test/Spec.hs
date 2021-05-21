@@ -23,7 +23,7 @@ main =
   defaultMain $
     testGroup
       "Tests"
-      [optNameTests, propertyTests, outdatedTests, devTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
+      [optNameTests, propertyTests, outdatedTests, devTests, optPartTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
 
 outdatedTests :: TestTree
 outdatedTests =
@@ -200,9 +200,10 @@ outdatedTests =
         ]
     ]
 
+optPartTests :: TestTree
 optPartTests =
   testGroup
-    "\n ============= unit tests against parse  ============= "
+    "\n ============= unit tests against optPart  ============= "
     [ test_optPart "--help   " (["--help"], ""),
       test_optPart "-h,--help   " (["-h", "--help"], ""),
       test_optPart "--           " (["--"], ""),
@@ -211,7 +212,7 @@ optPartTests =
       test_optPart "-o,--out ARG   " (["-o", "--out"], "ARG"),
       test_optPart "-o,--out=ARG  " (["-o", "--out"], "ARG"),
       test_optPart "-o,--out ARG\n" (["-o", "--out"], "ARG"),
-      test_optPart "-o,--out ARG:\n   " (["-o", "--out"], "ARG"),
+      test_optPart "-o,--out ARG:ARG2\n   " (["-o", "--out"], "ARG:ARG2"),
       test_optPart "-o <ARG1, ARG2>" (["-o"], "<ARG1, ARG2>"),
       test_optPart "-o <ARG1>,<ARG2>" (["-o"], "<ARG1>,<ARG2>"),
       test_optPart "-o<ARG1> <ARG2>" (["-o"], "<ARG1>,<ARG2>"),
@@ -222,20 +223,20 @@ optPartTests =
       test_optPart "--out, -o ARG    " (["--out", "-o"], "ARG"),
       test_optPart "--out=ARG1:ARG2\n " (["--out"], "ARG1:ARG2"),
       test_optPart
-        "-o FILE --out=FILE    without comma, with = sign"
+        "-o FILE --out=FILE  "
         (["-o", "--out"], "FILE"),
       test_optPart
-        "-i <file>, --input <file>   with comma, without = sign"
+        "-i <file>, --input <file>  "
         (["-i", "--input"], "<file>"),
       -- examples in the wild
       test_optPart
-        "  -E, --show-ends          display $ at end of each line"
+        "  -E, --show-ends   "
         (["-E", "--show-ends"], ""),
       test_optPart
-        " -h --help       Print this help file and exit"
+        " -h --help    "
         (["-h", "--help"], ""),
       test_optPart
-        "--min_length    Sets an artificial lower limit"
+        "--min_length   "
         (["--min_length"], ""),
       ---- gzip ----
       test_optPart
