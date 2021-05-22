@@ -1,10 +1,10 @@
-name:                h2o
-version:             0.1.1
-github:              "yamaton/h2o"
-license:             BSD3
-author:              "Yamato Matsuoka"
-maintainer:          "yamato.matsuoka@tetradresearch.com"
-copyright:           "2021 Tetrad Research"
+name: h2o
+version: 0.1.1
+github: "yamaton/h2o"
+license: BSD3
+author: "Yamato Matsuoka"
+maintainer: "yamato.matsuoka@tetradresearch.com"
+copyright: "2021 Tetrad Research"
 
 extra-source-files:
   - README.md
@@ -38,8 +38,8 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
       - -optl-fuse-ld=bfd
-      - -optl-static   # same as ld-options:  - -static
-      - -optl-pthread  #                      - -pthread
+      - -optl-static  # same as ld-options:  - -static
+      - -optl-pthread #                      - -pthread
     dependencies:
       - h2o
       - optparse-applicative
@@ -63,3 +63,4 @@ tests:
       - tasty-expected-failure
       - tasty-golden
       - utf8-string
+      - filepath

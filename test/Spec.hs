@@ -17,6 +17,7 @@ import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Utils (getMostFrequent)
+import System.FilePath (takeBaseName)
 
 main :: IO ()
 main =
@@ -342,13 +343,11 @@ unsupportedCases =
   expectFail $
     testGroup
       "\n ============= Unsupported corner cases parse fail ============= "
-      [
-        -- ========================================================================
+      [ -- ========================================================================
         -- Just shows test_parser behaves unexpectedly in single-line processing.
         -- In reality layout information and/or following matches corrects it.
         test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1> <ARG2>", "baba"),
         test_parser "-o{arg} --output{arg}    baba" (["-o", "--output"], "{arg}", "baba"),
-
         -- Just shows optPart alone cannot handle if square brackets appear in option names.
         -- In reality parseWithOptPart invokes fallback and prodesses nicely.
         test_optPart
@@ -517,21 +516,25 @@ shellCompGoldenTests =
     [ goldenVsString
         "minimap2 fish"
         "golden/minimap2.fish"
-        actionFish,
+        (actionFish "golden/minimap2.txt"),
       goldenVsString
         "minimap2 zsh"
         "golden/minimap2.zsh"
-        actionZsh,
+        (actionZsh "golden/minimap2.txt"),
       goldenVsString
         "minimap2 bash"
         "golden/minimap2.sh"
-        actionBash
+        (actionBash "golden/minimap2.txt"),
+      --------------
+      goldenVsString
+        "bowtie2 fish"
+        "golden/bowtie2.fish"
+        (actionFish "golden/bowtie2.txt")
     ]
   where
-    mantext = "golden/minimap2-man.txt"
-    actionFish = BLU.fromString . genFishScript "minimap2" . parseMany <$> readFile mantext
-    actionZsh = BLU.fromString . genZshScript "minimap2" . parseMany <$> readFile mantext
-    actionBash = BLU.fromString . genBashScript "minimap2" . parseMany <$> readFile mantext
+    actionFish x = BLU.fromString . genFishScript (takeBaseName x) . parseMany <$> readFile x
+    actionZsh x = BLU.fromString . genZshScript (takeBaseName x) . parseMany <$> readFile x
+    actionBash x = BLU.fromString . genBashScript (takeBaseName x) . parseMany <$> readFile x
 
 propertyTests :: TestTree
 propertyTests =
