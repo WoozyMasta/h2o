@@ -264,6 +264,8 @@ optPart = do
         [] -> ""
         x : _ -> x
   skipSpaces
+  _ <- argWordParenthesized <++ pure " "
+  skipSpaces
   eof
   return (names, args)
 
