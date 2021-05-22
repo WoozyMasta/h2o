@@ -79,6 +79,9 @@ argWordBracketedHelper bra ket = do
   where
     nonBracketLettersForSure = munch1 (`notElem` ['\n', bra, ket])
 
+argWordBracketed :: ReadP String
+argWordBracketed = argWordAngleBracketed <++ argWordCurlyBracketed <++ argWordParenthesized <++ argWordSquareBracketed
+
 argWordAngleBracketed :: ReadP String
 argWordAngleBracketed = argWordBracketedHelper '<' '>'
 
@@ -87,6 +90,9 @@ argWordCurlyBracketed = argWordBracketedHelper '{' '}'
 
 argWordParenthesized :: ReadP String
 argWordParenthesized = argWordBracketedHelper '(' ')'
+
+argWordSquareBracketed :: ReadP String
+argWordSquareBracketed = argWordBracketedHelper '[' ']'
 
 description :: ReadP String
 description = do
@@ -135,7 +141,6 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 optArgs :: ReadP String
 optArgs = do
-  _ <- char '[' <++ pure ' ' -- for cases such as --cs[=STR]
   _ <- singleSpace +++ char '='
   args <- sepBy1 argWordBare argSep
   return (List.intercalate "," args)
@@ -143,8 +148,8 @@ optArgs = do
 optArgsInBraket :: ReadP String
 optArgsInBraket = do
   _ <- char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
-  args <- sepBy1 (argWordCurlyBracketed <++ argWordAngleBracketed <++ argWordParenthesized) (char ',' +++ char ' ') -- to keep { and }
-  return (List.intercalate "," args)
+  (s, _) <- gather $ sepBy1 argWordBracketed (char ',' +++ char ' ' +++ pure ' ')
+  return s
 
 skip :: ReadP a -> ReadP ()
 skip a = a *> pure ()
