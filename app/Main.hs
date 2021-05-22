@@ -38,7 +38,7 @@ subcommandInput =
     <$> strOption
       ( long "subcommand"
           <> short 's'
-          <> metavar "<STRING>-<STRING>"
+          <> metavar "<STRING>"
           <> help "Specify command-subcommand name to parse"
       )
 
