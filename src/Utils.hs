@@ -85,3 +85,9 @@ getParagraph :: [String] -> (Int, Int) -> String
 getParagraph xs range = unlines $ map (xs !!) indices
   where
     indices = fromRange range
+
+-- | check if the string starts with non-space char `c`
+startsWithChar :: Char -> String -> Bool
+startsWithChar c s = not (null ss) && head ss == c
+  where
+    ss = dropWhile (`elem` " \t") s

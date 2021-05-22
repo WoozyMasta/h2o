@@ -1,5 +1,6 @@
 module Main where
 
+import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
   ( genFishLineSubcommand,
@@ -75,16 +76,18 @@ main = execParser opts >>= run
         )
 
 run :: Config -> IO ()
-run (Config f shell name subname isParsing isConvertingTabsToSpaces isPreprocessOnly) = do
+run (Config f shell name subname isParsingSubcommand isConvertingTabsToSpaces isPreprocessOnly) = do
   content <- readFile f
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
-        | isConvertingTabsToSpaces = convertTabsToSpaces 8 content
-        | isPreprocessOnly = formatStringPairs $ preprocessAll content
-        | isParsing = genSubcommandScript cmd subcommands
-        | null subname = genOptScript shell cmd opts
-        | otherwise = genSubcommandOptScript cmd subname opts
+        | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ convertTabsToSpaces 8 content
+        | isParsingSubcommand && isPreprocessOnly = trace "[main] processing subcommands only" $ genSubcommandScript cmd subcommands
+        | isParsingSubcommand && null subname = trace "[main] processing subcommands + top-level options" $ genSubcommandScript cmd subcommands ++ "\n\n\n" ++ genOptScript shell cmd opts
+        | isParsingSubcommand = trace "[main] processing subcommands + subcommand-level options" $ genSubcommandScript cmd subcommands ++ "\n\n\n" ++ genSubcommandOptScript cmd subname opts
+        | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ formatStringPairs $ preprocessAll content
+        | null subname = trace "[main] processing top-level options" $ genOptScript shell cmd opts
+        | otherwise = trace "[main] processing subcommand-level options" $ genSubcommandOptScript cmd subname opts
   putStr s
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])

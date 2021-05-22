@@ -1,9 +1,10 @@
 module Subcommand where
 
 import Control.Monad (liftM2)
+import qualified Data.Maybe as Maybe
 import HelpParser (newline, optWord, singleSpace, skip, word)
 import Text.ParserCombinators.ReadP
-import Utils (getMostFrequent)
+import Utils (convertTabsToSpaces, debugMsg, getMostFrequent, startsWithChar)
 
 type Layout = (Int, Int)
 
@@ -12,6 +13,10 @@ data Subcommand = Subcommand
     _desc :: String
   }
 
+-- | Returns location of first two words:
+-- -1 if the first or the second word unavailable
+--    firstTwoWordsLoc "  hello" == (2, -1)
+--    firstTwoWordsLoc "       " == (-1, -1)
 firstTwoWordsLoc :: String -> (Int, Int)
 firstTwoWordsLoc line = (firstLoc, secondLoc)
   where
@@ -24,9 +29,9 @@ firstTwoWordsLoc line = (firstLoc, secondLoc)
 getLayout :: [String] -> Maybe Layout
 getLayout xs = liftM2 (,) first second
   where
-    pairs = map firstTwoWordsLoc xs
-    first = getMostFrequent [a | (a, _) <- pairs, a >= 0]
-    second = getMostFrequent [b | (_, b) <- pairs, b >= 0]
+    pairs = debugMsg "first two word locations:"$ filter (\(a, b) -> a > 0 && b >= a + 6) $ map firstTwoWordsLoc xs
+    second = getMostFrequent [b | (_, b) <- pairs]
+    first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
 
 getAlignedLines :: String -> [String]
 getAlignedLines s = case layout of
@@ -34,7 +39,7 @@ getAlignedLines s = case layout of
   _ -> []
   where
     xs = lines s
-    layout = getLayout xs
+    layout = debugMsg "subcommand layout :" $ getLayout xs
 
 subcommand :: ReadP Subcommand
 subcommand = do
@@ -47,19 +52,20 @@ subcommand = do
   let desc = unwords ss
   return (Subcommand cmd desc)
 
-startingWithDash :: String -> Bool
-startingWithDash s = if null text then False else head text == '-'
-  where
-    text = dropWhile (' ' ==) s
-
 removeOptionLines :: String -> String
-removeOptionLines s = unlines xs
+removeOptionLines content = unlines xs
   where
-    xs = filter (not . startingWithDash) (lines s)
+    f s =
+      not (null s)
+        && (not . startsWithChar '-' $ s)
+        && (not . startsWithChar '[' $ s)
+        && (head s == ' ')
+    xs = filter f (lines content)
 
 parseSubcommand :: String -> [Subcommand]
-parseSubcommand s = results
+parseSubcommand content = results
   where
+    s = convertTabsToSpaces 8 content
     s' = removeOptionLines s
     xs = getAlignedLines s'
     results = (map (fst . last) . filter (not . null)) [readP_to_S subcommand x | x <- xs]

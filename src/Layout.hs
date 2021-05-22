@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 import HelpParser (Opt (..), parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
-import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, toRanges)
+import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, startsWithChar, toRanges)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -33,9 +33,7 @@ getWidth s
 
 -- | check if the string starts with dash - possibly after spaces and tabs
 startsWithDash :: String -> Bool
-startsWithDash s = not (null ss) && head ss == '-'
-  where
-    ss = dropWhile (`elem` " \t") s
+startsWithDash = startsWithChar '-'
 
 -- | a helper function
 _getNonblankLocationTemplate :: (String -> Bool) -> String -> [Location]
