@@ -2,7 +2,7 @@ import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import GenBashCompletions (genBashScript)
-import GenFishCompletions (genFishLineOption, genFishScript)
+import GenFishCompletions (genFishLineOption, genFishScript, truncateAfterPeriod)
 import GenZshCompletions (genZshScript, getZshOptStr)
 import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
@@ -215,7 +215,7 @@ optPartTests =
       test_optPart "-o,--out ARG:ARG2\n   " (["-o", "--out"], "ARG:ARG2"),
       test_optPart "-o <ARG1, ARG2>" (["-o"], "<ARG1, ARG2>"),
       test_optPart "-o <ARG1>,<ARG2>" (["-o"], "<ARG1>,<ARG2>"),
-      test_optPart "-o<ARG1> <ARG2>" (["-o"], "<ARG1>,<ARG2>"),
+      test_optPart "-o<ARG1> <ARG2>" (["-o"], "<ARG1> <ARG2>"),
       test_optPart "-o arg --output arg " (["-o", "--output"], "arg"),
       test_optPart "-o{arg} --output{arg} " (["-o", "--output"], "{arg}"),
       test_optPart "-o=ARG  " (["-o"], "ARG"),
@@ -265,7 +265,7 @@ optPartTests =
       ---- minimap2 ----
       test_optPart
         "--cs[=STR] "
-        (["--cs"], "[STR]"),
+        (["--cs"], "[=STR]"),
       test_optPart
         " -O INT[,INT]"
         (["-O"], "INT[,INT]"),
@@ -293,14 +293,11 @@ optPartTests =
         (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>"),
       ---- readseq ----
       test_optPart
-        " -wid[th]=#            "
-        (["-wid"], "#"),
+        " -width=#            "
+        (["-width"], "#"),
       test_optPart
         "-extract=1000..9999 "
         (["-extract"], "1000..9999"),
-      test_optPart
-        "-feat[ures]=exon,CDS... "
-        (["--feat[ures]"], "exon,CDS..."),
       ---- bowtie2 ----
       test_optPart "-t/--time" (["-t", "--time"], ""),
       test_optPart
@@ -317,8 +314,10 @@ optPartTests =
       test_optPart "-@, --threads INT" (["-@", "--threads"], "INT"),
       ---- bcftools ----
       test_optPart
-        "-S, --samples-file [^]<file>"
-        (["-S", "--samples-file"], "[^]<file>"),
+        "-s, --samples [^]<list>"
+        (["-s", "--samples"], "[^]<list>"),
+      test_optPart "--ploidy <assembly>[?]" (["--ploidy"], "<assembly>[?]"),
+      test_optPart " -g, --gvcf <int>,[...]" (["-g", "--gvcf"], "<int>,[...]"),
       ---- gridss ----
       test_optPart "-o/--output" (["-o", "--output"], ""),
       ---- minimap2 ----
@@ -331,7 +330,11 @@ optPartTests =
         (["--tmpl"], "file=repl"),
       test_optPart
         " --tmux (Long beta testing) "
-        (["--tmux"], "(Long beta testing)")
+        (["--tmux"], "(Long beta testing)"),
+      ---- octopus ----
+      test_optPart
+        " --inactive-flank-scoring arg (=1)"
+        (["--inactive-flank-scoring"], "arg")
     ]
 
 unsupportedCases :: TestTree
@@ -339,22 +342,31 @@ unsupportedCases =
   expectFail $
     testGroup
       "\n ============= Unsupported corner cases parse fail ============= "
-      [ -- single-item parsing
-        test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1>,<ARG2>", "baba"),
+      [
+        -- ========================================================================
+        -- Just shows test_parser behaves unexpectedly in single-line processing.
+        -- In reality layout information and/or following matches corrects it.
+        test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1> <ARG2>", "baba"),
         test_parser "-o{arg} --output{arg}    baba" (["-o", "--output"], "{arg}", "baba"),
-        ---- stack ----
+
+        -- Just shows optPart alone cannot handle if square brackets appear in option names.
+        -- In reality parseWithOptPart invokes fallback and prodesses nicely.
+        test_optPart
+          "-feat[ures]=exon,CDS... "
+          (["--feat[ures]"], "exon,CDS..."),
         test_optPartMany "--[no-]dump-logs" [(["--dump-logs"], ""), (["--no-dump-logs"], "")],
+        -- ========================================================================
+
+        -- ================================
+        -- unsupported examples starts here
+        -- ================================
+
         ---- 7z --help ----
         test_optPart
           " -i[r[-|0]]{@listfile|!wildcard}"
           (["-i"], "[r[-|0]]{@listfile|!wildcard}"),
         ---- bcftools ----
-        test_optPart
-          "-s, --samples [^]<list>"
-          (["-s", "--samples"], "[^]<list>"),
         test_optPartMany "-h/H, --header-only/--no-header" [(["-h", "--header-only"], ""), (["-H", "--no-header"], "")],
-        test_optPart "--ploidy <assembly>[?]" (["--ploidy"], "<assembly>[?]"),
-        test_optPart " -g, --gvcf <int>,[...]" (["-g", "--gvcf"], "<int>,[...]"),
         ---- blastn ----
         test_optPart
           " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n"
@@ -362,15 +374,13 @@ unsupportedCases =
         test_optPart
           " -window_size <Integer, >=0>\n "
           (["-window_size"], "<Integer, >=0>"),
-        ---- octopus ----
-        test_optPart
-          " --inactive-flank-scoring arg (=1)"
-          (["--inactive-flank-scoring"], "arg"),
         ---- delly ----
         test_optPart
           "-o [ --outfile ] arg (=\"sv.bcf\") "
           (["-o", "--outfile"], "arg"),
         ---- fastqc ----
+        -- This example is unsupported due to its syntactic ambiguity in relating the first
+        --  line with the rest. Guess semantics analysis is required.
         test_parser
           "    -c              Specifies a non-default file which contains the list of\n\
           \    --contaminants  contaminants to screen overrepresented sequences against.\n\
@@ -437,7 +447,15 @@ miscTests =
           "   hi               there   "
           @?= (3, 20),
       testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == Just (-4)" $
-        getMostFrequent [1 :: Int, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= Just (-4 :: Int)
+        getMostFrequent [1 :: Int, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= Just (-4 :: Int),
+      testCase "truncateAfterPeriod 1" $
+        truncateAfterPeriod "hello, i.e. good bye!" @?= "hello, i.e. good bye!",
+      testCase "truncateAfterPeriod 2" $
+        truncateAfterPeriod "baba. keke" @?= "baba.",
+      testCase "truncateAfterPeriod 3" $
+        truncateAfterPeriod "baba... keke" @?= "baba...",
+      testCase "truncateAfterPeriod 4" $
+        truncateAfterPeriod "baba .. keke" @?= "baba .."
     ]
 
 shellCompTests :: TestTree
