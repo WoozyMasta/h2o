@@ -11,7 +11,7 @@ import GenZshCompletions (genZshScript)
 import HelpParser (Opt)
 import Layout (parseMany, preprocessAll)
 import Options.Applicative
-import Subcommand (Subcommand, parseSubcommand)
+import Subcommand (Subcommand, Subcommand (..), parseSubcommand)
 import System.FilePath (takeBaseName)
 import Utils (convertTabsToSpaces)
 
@@ -22,6 +22,7 @@ data Config = Config
     _subname :: String,
     _isParsingSubcommand :: Bool,
     _isConvertingTabsToSpaces :: Bool,
+    _isListingSubcommands :: Bool,
     _isPreprocessOnly :: Bool
   }
 
@@ -41,7 +42,6 @@ config =
       )
     <*> strOption
       ( long "name"
-          <> short 'n'
           <> metavar "<COMMAND>"
           <> value ""
           <> help "Specify command name"
@@ -61,6 +61,10 @@ config =
           <> help "Convert tabs to spaces"
       )
     <*> switch
+      ( long "list-subcommands"
+          <> help "Convert tabs to spaces"
+      )
+    <*> switch
       ( long "debug"
           <> help "Run preprocessing only"
       )
@@ -76,12 +80,13 @@ main = execParser opts >>= run
         )
 
 run :: Config -> IO ()
-run (Config f shell name subname isParsingSubcommand isConvertingTabsToSpaces isPreprocessOnly) = do
+run (Config f shell name subname isParsingSubcommand isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly) = do
   content <- readFile f
   let subcommands = parseSubcommand content
   let opts = parseMany content
   let s
         | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ convertTabsToSpaces 8 content
+        | isListingSubcommands = trace "[main] Listing subcommands...\n" $ unlines (map _cmd subcommands)
         | isParsingSubcommand && isPreprocessOnly = trace "[main] processing subcommands only" $ genSubcommandScript cmd subcommands
         | isParsingSubcommand && null subname = trace "[main] processing subcommands + top-level options" $ genSubcommandScript cmd subcommands ++ "\n\n\n" ++ genOptScript shell cmd opts
         | isParsingSubcommand = trace "[main] processing subcommands + subcommand-level options" $ genSubcommandScript cmd subcommands ++ "\n\n\n" ++ genSubcommandOptScript cmd subname opts
