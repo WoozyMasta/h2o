@@ -65,7 +65,7 @@ truncateAfterPeriod line
 genFishLineSubcommand :: Command -> Subcommand -> String
 genFishLineSubcommand cmd (Subcommand subcmd desc) = line
   where
-    template = "complete -c %s -n __fish_use_subcommand -a %s -d '%s'"
+    template = "complete -c %s -n __fish_use_subcommand -x -a %s -d '%s'"
     quotedDesc = replace "'" "\\'" desc
     line = printf template cmd subcmd quotedDesc
 
