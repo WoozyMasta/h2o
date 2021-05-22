@@ -104,39 +104,32 @@ main = execParser opts >>= run
         )
 
 run :: Config -> IO ()
-run (Config input shell isParsingSubcommand isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly) = do
-  content <- case input of
-    SubcommandInput name subname -> getHelpSub name subname
-    CommandInput name -> getHelp name
-    FileInput f -> readFile f
-  let subcommands = parseSubcommand content
-  let opts = parseMany content
-  let s
-        | isConvertingTabsToSpaces =
-          trace "[main] Converting tags to spaces...\n" $
-            convertTabsToSpaces 8 content
-        | isListingSubcommands =
-          trace "[main] Listing subcommands...\n" $ unlines (map _cmd subcommands)
-        | isParsingSubcommand && isPreprocessOnly =
-          trace "[main] processing subcommands only" $
-            genSubcommandScript cmd subcommands
-        | isPreprocessOnly =
-          trace "[main] processing (option+arg, description) splitting only" $
-            formatStringPairs $ preprocessAll content
-        | otherwise =
-          case input of
-            SubcommandInput _ subname ->
-              if isParsingSubcommand
-                then
-                  trace "[main] processing subcommands + subcommand-level options" $
-                    genSubcommandScript cmd subcommands ++ "\n\n\n" ++ genSubcommandOptScript cmd subname opts
-                else
-                  trace "[main] processing subcommand-level options" $
-                    genSubcommandOptScript cmd subname opts
-            _ ->
-              trace "[main] processing subcommands + top-level options" $
-                genSubcommandScript cmd subcommands ++ "\n\n\n" ++ genOptScript shell cmd opts
-  putStr s
+run (Config input shell isParsingSubcommand isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)
+  | isParsingSubcommand = case input of
+    CommandInput name -> genWithSubcommands shell name
+    _ -> putStr "[Usage] To parse all subcommand help pages, run `h2o --command <string> --parse-subcommand`"
+  | otherwise = do
+    content <- getInputContent input
+    let subcommands = parseSubcommand content
+    let opts = parseMany content
+    let s
+          | isConvertingTabsToSpaces =
+            trace "[main] Converting tags to spaces...\n" $
+              convertTabsToSpaces 8 content
+          | isListingSubcommands =
+            trace "[main] Listing subcommands...\n" $ unlines (map _cmd subcommands)
+          | isPreprocessOnly =
+            trace "[main] processing (option+arg, description) splitting only" $
+              formatStringPairs $ preprocessAll content
+          | otherwise =
+            case input of
+              SubcommandInput _ subname ->
+                trace "[main] processing subcommand-level options" $
+                  genSubcommandOptScript cmd subname opts
+              _ ->
+                trace "[main] processing top-level options" $
+                  genOptScript shell cmd opts
+    putStr s
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     cmd = case input of
@@ -161,3 +154,35 @@ genSubcommandScript cmd subcmds = unlines [genFishLineSubcommand cmd sub | sub <
 
 genSubcommandOptScript :: String -> String -> [Opt] -> String
 genSubcommandOptScript = genFishScriptUnderSubcommand
+
+getInputContent :: Input -> IO String
+getInputContent input = case input of
+  SubcommandInput name subname -> getHelpSub name subname
+  CommandInput name -> getHelp name
+  FileInput f -> readFile f
+
+-- | Generate shell completion script from the root help page
+-- as well as the subcommand's help pages.
+genWithSubcommands :: String -> String -> IO ()
+genWithSubcommands shell cmd = do
+  rootContent <- getInputContent (CommandInput cmd)
+  let subcmds = parseSubcommand rootContent
+  let subcommandScript = genSubcommandScript cmd subcmds
+  putStr subcommandScript
+  putStr "\n\n\n"
+
+  let rootOptions = parseMany rootContent
+  let rootOptScript = genFishScript cmd rootOptions
+  putStr rootOptScript
+  putStr "\n\n\n"
+
+  let subcommandList = map _cmd subcmds
+  mapM_ (_genSubcommandOptions shell cmd) subcommandList
+
+_genSubcommandOptions :: String -> String -> String -> IO ()
+_genSubcommandOptions _ name subname = do
+  content <- getInputContent (SubcommandInput name subname)
+  let options = parseMany content
+  let script = genSubcommandOptScript name subname options
+  putStr script
+  putStr "\n\n\n"
