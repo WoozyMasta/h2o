@@ -15,7 +15,7 @@ import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (Subcommand (..), parseSubcommand)
 import System.FilePath (takeBaseName)
-import System.Process (readProcess)
+import System.Process (readProcessWithExitCode)
 import Utils (convertTabsToSpaces)
 
 data Input
@@ -138,10 +138,18 @@ run (Config input shell isParsingSubcommand isConvertingTabsToSpaces isListingSu
       FileInput f -> takeBaseName f
 
 getHelp :: String -> IO String
-getHelp cmd = readProcess cmd ["--help"] ""
+getHelp cmd = do
+  (_, content, _) <- readProcessWithExitCode cmd ["--help"] ""
+  if null content
+    then (\(_, s, _) -> s) <$> readProcessWithExitCode cmd ["help"] ""
+    else return content
 
 getHelpSub :: String -> String -> IO String
-getHelpSub cmd subcmd = readProcess cmd [subcmd, "--help"] ""
+getHelpSub cmd subcmd = do
+  (_, content, _) <- readProcessWithExitCode cmd [subcmd, "--help"] ""
+  if null content
+    then (\(_, s, _) -> s) <$> readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
+    else return content
 
 genOptScript :: String -> String -> [Opt] -> String
 genOptScript "fish" = genFishScript
@@ -169,12 +177,12 @@ genWithSubcommands shell cmd = do
   let subcmds = parseSubcommand rootContent
   let subcommandScript = genSubcommandScript cmd subcmds
   putStr subcommandScript
-  putStr "\n\n\n"
+  putStr $ if null subcommandScript then "" else "\n\n\n"
 
   let rootOptions = parseMany rootContent
   let rootOptScript = genFishScript cmd rootOptions
   putStr rootOptScript
-  putStr "\n\n\n"
+  putStr $ if null rootOptScript then "" else "\n\n\n"
 
   let subcommandList = map _cmd subcmds
   mapM_ (_genSubcommandOptions shell cmd) subcommandList
@@ -185,4 +193,4 @@ _genSubcommandOptions _ name subname = do
   let options = parseMany content
   let script = genSubcommandOptScript name subname options
   putStr script
-  putStr "\n\n\n"
+  putStr $ if null script then "" else "\n\n\n"
