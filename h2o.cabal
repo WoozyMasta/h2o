@@ -57,6 +57,7 @@ executable h2o
     , filepath
     , h2o
     , optparse-applicative
+    , process
   default-language: Haskell2010
 
 test-suite h2o-test

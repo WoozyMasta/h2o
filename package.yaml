@@ -44,6 +44,7 @@ executables:
       - h2o
       - optparse-applicative
       - filepath
+      - process
 
 tests:
   h2o-test:
