@@ -515,21 +515,21 @@ shellCompGoldenTests =
     "Golden Tests of shell completions"
     [ goldenVsString
         "minimap2 fish"
-        "golden/minimap2.fish"
-        (actionFish "golden/minimap2.txt"),
+        "test/golden/minimap2.fish"
+        (actionFish "test/golden/minimap2.txt"),
       goldenVsString
         "minimap2 zsh"
-        "golden/minimap2.zsh"
-        (actionZsh "golden/minimap2.txt"),
+        "test/golden/minimap2.zsh"
+        (actionZsh "test/golden/minimap2.txt"),
       goldenVsString
         "minimap2 bash"
-        "golden/minimap2.sh"
-        (actionBash "golden/minimap2.txt"),
+        "test/golden/minimap2.sh"
+        (actionBash "test/golden/minimap2.txt"),
       --------------
       goldenVsString
         "bowtie2 fish"
-        "golden/bowtie2.fish"
-        (actionFish "golden/bowtie2.txt")
+        "test/golden/bowtie2.fish"
+        (actionFish "test/golden/bowtie2.txt")
     ]
   where
     actionFish x = BLU.fromString . genFishScript (takeBaseName x) . parseMany <$> readFile x
