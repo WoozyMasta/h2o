@@ -5,9 +5,10 @@ import qualified Data.Maybe as Maybe
 import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
-  ( genFishLineSubcommand,
-    genFishScript,
-    genFishScriptUnderSubcommand,
+  ( genFishScript,
+    genFishScriptRootOptions,
+    genFishScriptSubcommands,
+    genFishScriptSubcommandOptions,
   )
 import GenZshCompletions (genZshScript)
 import HelpParser (Opt)
@@ -106,7 +107,7 @@ main = execParser opts >>= run
 run :: Config -> IO ()
 run (Config input shell isParsingSubcommand isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)
   | isParsingSubcommand = case input of
-    CommandInput name -> genWithSubcommands shell name
+    CommandInput name -> writeWithSubcommands shell name
     _ -> putStr "[Usage] To parse all subcommand help pages, run `h2o --command <string> --parse-subcommand`"
   | otherwise = do
     content <- getInputContent input
@@ -125,10 +126,10 @@ run (Config input shell isParsingSubcommand isConvertingTabsToSpaces isListingSu
             case input of
               SubcommandInput _ subname ->
                 trace "[main] processing subcommand-level options" $
-                  genSubcommandOptScript cmd subname opts
+                  genScriptSubcommandOptions cmd subname opts
               _ ->
                 trace "[main] processing top-level options" $
-                  genOptScript shell cmd opts
+                  genScriptSimple shell cmd opts
     putStr s
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
@@ -151,17 +152,20 @@ getHelpSub cmd subcmd = do
     then (\(_, s, _) -> s) <$> readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
     else return content
 
-genOptScript :: String -> String -> [Opt] -> String
-genOptScript "fish" = genFishScript
-genOptScript "zsh" = genZshScript
-genOptScript "bash" = genBashScript
-genOptScript _ = \_ opts -> unlines $ map show opts
+genScriptSimple :: String -> String -> [Opt] -> String
+genScriptSimple "fish" = genFishScript
+genScriptSimple "zsh" = genZshScript
+genScriptSimple "bash" = genBashScript
+genScriptSimple _ = \_ opts -> unlines $ map show opts
 
-genSubcommandScript :: String -> [Subcommand] -> String
-genSubcommandScript cmd subcmds = unlines [genFishLineSubcommand cmd sub | sub <- subcmds]
+genScriptRootOptions :: String -> [String] -> [Opt] -> String
+genScriptRootOptions = genFishScriptRootOptions
 
-genSubcommandOptScript :: String -> String -> [Opt] -> String
-genSubcommandOptScript = genFishScriptUnderSubcommand
+genScriptSubcommands :: String -> [Subcommand] -> String
+genScriptSubcommands = genFishScriptSubcommands
+
+genScriptSubcommandOptions :: String -> String -> [Opt] -> String
+genScriptSubcommandOptions = genFishScriptSubcommandOptions
 
 getInputContent :: Input -> IO String
 getInputContent input = case input of
@@ -171,26 +175,27 @@ getInputContent input = case input of
 
 -- | Generate shell completion script from the root help page
 -- as well as the subcommand's help pages.
-genWithSubcommands :: String -> String -> IO ()
-genWithSubcommands shell cmd = do
+writeWithSubcommands :: String -> String -> IO ()
+writeWithSubcommands shell cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let subcmds = parseSubcommand rootContent
-  let subcommandScript = genSubcommandScript cmd subcmds
+  let subcommandScript = genScriptSubcommands cmd subcmds
   putStr subcommandScript
   putStr $ if null subcommandScript then "" else "\n\n\n"
 
   let rootOptions = parseMany rootContent
-  let rootOptScript = genFishScript cmd rootOptions
+  let subcmdNames = map _cmd subcmds
+  let rootOptScript = genScriptRootOptions cmd subcmdNames rootOptions
   putStr rootOptScript
   putStr $ if null rootOptScript then "" else "\n\n\n"
 
   let subcommandList = map _cmd subcmds
-  mapM_ (_genSubcommandOptions shell cmd) subcommandList
+  mapM_ (_writeSubcommandOptions shell cmd) subcommandList
 
-_genSubcommandOptions :: String -> String -> String -> IO ()
-_genSubcommandOptions _ name subname = do
+_writeSubcommandOptions :: String -> String -> String -> IO ()
+_writeSubcommandOptions _ name subname = do
   content <- getInputContent (SubcommandInput name subname)
   let options = parseMany content
-  let script = genSubcommandOptScript name subname options
+  let script = genScriptSubcommandOptions name subname options
   putStr script
   putStr $ if null script then "" else "\n\n\n"
