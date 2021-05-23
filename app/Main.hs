@@ -1,14 +1,15 @@
 module Main where
 
+import Control.Monad (filterM)
 import Data.List.Extra (stripInfix)
 import qualified Data.Maybe as Maybe
 import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
-  ( genFishScriptSimple,
-    genFishScriptRootOptions,
-    genFishScriptSubcommands,
+  ( genFishScriptRootOptions,
+    genFishScriptSimple,
     genFishScriptSubcommandOptions,
+    genFishScriptSubcommands,
   )
 import GenZshCompletions (genZshScript)
 import HelpParser (Opt)
@@ -152,6 +153,9 @@ getHelpSub cmd subcmd = do
     then (\(_, s, _) -> s) <$> readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
     else return content
 
+isSub :: String -> String -> IO Bool
+isSub cmd subcmd = not . null <$> getHelpSub cmd subcmd
+
 genScriptSimple :: String -> String -> [Opt] -> String
 genScriptSimple "fish" = genFishScriptSimple
 genScriptSimple "zsh" = genZshScript
@@ -178,19 +182,20 @@ getInputContent input = case input of
 writeWithSubcommands :: String -> String -> IO ()
 writeWithSubcommands shell cmd = do
   rootContent <- getInputContent (CommandInput cmd)
-  let subcmds = parseSubcommand rootContent
-  let subcommandScript = genScriptSubcommands cmd subcmds
-  putStr subcommandScript
-  putStr $ if null subcommandScript then "" else "\n\n\n"
-
   let rootOptions = parseMany rootContent
-  let subcmdNames = map _cmd subcmds
-  let rootOptScript = genScriptRootOptions cmd subcmdNames rootOptions
-  putStr rootOptScript
-  putStr $ if null rootOptScript then "" else "\n\n\n"
+  let subcmds = parseSubcommand rootContent
+  let subcmdsM = filterM (isSub cmd . _cmd) subcmds
 
-  let subcommandList = map _cmd subcmds
-  mapM_ (_writeSubcommandOptions shell cmd) subcommandList
+  subs <- subcmdsM
+  let subcmdNames = map _cmd subs
+  let subcommandScript = genScriptSubcommands cmd subs
+  let rootOptScript = genScriptRootOptions cmd subcmdNames rootOptions
+
+  if null subs
+    then
+      trace "[warning] Ignore subcommands" $
+        putStr (genScriptSimple shell cmd rootOptions)
+    else putStr (rootOptScript ++ "\n\n\n" ++ subcommandScript ++ "\n\n\n") >> mapM_ (_writeSubcommandOptions shell cmd) subcmdNames
 
 _writeSubcommandOptions :: String -> String -> String -> IO ()
 _writeSubcommandOptions _ name subname = do
