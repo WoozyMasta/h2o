@@ -2,7 +2,7 @@ import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import GenBashCompletions (genBashScript)
-import GenFishCompletions (genFishLineOption, genFishScript, truncateAfterPeriod)
+import GenFishCompletions (makeFishLineOption, genFishScriptSimple, truncateAfterPeriod)
 import GenZshCompletions (genZshScript, getZshOptStr)
 import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
@@ -462,7 +462,7 @@ shellCompTests =
   testGroup
     "\n ============= Test Fish script generation ============"
     [ testCase "basic fish comp" $
-        genFishLineOption cmd opt @?= fishExpected,
+        makeFishLineOption cmd opt @?= fishExpected,
       testCase "basic zsh comp" $
         getZshOptStr opt @?= zshArgsExpected,
       testCase "zsh script generation" $
@@ -532,7 +532,7 @@ shellCompGoldenTests =
         (actionFish "test/golden/bowtie2.txt")
     ]
   where
-    actionFish x = BLU.fromString . genFishScript (takeBaseName x) . parseMany <$> readFile x
+    actionFish x = BLU.fromString . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
     actionZsh x = BLU.fromString . genZshScript (takeBaseName x) . parseMany <$> readFile x
     actionBash x = BLU.fromString . genBashScript (takeBaseName x) . parseMany <$> readFile x
 

@@ -5,7 +5,7 @@ import qualified Data.Maybe as Maybe
 import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
-  ( genFishScript,
+  ( genFishScriptSimple,
     genFishScriptRootOptions,
     genFishScriptSubcommands,
     genFishScriptSubcommandOptions,
@@ -153,7 +153,7 @@ getHelpSub cmd subcmd = do
     else return content
 
 genScriptSimple :: String -> String -> [Opt] -> String
-genScriptSimple "fish" = genFishScript
+genScriptSimple "fish" = genFishScriptSimple
 genScriptSimple "zsh" = genZshScript
 genScriptSimple "bash" = genBashScript
 genScriptSimple _ = \_ opts -> unlines $ map show opts

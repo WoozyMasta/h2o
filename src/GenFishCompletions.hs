@@ -10,7 +10,6 @@ import HelpParser (Opt (..), OptName (..), OptNameType (..))
 import Subcommand (Subcommand (..))
 import Text.Printf (printf)
 
-
 -- https://unix.stackexchange.com/questions/296141/how-to-use-a-special-character-as-a-normal-one-in-unix-shells
 escapeSpecialSymbols :: String -> String
 escapeSpecialSymbols s = List.foldl' f s symbols
@@ -54,16 +53,17 @@ truncateAfterPeriod line
           criteria = len >= 3 && s !! (len - 2) /= '.' && s !! (len - 3) == '.' -- like "e.g."
           extra = truncateAfterPeriod (unwords ss)
 
-genFishLineOption :: String -> Opt -> String
-genFishLineOption cmd (Opt names arg desc) = line
+-- | make a fish-completion line for an option
+makeFishLineOption :: String -> Opt -> String
+makeFishLineOption cmd (Opt names arg desc) = line
   where
     parts = unwords $ map toFishCompPart names
     quotedDesc = replace "'" "\\'" (truncateAfterPeriod desc)
     line = printf "complete -c %s %s -d '%s'%s" cmd parts quotedDesc (argToFlg arg)
 
--- | This is for a top-level option that is suppressed after a subcommand
-genFishLineRootOption :: String -> [String] -> Opt -> String
-genFishLineRootOption cmd subcmds (Opt names arg desc) = line
+-- | make a fish-completion line for a root-level option suppressed after a subcommand
+makeFishLineRootOption :: String -> [String] -> Opt -> String
+makeFishLineRootOption cmd subcmds (Opt names arg desc) = line
   where
     parts = unwords $ map toFishCompPart names
     quotedDesc = replace "'" "\\'" (truncateAfterPeriod desc)
@@ -71,29 +71,35 @@ genFishLineRootOption cmd subcmds (Opt names arg desc) = line
     cond = printf "-n \"not __fish_seen_subcommand_from %s\"" subcmdsAsStr :: String
     line = printf "complete -c %s %s %s -d '%s'%s" cmd cond parts quotedDesc (argToFlg arg)
 
-genFishLineSubcommand :: String -> Subcommand -> String
-genFishLineSubcommand cmd (Subcommand subcmd desc) = line
+-- | make a fish-completion line for a subcommand name
+makeFishLineSubcommand :: String -> Subcommand -> String
+makeFishLineSubcommand cmd (Subcommand subcmd desc) = line
   where
     template = "complete -c %s -n __fish_use_subcommand -x -a %s -d '%s'"
     quotedDesc = replace "'" "\\'" desc
     line = printf template cmd subcmd quotedDesc
 
-genFishLineSubcommandOption :: String -> String -> Opt -> String
-genFishLineSubcommandOption cmd subcmd (Opt names arg desc) = line
+-- | make a fish-completion line for an option under a subcommand
+makeFishLineSubcommandOption :: String -> String -> Opt -> String
+makeFishLineSubcommandOption cmd subcmd (Opt names arg desc) = line
   where
     parts = unwords $ map toFishCompPart names
     quotedDesc = replace "'" "\\'" (truncateAfterPeriod desc)
     subcmdCondition = printf "-n \"__fish_seen_subcommand_from %s\"" subcmd :: String
     line = printf "complete -c %s %s %s -d '%s'%s" cmd subcmdCondition parts quotedDesc (argToFlg arg)
 
-genFishScript :: String -> [Opt] -> String
-genFishScript cmd opts = unlines [genFishLineOption cmd opt | opt <- opts]
+-- | Generate simple fish completion script WITHOUT subcommands
+genFishScriptSimple :: String -> [Opt] -> String
+genFishScriptSimple cmd opts = unlines [makeFishLineOption cmd opt | opt <- opts]
 
+-- | Generate fish completion script for root-level options that are suppressed after a subcommand
 genFishScriptRootOptions :: String -> [String] -> [Opt] -> String
-genFishScriptRootOptions cmd subcmds opts = unlines [genFishLineRootOption cmd subcmds opt | opt <- opts]
+genFishScriptRootOptions cmd subcmds opts = unlines [makeFishLineRootOption cmd subcmds opt | opt <- opts]
 
+-- | Generate fish completion script for subcommand names
 genFishScriptSubcommands :: String -> [Subcommand] -> String
-genFishScriptSubcommands cmd subcmds = unlines [genFishLineSubcommand cmd sub | sub <- subcmds]
+genFishScriptSubcommands cmd subcmds = unlines [makeFishLineSubcommand cmd sub | sub <- subcmds]
 
+-- | Generate fish completion script for options under a subcommand
 genFishScriptSubcommandOptions :: String -> String -> [Opt] -> String
-genFishScriptSubcommandOptions cmd subcmd opts = unlines [genFishLineSubcommandOption cmd subcmd opt | opt <- opts]
+genFishScriptSubcommandOptions cmd subcmd opts = unlines [makeFishLineSubcommandOption cmd subcmd opt | opt <- opts]
