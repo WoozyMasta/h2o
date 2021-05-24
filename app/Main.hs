@@ -29,7 +29,6 @@ data Input
 data Config = Config
   { _input :: Input,
     _shell :: String,
-    _isParsingSubcommand :: Bool,
     _isOutputJSON :: Bool,
     _isConvertingTabsToSpaces :: Bool,
     _isListingSubcommands :: Bool,
@@ -81,10 +80,6 @@ config =
           <> help "Select shell for completion script (bash|zsh|fish|none)"
       )
     <*> switch
-      ( long "parse-subcommand"
-          <> help "Parse subcommands (experimental)"
-      )
-    <*> switch
       ( long "json"
           <> help "Output in JSON"
       )
@@ -112,33 +107,31 @@ main = execParser opts >>= run
         )
 
 run :: Config -> IO ()
-run (Config (CommandInput name) _ _ True _ _ _) = trace "[main] JSON output\n" $ writeJSON name
-run (Config input shell isParsingSubcommand _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)
-  | isParsingSubcommand = case input of
-    CommandInput name -> writeWithSubcommands shell name
-    _ -> putStr "[Usage] To parse all subcommand help pages, run `h2o --command <string> --parse-subcommand`"
-  | otherwise = do
-    content <- getInputContent input
-    let subcommands = parseSubcommand content
-    let opts = parseMany content
-    let s
-          | isConvertingTabsToSpaces =
-            trace "[main] Converting tags to spaces...\n" $
-              convertTabsToSpaces 8 content
-          | isListingSubcommands =
-            trace "[main] Listing subcommands...\n" $ unlines (map _cmd subcommands)
-          | isPreprocessOnly =
-            trace "[main] processing (option+arg, description) splitting only" $
-              formatStringPairs $ preprocessAll content
-          | otherwise =
-            case input of
-              SubcommandInput _ subname ->
-                trace "[main] processing subcommand-level options" $
-                  genScriptSubcommandOptions cmd subname opts
-              _ ->
-                trace "[main] processing top-level options" $
-                  genScriptSimple shell cmd opts
-    putStr s
+run (Config (CommandInput name) _ True _ _ _) = trace "[main] JSON output\n" $ writeJSON name
+run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly) = do
+  content <- getInputContent input
+  let subcommands = parseSubcommand content
+  let opts = parseMany content
+  let res
+        | isConvertingTabsToSpaces =
+          trace "[main] Converting tags to spaces...\n" $
+            putStr . convertTabsToSpaces 8 $ content
+        | isPreprocessOnly =
+          trace "[main] processing (option+arg, description) splitting only" $
+            putStr . formatStringPairs . preprocessAll $ content
+        | isListingSubcommands =
+          trace "[main] Listing subcommands...\n" $ putStr (unlines (map _cmd subcommands))
+        | otherwise =
+          case input of
+            SubcommandInput _ subname ->
+              trace "[main] processing subcommand-level options" $
+                putStr (genScriptSubcommandOptions cmd subname opts)
+            CommandInput name ->
+              writeWithSubcommands shell name
+            FileInput _ ->
+              trace "[main] processing options from the file" $
+                putStr (genScriptSimple shell cmd opts)
+  res
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     cmd = case input of
