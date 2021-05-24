@@ -21,8 +21,10 @@ description: Please see the README on GitHub at <https://github.com/yamaton/h2o#
 dependencies:
   - base >= 4.7 && < 5
   - containers
+  - aeson
   - MissingH
   - extra
+  - bytestring
 
 library:
   source-dirs: src

@@ -11,6 +11,7 @@ import GenFishCompletions
     genFishScriptSubcommandOptions,
     genFishScriptSubcommands,
   )
+import GenJSON (toCommand, writeCommandAsJSON)
 import GenZshCompletions (genZshScript)
 import HelpParser (Opt)
 import Layout (parseMany, preprocessAll)
@@ -29,6 +30,7 @@ data Config = Config
   { _input :: Input,
     _shell :: String,
     _isParsingSubcommand :: Bool,
+    _isOutputJSON :: Bool,
     _isConvertingTabsToSpaces :: Bool,
     _isListingSubcommands :: Bool,
     _isPreprocessOnly :: Bool
@@ -76,11 +78,15 @@ config =
           <> metavar "{bash|zsh|fish|none}"
           <> showDefault
           <> value "none"
-          <> help "Select shell for a completions script (bash|zsh|fish|none)"
+          <> help "Select shell for completion script (bash|zsh|fish|none)"
       )
     <*> switch
       ( long "parse-subcommand"
           <> help "Parse subcommands (experimental)"
+      )
+    <*> switch
+      ( long "json"
+          <> help "Output in JSON"
       )
     <*> switch
       ( long "convert-tabs-to-spaces"
@@ -106,7 +112,8 @@ main = execParser opts >>= run
         )
 
 run :: Config -> IO ()
-run (Config input shell isParsingSubcommand isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)
+run (Config (CommandInput name) _ _ True _ _ _) = trace "[main] JSON output\n" $ writeJSON name
+run (Config input shell isParsingSubcommand _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)
   | isParsingSubcommand = case input of
     CommandInput name -> writeWithSubcommands shell name
     _ -> putStr "[Usage] To parse all subcommand help pages, run `h2o --command <string> --parse-subcommand`"
@@ -204,3 +211,22 @@ _writeSubcommandOptions _ name subname = do
   let script = genScriptSubcommandOptions name subname options
   putStr script
   putStr $ if null script then "" else "\n\n\n"
+
+_getSubcommandOpts :: String -> String -> IO [Opt]
+_getSubcommandOpts name subname = parseMany <$> getInputContent (SubcommandInput name subname)
+
+-- | Generate shell completion script from the root help page
+-- as well as the subcommand's help pages.
+writeJSON :: String -> IO ()
+writeJSON cmd = do
+  rootContent <- getInputContent (CommandInput cmd)
+  let rootOptions = parseMany rootContent
+  let subcmds = parseSubcommand rootContent
+  let subcmdsFilteredM = filterM (isSub cmd . _cmd) subcmds
+
+  subs <- subcmdsFilteredM
+  let subcmdNames = map _cmd subs
+  let optsListM = mapM (_getSubcommandOpts cmd) subcmdNames
+  let subcmdOptsPairsM = zip <$> subcmdsFilteredM <*> optsListM
+  let commandM = toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
+  writeCommandAsJSON =<< commandM

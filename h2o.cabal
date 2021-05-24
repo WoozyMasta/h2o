@@ -26,6 +26,7 @@ library
   exposed-modules:
       GenBashCompletions
       GenFishCompletions
+      GenJSON
       GenZshCompletions
       HelpParser
       Layout
@@ -37,7 +38,9 @@ library
       src
   build-depends:
       MissingH
+    , aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
     , extra
   default-language: Haskell2010
@@ -51,7 +54,9 @@ executable h2o
   ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=bfd -optl-static -optl-pthread
   build-depends:
       MissingH
+    , aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
     , extra
     , filepath
@@ -70,7 +75,9 @@ test-suite h2o-test
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MissingH
+    , aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
     , extra
     , filepath
