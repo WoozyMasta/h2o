@@ -13,11 +13,17 @@
 
 ## How to use
 
-```
-h2o --help > ./h2o.txt
-h2o ./h2o.txt --name h2o --shell fish > h2o.fish
-```
+```shell
+# Generate fish completion script from `ls --help` command.
+h2o --command ls --shell fish > ls.fish
 
+# Export info from `ls --help` in JSON
+h2o --command ls --json
+
+# Parse manpage text file
+man ls | col -b > ls.txt
+h2o --file ls.txt --shell fish > ls.fish
+```
 
 ## Related projects
 * [parse-help](https://github.com/sindresorhus/parse-help)
