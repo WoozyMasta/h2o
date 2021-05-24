@@ -5,8 +5,6 @@ module GenBashCompletions where
 import HelpParser
 import Text.Printf
 
-type Command = String
-
 bashTemplate :: String
 bashTemplate =
   unlines
@@ -37,7 +35,7 @@ getOptsArray opts = unwords $ concatMap (map _raw . _names) opts
 indent :: Int -> String -> String
 indent n s = replicate n ' ' ++ s
 
-genBashScript :: Command -> [Opt] -> String
+genBashScript :: String -> [Opt] -> String
 genBashScript cmd opts = res
   where
     optsArray = getOptsArray opts

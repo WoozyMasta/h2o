@@ -8,9 +8,8 @@ import HelpParser
 import Subcommand
 import Text.Printf
 
-type Command = String
 
-zshHeader :: Command -> String
+zshHeader :: String -> String
 zshHeader cmd = printf "#compdef %s\n\n" cmd :: String
 
 getZshOptStr :: Opt -> String
@@ -31,7 +30,7 @@ getZshDescStr (Subcommand name desc) = printf "'%s:%s'" name quotedDesc
 indent :: Int -> String -> String
 indent n s = replicate n ' ' ++ s
 
-genZshBodyOptions :: Command -> [Opt] -> String
+genZshBodyOptions :: String -> [Opt] -> String
 genZshBodyOptions _ opts = res
   where
     args = unlines (map (indent 4 . getZshOptStr) opts)
@@ -40,14 +39,14 @@ genZshBodyOptions _ opts = res
     template = "args=(\n%s)\n\n_arguments %s$args\n"
     res = printf template args flags :: String
 
-genZshBodyCommands :: Command -> [Subcommand] -> String
+genZshBodyCommands :: String -> [Subcommand] -> String
 genZshBodyCommands cmd xs = res
   where
     args = unlines (map (indent 4 . getZshDescStr) xs)
     template = "cmds=(\n%s)\n\n_describe '%s commands' $cmds\n"
     res = printf template args cmd
 
-genZshScript :: Command -> [Opt] -> String
+genZshScript :: String -> [Opt] -> String
 genZshScript cmd opts = header ++ body
   where
     header = zshHeader cmd
