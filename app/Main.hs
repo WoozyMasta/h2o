@@ -19,6 +19,7 @@ import Options.Applicative
 import Subcommand (Subcommand (..), parseSubcommand)
 import System.FilePath (takeBaseName)
 import System.Process (readProcessWithExitCode)
+import Text.Printf (printf)
 import Utils (convertTabsToSpaces)
 
 data Input
@@ -125,7 +126,7 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
           case input of
             SubcommandInput _ subname ->
               trace "[main] processing subcommand-level options" $
-                putStr (genScriptSubcommandOptions cmd subname opts)
+                putStr (genScriptSubcommandOptions shell cmd subname opts)
             CommandInput name ->
               writeWithSubcommands shell name
             FileInput _ ->
@@ -165,14 +166,20 @@ genScriptSimple "zsh" = genZshScript
 genScriptSimple "bash" = genBashScript
 genScriptSimple _ = \_ opts -> unlines $ map show opts
 
-genScriptRootOptions :: String -> [String] -> [Opt] -> String
-genScriptRootOptions = genFishScriptRootOptions
+genScriptRootOptions :: String -> String -> [String] -> [Opt] -> String
+genScriptRootOptions "fish" cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
+genScriptRootOptions shell cmd _ opts = genScriptSimple shell cmd opts
 
-genScriptSubcommands :: String -> [Subcommand] -> String
-genScriptSubcommands = genFishScriptSubcommands
+genScriptSubcommands :: String -> String -> [Subcommand] -> String
+genScriptSubcommands "fish" cmd subcmds = genFishScriptSubcommands cmd subcmds
+genScriptSubcommands _ _ subcmds = unlines $ map show subcmds
 
-genScriptSubcommandOptions :: String -> String -> [Opt] -> String
-genScriptSubcommandOptions = genFishScriptSubcommandOptions
+genScriptSubcommandOptions :: String -> String -> String -> [Opt] -> String
+genScriptSubcommandOptions "fish" cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
+genScriptSubcommandOptions _ cmd subcmd opts =
+  unlines $ map (\opt -> prefix ++ show opt) opts
+  where
+    prefix = printf "(%s-%s) " cmd subcmd
 
 getInputContent :: Input -> IO String
 getInputContent input = case input of
@@ -191,8 +198,8 @@ writeWithSubcommands shell cmd = do
 
   subs <- subcmdsM
   let subcmdNames = map _cmd subs
-  let subcommandScript = genScriptSubcommands cmd subs
-  let rootOptScript = genScriptRootOptions cmd subcmdNames rootOptions
+  let subcommandScript = genScriptSubcommands shell cmd subs
+  let rootOptScript = genScriptRootOptions shell cmd subcmdNames rootOptions
 
   if null subs
     then
@@ -201,10 +208,10 @@ writeWithSubcommands shell cmd = do
     else putStr (rootOptScript ++ "\n\n\n" ++ subcommandScript ++ "\n\n\n") >> mapM_ (_writeSubcommandOptions shell cmd) subcmdNames
 
 _writeSubcommandOptions :: String -> String -> String -> IO ()
-_writeSubcommandOptions _ name subname = do
+_writeSubcommandOptions shell name subname = do
   content <- getInputContent (SubcommandInput name subname)
   let options = parseMany content
-  let script = genScriptSubcommandOptions name subname options
+  let script = genScriptSubcommandOptions shell name subname options
   putStr script
   putStr $ if null script then "" else "\n\n\n"
 

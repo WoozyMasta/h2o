@@ -5,6 +5,7 @@ module HelpParser where
 import qualified Data.List as List
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
+import Text.Printf (printf)
 
 data Opt = Opt
   { _names :: [OptName],
@@ -23,7 +24,7 @@ type OptArg = String
 
 instance Show Opt where
   show (Opt names args desc) =
-    show (names, args, desc)
+    printf "%s  ::  %s\n%s\n" (unwords (map _raw names)) args desc
 
 instance Show OptName where
   show (OptName raw _) = show raw

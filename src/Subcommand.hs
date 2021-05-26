@@ -13,6 +13,9 @@ data Subcommand = Subcommand
     _desc :: String
   }
 
+instance Show Subcommand where
+  show (Subcommand cmd desc) = cmd ++ "\t\t(" ++ desc ++ ")"
+
 -- | Returns location of first two words:
 -- -1 if the first or the second word unavailable
 --    firstTwoWordsLoc "  hello" == (2, -1)
@@ -29,7 +32,7 @@ firstTwoWordsLoc line = (firstLoc, secondLoc)
 getLayout :: [String] -> Maybe Layout
 getLayout xs = liftM2 (,) first second
   where
-    pairs = debugMsg "first two word locations:"$ filter (\(a, b) -> a > 0 && b >= a + 6) $ map firstTwoWordsLoc xs
+    pairs = debugMsg "first two word locations:" $ filter (\(a, b) -> a > 0 && b >= a + 6) $ map firstTwoWordsLoc xs
     second = getMostFrequent [b | (_, b) <- pairs]
     first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
 
