@@ -40,7 +40,7 @@ instance ToJSON Command where
     pairs ("name" .= name <> "description" .= desc <> "options" .= opts <> "subcommands" .= subcommands)
 
 toSimpleCommand :: String -> String -> [Opt] -> Command
-toSimpleCommand name desc opts = Command name name opts []
+toSimpleCommand name desc opts = Command name desc opts []
 
 subcommandToCommand :: Subcommand -> [Opt] -> Command
 subcommandToCommand (Subcommand subcmd desc) = toSimpleCommand subcmd desc
