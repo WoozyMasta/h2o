@@ -154,7 +154,10 @@ getHelpSub cmd subcmd = do
     else return content
 
 isSub :: String -> String -> IO Bool
-isSub cmd subcmd = not . null <$> getHelpSub cmd subcmd
+isSub cmd subcmd = do
+  content <- getHelpSub cmd subcmd
+  contentRoot <- getHelp cmd
+  return $ not (null content) && (content /= contentRoot)
 
 genScriptSimple :: String -> String -> [Opt] -> String
 genScriptSimple "fish" = genFishScriptSimple
