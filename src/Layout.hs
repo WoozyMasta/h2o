@@ -168,7 +168,7 @@ descOffsetWithCountInOptionLines s optLineNums =
         n = length sep
 
 isSpacesOnly :: String -> Bool
-isSpacesOnly = all (' ' ==)
+isSpacesOnly s = not (null  s) && all (' ' ==) s
 
 isWordStartingAtOffsetAfterBlank :: Int -> String -> Bool
 isWordStartingAtOffsetAfterBlank _ "" = False
@@ -178,14 +178,14 @@ isWordStartingAtOffsetAfterBlank n x =
   where
     (before, after) = splitAt n x
     condBefore = isSpacesOnly before
-    condAfter = head after /= ' '
+    condAfter = not (null after) && head after /= ' '
 
 isWordStartingAtOffset :: Int -> String -> Bool
 isWordStartingAtOffset _ "" = False
 isWordStartingAtOffset 0 (c : _) = c /= ' '
 isWordStartingAtOffset n x =
   assert ('\n' `notElem` x && '\t' `notElem` x) $
-    last before == ' ' && head after /= ' '
+    not (null before) && not (null after) && last before == ' ' && head after /= ' '
   where
     (before, after) = splitAt n x
 
@@ -207,7 +207,7 @@ isSeparatedAtOffset n sep x
   | n <= w || length x <= w = False
   | otherwise =
     assert ('\n' `notElem` x && '\t' `notElem` x) $
-      sep `List.isSuffixOf` before && head after /= ' '
+      sep `List.isSuffixOf` before && (not (null after) && head after /= ' ')
   where
     w = length sep
     (before, after) = splitAt n x
