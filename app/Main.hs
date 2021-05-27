@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad (filterM)
+import qualified Data.ByteString as BS
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Debug.Trace (trace)
@@ -18,7 +19,8 @@ import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (Subcommand (..), parseSubcommand)
 import System.FilePath (takeBaseName)
-import System.Process (readProcessWithExitCode)
+import System.Process (createProcess, readProcess)
+import qualified System.Process as Process
 import Text.Printf (printf)
 import Utils (convertTabsToSpaces)
 
@@ -142,23 +144,44 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
 
 getHelp :: String -> IO String
 getHelp cmd = do
-  (_, content, _) <- readProcessWithExitCode cmd ["--help"] ""
+  content <- readProcess cmd ["--help"] ""
   if null content
-    then (\(_, s, _) -> s) <$> readProcessWithExitCode cmd ["help"] ""
+    then readProcess cmd ["help"] ""
     else return content
 
 getHelpSub :: String -> String -> IO String
 getHelpSub cmd subcmd = do
-  (_, content, _) <- readProcessWithExitCode cmd [subcmd, "--help"] ""
+  content <- readProcess cmd [subcmd, "--help"] ""
   if null content
-    then (\(_, s, _) -> s) <$> readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
+    then readProcess cmd ["help", subcmd] "" -- samtools
+    else return content
+
+readProcessBS :: String -> [String] -> IO BS.ByteString
+readProcessBS cmd args = do
+  (_, houtMay, _, _) <- createProcess (Process.proc cmd args) {Process.std_out = Process.CreatePipe}
+  case houtMay of
+    Just hout -> BS.hGetContents hout
+    Nothing -> return BS.empty
+
+getHelpBS :: String -> IO BS.ByteString
+getHelpBS cmd = do
+  content <- readProcessBS cmd ["--help"]
+  if BS.null content
+    then readProcessBS cmd ["help"]
+    else return content
+
+getHelpSubBS :: String -> String -> IO BS.ByteString
+getHelpSubBS cmd subcmd = do
+  content <- readProcessBS cmd [subcmd, "--help"]
+  if BS.null content
+    then readProcessBS cmd ["help", subcmd] -- samtools
     else return content
 
 isSub :: String -> String -> IO Bool
 isSub cmd subcmd = do
-  content <- getHelpSub cmd subcmd
-  contentRoot <- getHelp cmd
-  return $ not (null content) && (content /= contentRoot)
+  content <- getHelpSubBS cmd subcmd
+  contentRoot <- getHelpBS cmd
+  return $ not (BS.null content) && (content /= contentRoot)
 
 genScriptSimple :: String -> String -> [Opt] -> String
 genScriptSimple "fish" = genFishScriptSimple

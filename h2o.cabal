@@ -51,7 +51,7 @@ executable h2o
       Paths_h2o
   hs-source-dirs:
       app
-  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=bfd -optl-static -optl-pthread
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N -optl-fuse-ld=bfd -optl-static -optl-pthread
   build-depends:
       MissingH
     , aeson

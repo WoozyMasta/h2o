@@ -35,7 +35,6 @@ executables:
     source-dirs: app
     ghc-options:
       - -Wall
-      - -O2
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
