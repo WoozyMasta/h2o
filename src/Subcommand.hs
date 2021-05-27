@@ -11,7 +11,7 @@ type Layout = (Int, Int)
 data Subcommand = Subcommand
   { _cmd :: String,
     _desc :: String
-  }
+  } deriving (Eq, Ord)
 
 instance Show Subcommand where
   show (Subcommand cmd desc) = cmd ++ "\t\t(" ++ desc ++ ")"

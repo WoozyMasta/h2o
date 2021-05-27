@@ -1,7 +1,7 @@
 module Main where
 
 import Control.Monad (filterM)
-import Data.List.Extra (stripInfix)
+import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
@@ -111,7 +111,6 @@ run :: Config -> IO ()
 run (Config (CommandInput name) _ True _ _ _) = trace "[main] JSON output\n" $ writeJSON name
 run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly) = do
   content <- getInputContent input
-  let subcommands = parseSubcommand content
   let opts = parseMany content
   let res
         | isConvertingTabsToSpaces =
@@ -121,7 +120,8 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
           trace "[main] processing (option+arg, description) splitting only" $
             putStr . formatStringPairs . preprocessAll $ content
         | isListingSubcommands =
-          trace "[main] Listing subcommands...\n" $ putStr (unlines (map _cmd subcommands))
+          trace "[main] Listing subcommands...\n" $
+            putStr . unlines =<< listSubcommandsIO cmd
         | otherwise =
           case input of
             SubcommandInput _ subname ->
@@ -224,7 +224,7 @@ writeJSON :: String -> IO ()
 writeJSON cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let rootOptions = parseMany rootContent
-  let subcmds = parseSubcommand rootContent
+  let subcmds = nubSort (parseSubcommand rootContent)
   let subcmdsFilteredM = filterM (isSub cmd . _cmd) subcmds
 
   subs <- subcmdsFilteredM
@@ -233,3 +233,9 @@ writeJSON cmd = do
   let subcmdOptsPairsM = zip <$> subcmdsFilteredM <*> optsListM
   let commandM = toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
   writeCommandAsJSON =<< commandM
+
+listSubcommandsIO :: String -> IO [String]
+listSubcommandsIO cmd = do
+  rootContent <- getInputContent (CommandInput cmd)
+  let subcmdNames = nubSort (map _cmd (parseSubcommand rootContent))
+  filterM (isSub cmd) subcmdNames
