@@ -5,7 +5,7 @@
 
 module Main where
 
-import Control.Monad (filterM, guard, (<=<))
+import Control.Monad (guard, (<=<))
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
@@ -25,8 +25,7 @@ import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (parseSubcommand)
 import System.FilePath (takeBaseName)
-import System.Process (createProcess, readProcess)
-import qualified System.Process as Process
+import System.Process (readProcess)
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
 import Utils (convertTabsToSpaces)
@@ -176,33 +175,6 @@ getHelpSub cmd subcmd = do
     then readProcess cmd ["help", subcmd] "" -- samtools
     else return content
 
-readProcessAsText :: String -> [String] -> IO Text
-readProcessAsText cmd args = do
-  (_, houtMay, _, _) <- createProcess (Process.proc cmd args) {Process.std_out = Process.CreatePipe}
-  case houtMay of
-    Just hout -> TIO.hGetContents hout
-    Nothing -> return T.empty
-
-getHelpAsText :: String -> IO Text
-getHelpAsText cmd = do
-  content <- readProcessAsText cmd ["--help"]
-  if T.null content
-    then readProcessAsText cmd ["help"]
-    else return content
-
-getHelpSubAsText :: String -> String -> IO Text
-getHelpSubAsText cmd subcmd = do
-  content <- readProcessAsText cmd [subcmd, "--help"]
-  if T.null content
-    then readProcessAsText cmd ["help", subcmd] -- samtools
-    else return content
-
-isSub :: String -> String -> IO Bool
-isSub cmd subcmd = do
-  content <- getHelpSubAsText cmd subcmd
-  contentRoot <- getHelpAsText cmd
-  return $ not (T.null content) && (content /= contentRoot)
-
 genScriptSimple :: Shell -> String -> [Opt] -> Text
 genScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
 genScriptSimple Zsh cmd opts = genZshScript cmd opts
@@ -229,36 +201,23 @@ getInputContent (SubcommandInput name subname) = getHelpSub name subname
 getInputContent (CommandInput name) = getHelp name
 getInputContent (FileInput f) = readFile f
 
--- | Generate shell completion script from the root help page
--- as well as the subcommand's help pages.
 toScriptFull :: Shell -> String -> IO Text
 toScriptFull shell cmd = do
-  rootContent <- getInputContent (CommandInput cmd)
-  let rootOptions = parseMany rootContent
-  let subcmds = parseSubcommand rootContent
-  let subcmdsM = filterM (isSub cmd . _cmd) subcmds
-
-  subs <- subcmdsM
-  let subcmdNames = map _cmd subs
-  let subcommandScript = genScriptSubcommands shell cmd subs
+  (Command _ _ rootOptions subs) <- toCommandIO cmd
+  let subcmdNames = map _name subs
+  let subcmdOptsPairs = [(_name sub, _options sub) | sub <- subs]
   let rootOptScript = genScriptRootOptions shell cmd subcmdNames rootOptions
+  let subcommandScript = genScriptSubcommands shell cmd (toSubcommands subs)
   let two = [rootOptScript, subcommandScript]
-  texts <- mapM (_writeSubcommandOptions shell cmd) subcmdNames
+  let texts = map (uncurry (genScriptSubcommandOptions shell cmd)) subcmdOptsPairs
   let res =
         if null subcmdNames
           then trace "[warning] Ignore subcommands" $ genScriptSimple shell cmd rootOptions
           else T.intercalate "\n\n\n" (two ++ texts)
   return res
-
-_writeSubcommandOptions :: Shell -> String -> String -> IO Text
-_writeSubcommandOptions shell name subname = do
-  content <- getInputContent (SubcommandInput name subname)
-  let options = parseMany content
-  let script = genScriptSubcommandOptions shell name subname options
-  return script
-
-_getSubcommandOpts :: String -> String -> IO [Opt]
-_getSubcommandOpts name subname = parseMany <$> getInputContent (SubcommandInput name subname)
+  where
+    toSubcommands :: [Command] -> [Subcommand]
+    toSubcommands xs = [Subcommand name desc | (Command name desc _ _) <- xs]
 
 toCommandIO :: String -> IO Command
 toCommandIO cmd = do
@@ -279,6 +238,6 @@ writeJSON = TIO.putStr . toJSONText <=< toCommandIO
 
 listSubcommandsIO :: String -> IO [String]
 listSubcommandsIO s = getSubnames <$> toCommandIO s
-  where
-    getSubnames :: Command -> [String]
-    getSubnames = map _name . _subcommands
+
+getSubnames :: Command -> [String]
+getSubnames = map _name . _subcommands
