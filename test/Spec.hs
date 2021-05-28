@@ -1,8 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as TLE
 import GenBashCompletions (genBashScript)
-import GenFishCompletions (makeFishLineOption, genFishScriptSimple, truncateAfterPeriod)
+import GenFishCompletions (genFishScriptSimple, makeFishLineOption, truncateAfterPeriod)
 import GenZshCompletions (genZshScript, getZshOptStr)
 import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
@@ -10,6 +14,7 @@ import qualified Hedgehog.Range as Range
 import HelpParser
 import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
+import System.FilePath (takeBaseName)
 import Test.Tasty
 import Test.Tasty.ExpectedFailure
 import Test.Tasty.Golden (goldenVsString)
@@ -17,7 +22,6 @@ import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Utils (getMostFrequent)
-import System.FilePath (takeBaseName)
 
 main :: IO ()
 main =
@@ -532,7 +536,7 @@ shellCompGoldenTests =
         (actionFish "test/golden/bowtie2.txt")
     ]
   where
-    actionFish x = BLU.fromString . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
+    actionFish x = TLE.encodeUtf8 . TL.fromStrict . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
     actionZsh x = BLU.fromString . genZshScript (takeBaseName x) . parseMany <$> readFile x
     actionBash x = BLU.fromString . genBashScript (takeBaseName x) . parseMany <$> readFile x
 

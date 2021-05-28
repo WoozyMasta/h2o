@@ -4,10 +4,11 @@
 module Main where
 
 import Control.Monad (filterM)
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
@@ -132,12 +133,12 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
           case input of
             SubcommandInput _ subname ->
               trace "[main] processing subcommand-level options" $
-                putStr (genScriptSubcommandOptions shell cmd subname opts)
+                TIO.putStr (genScriptSubcommandOptions shell cmd subname opts)
             CommandInput name ->
               writeWithSubcommands shell name
             FileInput _ ->
               trace "[main] processing options from the file" $
-                putStr (genScriptSimple shell cmd opts)
+                TIO.putStr (genScriptSimple shell cmd opts)
   res
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
@@ -160,21 +161,21 @@ getHelpSub cmd subcmd = do
     then readProcess cmd ["help", subcmd] "" -- samtools
     else return content
 
-readProcessBS :: String -> [String] -> IO T.Text
+readProcessBS :: String -> [String] -> IO Text
 readProcessBS cmd args = do
   (_, houtMay, _, _) <- createProcess (Process.proc cmd args) {Process.std_out = Process.CreatePipe}
   case houtMay of
     Just hout -> TIO.hGetContents hout
     Nothing -> return T.empty
 
-getHelpBS :: String -> IO T.Text
+getHelpBS :: String -> IO Text
 getHelpBS cmd = do
   content <- readProcessBS cmd ["--help"]
   if T.null content
     then readProcessBS cmd ["help"]
     else return content
 
-getHelpSubBS :: String -> String -> IO T.Text
+getHelpSubBS :: String -> String -> IO Text
 getHelpSubBS cmd subcmd = do
   content <- readProcessBS cmd [subcmd, "--help"]
   if T.null content
@@ -187,26 +188,26 @@ isSub cmd subcmd = do
   contentRoot <- getHelpBS cmd
   return $ not (T.null content) && (content /= contentRoot)
 
-genScriptSimple :: String -> String -> [Opt] -> String
-genScriptSimple "fish" = genFishScriptSimple
-genScriptSimple "zsh" = genZshScript
-genScriptSimple "bash" = genBashScript
-genScriptSimple _ = \_ opts -> unlines $ map show opts
+genScriptSimple :: String -> String -> [Opt] -> Text
+genScriptSimple "fish" cmd opts = genFishScriptSimple cmd opts
+genScriptSimple "zsh" cmd opts = T.pack $ genZshScript cmd opts
+genScriptSimple "bash" cmd opts  = T.pack $ genBashScript cmd opts
+genScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
-genScriptRootOptions :: String -> String -> [String] -> [Opt] -> String
+genScriptRootOptions :: String -> String -> [String] -> [Opt] -> Text
 genScriptRootOptions "fish" cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
 genScriptRootOptions shell cmd _ opts = genScriptSimple shell cmd opts
 
-genScriptSubcommands :: String -> String -> [Subcommand] -> String
+genScriptSubcommands :: String -> String -> [Subcommand] -> Text
 genScriptSubcommands "fish" cmd subcmds = genFishScriptSubcommands cmd subcmds
-genScriptSubcommands _ _ subcmds = unlines $ map show subcmds
+genScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show) subcmds
 
-genScriptSubcommandOptions :: String -> String -> String -> [Opt] -> String
+genScriptSubcommandOptions :: String -> String -> String -> [Opt] -> Text
 genScriptSubcommandOptions "fish" cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
 genScriptSubcommandOptions _ cmd subcmd opts =
-  unlines $ map (\opt -> prefix ++ show opt) opts
+  T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
-    prefix = printf "(%s-%s) " cmd subcmd
+    prefix = T.pack $ printf "(%s-%s) " cmd subcmd
 
 getInputContent :: Input -> IO String
 getInputContent input = case input of
@@ -231,16 +232,17 @@ writeWithSubcommands shell cmd = do
   if null subs
     then
       trace "[warning] Ignore subcommands" $
-        putStr (genScriptSimple shell cmd rootOptions)
-    else putStr (rootOptScript ++ "\n\n\n" ++ subcommandScript ++ "\n\n\n") >> mapM_ (_writeSubcommandOptions shell cmd) subcmdNames
+        TIO.putStr (genScriptSimple shell cmd rootOptions)
+    else TIO.putStr (
+      rootOptScript `T.append` "\n\n\n" `T.append` subcommandScript `T.append` "\n\n\n") >> mapM_ (_writeSubcommandOptions shell cmd) subcmdNames
 
 _writeSubcommandOptions :: String -> String -> String -> IO ()
 _writeSubcommandOptions shell name subname = do
   content <- getInputContent (SubcommandInput name subname)
   let options = parseMany content
   let script = genScriptSubcommandOptions shell name subname options
-  putStr script
-  putStr $ if null script then "" else "\n\n\n"
+  TIO.putStr script
+  TIO.putStr $ if T.null script then "" else "\n\n\n"
 
 _getSubcommandOpts :: String -> String -> IO [Opt]
 _getSubcommandOpts name subname = parseMany <$> getInputContent (SubcommandInput name subname)
