@@ -175,31 +175,31 @@ getHelpSub cmd subcmd = do
     then readProcess cmd ["help", subcmd] "" -- samtools
     else return content
 
-readProcessTxt :: String -> [String] -> IO Text
-readProcessTxt cmd args = do
+readProcessAsText :: String -> [String] -> IO Text
+readProcessAsText cmd args = do
   (_, houtMay, _, _) <- createProcess (Process.proc cmd args) {Process.std_out = Process.CreatePipe}
   case houtMay of
     Just hout -> TIO.hGetContents hout
     Nothing -> return T.empty
 
-getHelpTxt :: String -> IO Text
-getHelpTxt cmd = do
-  content <- readProcessTxt cmd ["--help"]
+getHelpAsText :: String -> IO Text
+getHelpAsText cmd = do
+  content <- readProcessAsText cmd ["--help"]
   if T.null content
-    then readProcessTxt cmd ["help"]
+    then readProcessAsText cmd ["help"]
     else return content
 
-getHelpSubTxt :: String -> String -> IO Text
-getHelpSubTxt cmd subcmd = do
-  content <- readProcessTxt cmd [subcmd, "--help"]
+getHelpSubAsText :: String -> String -> IO Text
+getHelpSubAsText cmd subcmd = do
+  content <- readProcessAsText cmd [subcmd, "--help"]
   if T.null content
-    then readProcessTxt cmd ["help", subcmd] -- samtools
+    then readProcessAsText cmd ["help", subcmd] -- samtools
     else return content
 
 isSub :: String -> String -> IO Bool
 isSub cmd subcmd = do
-  content <- getHelpSubTxt cmd subcmd
-  contentRoot <- getHelpTxt cmd
+  content <- getHelpSubAsText cmd subcmd
+  contentRoot <- getHelpAsText cmd
   return $ not (T.null content) && (content /= contentRoot)
 
 genScriptSimple :: Shell -> String -> [Opt] -> Text
