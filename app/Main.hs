@@ -161,37 +161,37 @@ getHelpSub cmd subcmd = do
     then readProcess cmd ["help", subcmd] "" -- samtools
     else return content
 
-readProcessBS :: String -> [String] -> IO Text
-readProcessBS cmd args = do
+readProcessTxt :: String -> [String] -> IO Text
+readProcessTxt cmd args = do
   (_, houtMay, _, _) <- createProcess (Process.proc cmd args) {Process.std_out = Process.CreatePipe}
   case houtMay of
     Just hout -> TIO.hGetContents hout
     Nothing -> return T.empty
 
-getHelpBS :: String -> IO Text
-getHelpBS cmd = do
-  content <- readProcessBS cmd ["--help"]
+getHelpTxt :: String -> IO Text
+getHelpTxt cmd = do
+  content <- readProcessTxt cmd ["--help"]
   if T.null content
-    then readProcessBS cmd ["help"]
+    then readProcessTxt cmd ["help"]
     else return content
 
-getHelpSubBS :: String -> String -> IO Text
-getHelpSubBS cmd subcmd = do
-  content <- readProcessBS cmd [subcmd, "--help"]
+getHelpSubTxt :: String -> String -> IO Text
+getHelpSubTxt cmd subcmd = do
+  content <- readProcessTxt cmd [subcmd, "--help"]
   if T.null content
-    then readProcessBS cmd ["help", subcmd] -- samtools
+    then readProcessTxt cmd ["help", subcmd] -- samtools
     else return content
 
 isSub :: String -> String -> IO Bool
 isSub cmd subcmd = do
-  content <- getHelpSubBS cmd subcmd
-  contentRoot <- getHelpBS cmd
+  content <- getHelpSubTxt cmd subcmd
+  contentRoot <- getHelpTxt cmd
   return $ not (T.null content) && (content /= contentRoot)
 
 genScriptSimple :: String -> String -> [Opt] -> Text
 genScriptSimple "fish" cmd opts = genFishScriptSimple cmd opts
 genScriptSimple "zsh" cmd opts = T.pack $ genZshScript cmd opts
-genScriptSimple "bash" cmd opts  = T.pack $ genBashScript cmd opts
+genScriptSimple "bash" cmd opts = T.pack $ genBashScript cmd opts
 genScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
 genScriptRootOptions :: String -> String -> [String] -> [Opt] -> Text
@@ -210,10 +210,9 @@ genScriptSubcommandOptions _ cmd subcmd opts =
     prefix = T.pack $ printf "(%s-%s) " cmd subcmd
 
 getInputContent :: Input -> IO String
-getInputContent input = case input of
-  SubcommandInput name subname -> getHelpSub name subname
-  CommandInput name -> getHelp name
-  FileInput f -> readFile f
+getInputContent (SubcommandInput name subname) = getHelpSub name subname
+getInputContent (CommandInput name) = getHelp name
+getInputContent (FileInput f) = readFile f
 
 -- | Generate shell completion script from the root help page
 -- as well as the subcommand's help pages.
@@ -228,21 +227,22 @@ writeWithSubcommands shell cmd = do
   let subcmdNames = map _cmd subs
   let subcommandScript = genScriptSubcommands shell cmd subs
   let rootOptScript = genScriptRootOptions shell cmd subcmdNames rootOptions
+  let two = [rootOptScript, subcommandScript]
+  texts <- mapM (_writeSubcommandOptions shell cmd) subcmdNames
+  let res =
+        if null subs
+          then
+            trace "[warning] Ignore subcommands" $
+              genScriptSimple shell cmd rootOptions
+          else T.intercalate "\n\n\n" (two ++ texts)
+  TIO.putStr res
 
-  if null subs
-    then
-      trace "[warning] Ignore subcommands" $
-        TIO.putStr (genScriptSimple shell cmd rootOptions)
-    else TIO.putStr (
-      rootOptScript `T.append` "\n\n\n" `T.append` subcommandScript `T.append` "\n\n\n") >> mapM_ (_writeSubcommandOptions shell cmd) subcmdNames
-
-_writeSubcommandOptions :: String -> String -> String -> IO ()
+_writeSubcommandOptions :: String -> String -> String -> IO Text
 _writeSubcommandOptions shell name subname = do
   content <- getInputContent (SubcommandInput name subname)
   let options = parseMany content
   let script = genScriptSubcommandOptions shell name subname options
-  TIO.putStr script
-  TIO.putStr $ if T.null script then "" else "\n\n\n"
+  return script
 
 _getSubcommandOpts :: String -> String -> IO [Opt]
 _getSubcommandOpts name subname = parseMany <$> getInputContent (SubcommandInput name subname)
