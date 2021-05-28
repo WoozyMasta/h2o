@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -36,12 +37,23 @@ data Input
 
 data Config = Config
   { _input :: Input,
-    _shell :: String,
+    _shell :: Shell,
     _isOutputJSON :: Bool,
     _isConvertingTabsToSpaces :: Bool,
     _isListingSubcommands :: Bool,
     _isPreprocessOnly :: Bool
   }
+
+data Shell = Bash | Zsh | Fish | None deriving (Eq, Show)
+
+toShell :: String -> Shell
+toShell s
+  | s' == "bash" = Bash
+  | s' == "zsh" = Zsh
+  | s' == "fish" = Fish
+  | otherwise = None
+  where
+    s' = T.toLower . T.pack $ s
 
 subcommandInput :: Parser Input
 subcommandInput =
@@ -80,13 +92,15 @@ config :: Parser Config
 config =
   Config
     <$> inputP
-    <*> strOption
-      ( long "shell"
-          <> metavar "{bash|zsh|fish|none}"
-          <> showDefault
-          <> value "none"
-          <> help "Select shell for completion script (bash|zsh|fish|none)"
-      )
+    <*> ( toShell
+            <$> strOption
+              ( long "shell"
+                  <> metavar "{bash|zsh|fish|none}"
+                  <> showDefault
+                  <> value "none"
+                  <> help "Select shell for completion script (bash|zsh|fish|none)"
+              )
+        )
     <*> switch
       ( long "json"
           <> help "Output in JSON"
@@ -135,7 +149,7 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
               trace "[main] processing subcommand-level options" $
                 TIO.putStr (genScriptSubcommandOptions shell cmd subname opts)
             CommandInput name ->
-              writeWithSubcommands shell name
+              TIO.putStr =<< toScriptFull shell name
             FileInput _ ->
               trace "[main] processing options from the file" $
                 TIO.putStr (genScriptSimple shell cmd opts)
@@ -188,22 +202,22 @@ isSub cmd subcmd = do
   contentRoot <- getHelpTxt cmd
   return $ not (T.null content) && (content /= contentRoot)
 
-genScriptSimple :: String -> String -> [Opt] -> Text
-genScriptSimple "fish" cmd opts = genFishScriptSimple cmd opts
-genScriptSimple "zsh" cmd opts = genZshScript cmd opts
-genScriptSimple "bash" cmd opts = genBashScript cmd opts
+genScriptSimple :: Shell -> String -> [Opt] -> Text
+genScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
+genScriptSimple Zsh cmd opts = genZshScript cmd opts
+genScriptSimple Bash cmd opts = genBashScript cmd opts
 genScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
-genScriptRootOptions :: String -> String -> [String] -> [Opt] -> Text
-genScriptRootOptions "fish" cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
+genScriptRootOptions :: Shell -> String -> [String] -> [Opt] -> Text
+genScriptRootOptions Fish cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
 genScriptRootOptions shell cmd _ opts = genScriptSimple shell cmd opts
 
-genScriptSubcommands :: String -> String -> [Subcommand] -> Text
-genScriptSubcommands "fish" cmd subcmds = genFishScriptSubcommands cmd subcmds
+genScriptSubcommands :: Shell -> String -> [Subcommand] -> Text
+genScriptSubcommands Fish cmd subcmds = genFishScriptSubcommands cmd subcmds
 genScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show) subcmds
 
-genScriptSubcommandOptions :: String -> String -> String -> [Opt] -> Text
-genScriptSubcommandOptions "fish" cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
+genScriptSubcommandOptions :: Shell -> String -> String -> [Opt] -> Text
+genScriptSubcommandOptions Fish cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
 genScriptSubcommandOptions _ cmd subcmd opts =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
@@ -216,8 +230,8 @@ getInputContent (FileInput f) = readFile f
 
 -- | Generate shell completion script from the root help page
 -- as well as the subcommand's help pages.
-writeWithSubcommands :: String -> String -> IO ()
-writeWithSubcommands shell cmd = do
+toScriptFull :: Shell -> String -> IO Text
+toScriptFull shell cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let rootOptions = parseMany rootContent
   let subcmds = parseSubcommand rootContent
@@ -230,14 +244,12 @@ writeWithSubcommands shell cmd = do
   let two = [rootOptScript, subcommandScript]
   texts <- mapM (_writeSubcommandOptions shell cmd) subcmdNames
   let res =
-        if null subs
-          then
-            trace "[warning] Ignore subcommands" $
-              genScriptSimple shell cmd rootOptions
+        if null subcmdNames
+          then trace "[warning] Ignore subcommands" $ genScriptSimple shell cmd rootOptions
           else T.intercalate "\n\n\n" (two ++ texts)
-  TIO.putStr res
+  return res
 
-_writeSubcommandOptions :: String -> String -> String -> IO Text
+_writeSubcommandOptions :: Shell -> String -> String -> IO Text
 _writeSubcommandOptions shell name subname = do
   content <- getInputContent (SubcommandInput name subname)
   let options = parseMany content
@@ -253,7 +265,6 @@ toCommandIO cmd = do
   let rootOptions = parseMany rootContent
   let subcmds = nubSort (parseSubcommand rootContent)
   let subcmdsFilteredM = filterM (isSub cmd . _cmd) subcmds
-
   subs <- subcmdsFilteredM
   let subcmdNames = map _cmd subs
   let optsListM = mapM (_getSubcommandOpts cmd) subcmdNames
