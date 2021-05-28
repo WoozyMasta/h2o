@@ -12,16 +12,16 @@ import HelpParser (Opt (..), OptName (..))
 import Subcommand (Subcommand (..))
 
 data Command = Command
-  { name :: String, -- command name
-    description :: String, -- description of command itself
-    options :: [Opt], -- command options
-    subcommands :: [Command] -- subcommands
+  { _name :: String, -- command name
+    _description :: String, -- description of command itself
+    _options :: [Opt], -- command options
+    _subcommands :: [Command] -- subcommands
   }
   deriving (Show)
 
 instance ToJSON OptName where
-  toJSON (OptName raw t) = toJSON raw
-  toEncoding (OptName raw t) = toEncoding raw
+  toJSON (OptName raw _) = toJSON raw
+  toEncoding (OptName raw _) = toEncoding raw
 
 instance ToJSON Opt where
   toJSON (Opt names arg desc) =
@@ -51,7 +51,7 @@ toCommand :: String -> String -> [Opt] -> [(Subcommand, [Opt])] -> Command
 toCommand name desc opts subcmdOptsPairs =
   Command name desc opts subcommands
   where
-    subcommands = [subcommandToCommand subcmd opts | (subcmd, opts) <- subcmdOptsPairs]
+    subcommands = [subcommandToCommand subcmd opts' | (subcmd, opts') <- subcmdOptsPairs]
 
 writeCommandAsJSON :: Command -> IO ()
 writeCommandAsJSON = TIO.putStr . TL.toStrict  . encodeToLazyText

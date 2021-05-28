@@ -11,7 +11,6 @@ import qualified Data.Set as Set
 import Data.String.Utils (join, rstrip, split, strip)
 import Debug.Trace (trace)
 import HelpParser (Opt (..), parseLine, parseWithOptPart, preprocessAllFallback)
-import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
 import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, startsWithChar, toRanges)
 
