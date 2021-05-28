@@ -1,9 +1,14 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module GenBashCompletions where
 
-import HelpParser
-import Text.Printf
+import Data.Text (Text)
+import qualified Data.Text as T
+import HelpParser (Opt (_names), OptName (_raw))
+import Text.Printf (printf)
 
 bashTemplate :: String
 bashTemplate =
@@ -29,14 +34,11 @@ bashTemplate =
       "complete -F _func -o bashdefault -o default %s"
     ]
 
-getOptsArray :: [Opt] -> String
-getOptsArray opts = unwords $ concatMap (map _raw . _names) opts
+getOptsArray :: [Opt] -> Text
+getOptsArray opts = T.unwords $ concatMap (map (T.pack . _raw) . _names) opts
 
-indent :: Int -> String -> String
-indent n s = replicate n ' ' ++ s
-
-genBashScript :: String -> [Opt] -> String
+genBashScript :: String -> [Opt] -> Text
 genBashScript cmd opts = res
   where
     optsArray = getOptsArray opts
-    res = printf bashTemplate optsArray cmd
+    res = T.pack $ printf bashTemplate optsArray cmd

@@ -190,8 +190,8 @@ isSub cmd subcmd = do
 
 genScriptSimple :: String -> String -> [Opt] -> Text
 genScriptSimple "fish" cmd opts = genFishScriptSimple cmd opts
-genScriptSimple "zsh" cmd opts = T.pack $ genZshScript cmd opts
-genScriptSimple "bash" cmd opts = T.pack $ genBashScript cmd opts
+genScriptSimple "zsh" cmd opts = genZshScript cmd opts
+genScriptSimple "bash" cmd opts = genBashScript cmd opts
 genScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
 genScriptRootOptions :: String -> String -> [String] -> [Opt] -> Text

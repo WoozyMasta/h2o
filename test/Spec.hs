@@ -1,13 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import GenBashCompletions (genBashScript)
 import GenFishCompletions (genFishScriptSimple, makeFishLineOption, truncateAfterPeriod)
-import GenZshCompletions (genZshScript, getZshOptStr)
+import GenZshCompletions (genZshScript)
 import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -467,8 +466,6 @@ shellCompTests =
     "\n ============= Test Fish script generation ============"
     [ testCase "basic fish comp" $
         makeFishLineOption cmd opt @?= fishExpected,
-      testCase "basic zsh comp" $
-        getZshOptStr opt @?= zshArgsExpected,
       testCase "zsh script generation" $
         genZshScript cmd opts @?= zshScriptExpected,
       testCase "bash script generation" $
@@ -481,7 +478,6 @@ shellCompTests =
     desc = "Specify the filename to save"
     opt = Opt names arg desc
     fishExpected = "complete -c nanachi -s o -l output -d 'Specify the filename to save' -r"
-    zshArgsExpected = "'(-o --output)'{-o,--output}'[Specify the filename to save]'"
 
     names2 = [OptName "--help" LongType]
     args2 = ""
@@ -536,9 +532,10 @@ shellCompGoldenTests =
         (actionFish "test/golden/bowtie2.txt")
     ]
   where
-    actionFish x = TLE.encodeUtf8 . TL.fromStrict . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
-    actionZsh x = BLU.fromString . genZshScript (takeBaseName x) . parseMany <$> readFile x
-    actionBash x = BLU.fromString . genBashScript (takeBaseName x) . parseMany <$> readFile x
+    toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
+    actionFish x = toLazyByteString . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
+    actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany <$> readFile x
+    actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany <$> readFile x
 
 propertyTests :: TestTree
 propertyTests =

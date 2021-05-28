@@ -64,5 +64,4 @@ tests:
       - tasty-hedgehog
       - tasty-expected-failure
       - tasty-golden
-      - utf8-string
       - filepath

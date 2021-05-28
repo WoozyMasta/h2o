@@ -1,53 +1,63 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module GenZshCompletions where
 
 import qualified Data.List as List
-import Data.String.Utils (replace)
+import Data.Text (Text)
+import qualified Data.Text as T
 import HelpParser
-import Subcommand
-import Text.Printf
+  ( Opt (..),
+    OptName (..),
+    OptNameType (..),
+  )
+import Subcommand (Subcommand (..))
+import Text.Printf (printf)
 
+zshHeader :: String -> Text
+zshHeader cmd = T.pack $ printf "#compdef %s\n\n" cmd
 
-zshHeader :: String -> String
-zshHeader cmd = printf "#compdef %s\n\n" cmd :: String
+quote :: Text -> Text
+quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
-getZshOptStr :: Opt -> String
-getZshOptStr (Opt optnames _ desc) = case raws of
-  [raw] -> printf "'%s[%s]'" raw quotedDesc :: String
-  _ -> printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc :: String
+getOptAsText :: Opt -> Text
+getOptAsText (Opt optnames _ desc) = case raws of
+  [raw] -> T.pack $ printf "'%s[%s]'" raw quotedDesc
+  _ -> T.pack $ printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc
   where
     raws = map _raw optnames
     exclusionList = unwords raws
     optionNames = List.intercalate "," raws
-    quotedDesc = replace "]" "\\]" . replace "[" "\\[" . replace "'" "'\\''" $ desc
+    quotedDesc = quote . T.pack $ desc
 
-getZshDescStr :: Subcommand -> String
-getZshDescStr (Subcommand name desc) = printf "'%s:%s'" name quotedDesc
+getSubcommandAsText :: Subcommand -> Text
+getSubcommandAsText (Subcommand name desc) = T.pack $ printf "'%s:%s'" name quotedDesc
   where
-    quotedDesc = replace "'" "'\\''" desc
+    quotedDesc = quote (T.pack desc)
 
-indent :: Int -> String -> String
-indent n s = replicate n ' ' ++ s
+indent :: Int -> Text -> Text
+indent n t = T.replicate n " " `T.append` t
 
-genZshBodyOptions :: String -> [Opt] -> String
+genZshBodyOptions :: String -> [Opt] -> Text
 genZshBodyOptions _ opts = res
   where
-    args = unlines (map (indent 4 . getZshOptStr) opts)
+    args = T.unlines (map (indent 4 . getOptAsText) opts)
     containsOldStyle = elem OldType $ concatMap (map _type . _names) opts
-    flags = if containsOldStyle then "" else "-s "
+    flags = if containsOldStyle then T.empty else "-s "
     template = "args=(\n%s)\n\n_arguments %s$args\n"
-    res = printf template args flags :: String
+    res = T.pack $ printf template args flags
 
-genZshBodyCommands :: String -> [Subcommand] -> String
+genZshBodyCommands :: String -> [Subcommand] -> Text
 genZshBodyCommands cmd xs = res
   where
-    args = unlines (map (indent 4 . getZshDescStr) xs)
+    args = T.unlines (map (indent 4 . getSubcommandAsText) xs)
     template = "cmds=(\n%s)\n\n_describe '%s commands' $cmds\n"
-    res = printf template args cmd
+    res = T.pack $ printf template args cmd
 
-genZshScript :: String -> [Opt] -> String
-genZshScript cmd opts = header ++ body
+genZshScript :: String -> [Opt] -> Text
+genZshScript cmd opts = header `T.append` body
   where
     header = zshHeader cmd
     body = genZshBodyOptions cmd opts

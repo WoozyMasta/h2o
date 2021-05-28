@@ -88,5 +88,4 @@ test-suite h2o-test
     , tasty-hedgehog
     , tasty-hunit
     , text
-    , utf8-string
   default-language: Haskell2010
