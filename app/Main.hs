@@ -3,7 +3,7 @@
 
 module Main where
 
-import Control.Monad (filterM)
+import Control.Monad (filterM, (<=<))
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
@@ -17,16 +17,16 @@ import GenFishCompletions
     genFishScriptSubcommandOptions,
     genFishScriptSubcommands,
   )
-import GenJSON (toCommand, writeCommandAsJSON)
+import GenJSON (toCommand, toJSONText)
 import GenZshCompletions (genZshScript)
-import HelpParser (Opt)
 import Layout (parseMany, preprocessAll)
 import Options.Applicative
-import Subcommand (Subcommand (..), parseSubcommand)
+import Subcommand (parseSubcommand)
 import System.FilePath (takeBaseName)
 import System.Process (createProcess, readProcess)
 import qualified System.Process as Process
 import Text.Printf (printf)
+import Type (Command, Opt, Subcommand (..))
 import Utils (convertTabsToSpaces)
 
 data Input
@@ -247,10 +247,8 @@ _writeSubcommandOptions shell name subname = do
 _getSubcommandOpts :: String -> String -> IO [Opt]
 _getSubcommandOpts name subname = parseMany <$> getInputContent (SubcommandInput name subname)
 
--- | Generate shell completion script from the root help page
--- as well as the subcommand's help pages.
-writeJSON :: String -> IO ()
-writeJSON cmd = do
+toCommandIO :: String -> IO Command
+toCommandIO cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let rootOptions = parseMany rootContent
   let subcmds = nubSort (parseSubcommand rootContent)
@@ -260,8 +258,12 @@ writeJSON cmd = do
   let subcmdNames = map _cmd subs
   let optsListM = mapM (_getSubcommandOpts cmd) subcmdNames
   let subcmdOptsPairsM = zip <$> subcmdsFilteredM <*> optsListM
-  let commandM = toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
-  writeCommandAsJSON =<< commandM
+  toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
+
+-- | Generate shell completion script from the root help page
+-- as well as the subcommand's help pages.
+writeJSON :: String -> IO ()
+writeJSON = TIO.putStr . toJSONText <=< toCommandIO
 
 listSubcommandsIO :: String -> IO [String]
 listSubcommandsIO cmd = do

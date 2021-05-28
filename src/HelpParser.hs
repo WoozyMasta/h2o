@@ -5,37 +5,13 @@ module HelpParser where
 import qualified Data.List as List
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
-import Text.Printf (printf)
-
-data Opt = Opt
-  { _names :: [OptName],
-    _arg :: String,
-    _desc :: String
-  }
-  deriving (Eq)
-
-data OptName = OptName
-  { _raw :: String,
-    _type :: OptNameType
-  }
-  deriving (Eq)
+import Type
+  ( Opt (..),
+    OptName (..),
+    OptNameType (..),
+  )
 
 type OptArg = String
-
-instance Show Opt where
-  show (Opt names args desc) =
-    printf "%s  ::  %s\n%s\n" (unwords (map _raw names)) args desc
-
-instance Show OptName where
-  show (OptName raw _) = show raw
-
-instance Ord OptName where
-  (OptName raw1 t1) `compare` (OptName raw2 t2) = (raw1, t1) `compare` (raw2, t2)
-
-instance Ord Opt where
-  Opt n1 a1 d1 `compare` Opt n2 a2 d2 = (n1, a1, d1) `compare` (n2, a2, d2)
-
-data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show, Ord)
 
 digitChars :: [Char]
 digitChars = "0123456789"

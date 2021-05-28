@@ -8,13 +8,13 @@ module GenZshCompletions where
 import qualified Data.List as List
 import Data.Text (Text)
 import qualified Data.Text as T
-import HelpParser
+import Text.Printf (printf)
+import Type
   ( Opt (..),
     OptName (..),
     OptNameType (..),
+    Subcommand (..),
   )
-import Subcommand (Subcommand (..))
-import Text.Printf (printf)
 
 zshHeader :: String -> Text
 zshHeader cmd = T.pack $ printf "#compdef %s\n\n" cmd

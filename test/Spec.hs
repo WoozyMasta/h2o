@@ -10,7 +10,7 @@ import GenZshCompletions (genZshScript)
 import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import HelpParser
+import HelpParser (optName, optPart)
 import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
@@ -20,6 +20,11 @@ import Test.Tasty.Golden (goldenVsString)
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
+import Type
+  ( Opt (..),
+    OptName (..),
+    OptNameType (..),
+  )
 import Utils (getMostFrequent)
 
 main :: IO ()

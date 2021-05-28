@@ -7,9 +7,8 @@ module GenFishCompletions where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import HelpParser (Opt (..), OptName (..), OptNameType (..))
-import Subcommand (Subcommand (..))
 import Text.Printf (printf)
+import Type (Opt (..), OptName (..), OptNameType (..), Subcommand (..))
 
 -- https://unix.stackexchange.com/questions/296141/how-to-use-a-special-character-as-a-normal-one-in-unix-shells
 escapeSpecialSymbols :: Text -> Text

@@ -4,17 +4,10 @@ import Control.Monad (liftM2)
 import qualified Data.Maybe as Maybe
 import HelpParser (newline, optWord, singleSpace, skip, word)
 import Text.ParserCombinators.ReadP
+import Type (Subcommand (..))
 import Utils (convertTabsToSpaces, debugMsg, getMostFrequent, startsWithChar)
 
 type Layout = (Int, Int)
-
-data Subcommand = Subcommand
-  { _cmd :: String,
-    _desc :: String
-  } deriving (Eq, Ord)
-
-instance Show Subcommand where
-  show (Subcommand cmd desc) = cmd ++ "\t\t(" ++ desc ++ ")"
 
 -- | Returns location of first two words:
 -- -1 if the first or the second word unavailable

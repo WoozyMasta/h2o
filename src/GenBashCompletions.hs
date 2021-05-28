@@ -7,8 +7,8 @@ module GenBashCompletions where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import HelpParser (Opt (_names), OptName (_raw))
 import Text.Printf (printf)
+import Type (Opt (..), OptName (..))
 
 bashTemplate :: String
 bashTemplate =

@@ -10,8 +10,9 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Data.String.Utils (join, rstrip, split, strip)
 import Debug.Trace (trace)
-import HelpParser (Opt (..), parseLine, parseWithOptPart, preprocessAllFallback)
+import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
+import Type (Opt)
 import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, startsWithChar, toRanges)
 
 -- | Location is defined by (row, col) order
@@ -167,7 +168,7 @@ descOffsetWithCountInOptionLines s optLineNums =
         n = length sep
 
 isSpacesOnly :: String -> Bool
-isSpacesOnly s = not (null  s) && all (' ' ==) s
+isSpacesOnly s = not (null s) && all (' ' ==) s
 
 isWordStartingAtOffsetAfterBlank :: Int -> String -> Bool
 isWordStartingAtOffsetAfterBlank _ "" = False
