@@ -5,7 +5,9 @@
 module GenJSON where
 
 import Data.Aeson
-import qualified Data.ByteString.Lazy as BL
+import Data.Aeson.Text (encodeToLazyText)
+import qualified Data.Text.IO as TIO
+import qualified Data.Text.Lazy as TL
 import HelpParser (Opt (..), OptName (..))
 import Subcommand (Subcommand (..))
 
@@ -52,4 +54,4 @@ toCommand name desc opts subcmdOptsPairs =
     subcommands = [subcommandToCommand subcmd opts | (subcmd, opts) <- subcmdOptsPairs]
 
 writeCommandAsJSON :: Command -> IO ()
-writeCommandAsJSON = BL.putStr . encode
+writeCommandAsJSON = TIO.putStr . TL.toStrict  . encodeToLazyText

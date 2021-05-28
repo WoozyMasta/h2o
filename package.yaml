@@ -24,7 +24,7 @@ dependencies:
   - aeson
   - MissingH
   - extra
-  - bytestring
+  - text
 
 library:
   source-dirs: src

@@ -1,7 +1,11 @@
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Control.Monad (filterM)
-import qualified Data.ByteString as BS
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Debug.Trace (trace)
@@ -156,24 +160,24 @@ getHelpSub cmd subcmd = do
     then readProcess cmd ["help", subcmd] "" -- samtools
     else return content
 
-readProcessBS :: String -> [String] -> IO BS.ByteString
+readProcessBS :: String -> [String] -> IO T.Text
 readProcessBS cmd args = do
   (_, houtMay, _, _) <- createProcess (Process.proc cmd args) {Process.std_out = Process.CreatePipe}
   case houtMay of
-    Just hout -> BS.hGetContents hout
-    Nothing -> return BS.empty
+    Just hout -> TIO.hGetContents hout
+    Nothing -> return T.empty
 
-getHelpBS :: String -> IO BS.ByteString
+getHelpBS :: String -> IO T.Text
 getHelpBS cmd = do
   content <- readProcessBS cmd ["--help"]
-  if BS.null content
+  if T.null content
     then readProcessBS cmd ["help"]
     else return content
 
-getHelpSubBS :: String -> String -> IO BS.ByteString
+getHelpSubBS :: String -> String -> IO T.Text
 getHelpSubBS cmd subcmd = do
   content <- readProcessBS cmd [subcmd, "--help"]
-  if BS.null content
+  if T.null content
     then readProcessBS cmd ["help", subcmd] -- samtools
     else return content
 
@@ -181,7 +185,7 @@ isSub :: String -> String -> IO Bool
 isSub cmd subcmd = do
   content <- getHelpSubBS cmd subcmd
   contentRoot <- getHelpBS cmd
-  return $ not (BS.null content) && (content /= contentRoot)
+  return $ not (T.null content) && (content /= contentRoot)
 
 genScriptSimple :: String -> String -> [Opt] -> String
 genScriptSimple "fish" = genFishScriptSimple
