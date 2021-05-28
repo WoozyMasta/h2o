@@ -1,10 +1,11 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE MonadComprehensions #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
-import Control.Monad (filterM, (<=<))
+import Control.Monad (filterM, guard, (<=<))
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
@@ -27,7 +28,7 @@ import System.FilePath (takeBaseName)
 import System.Process (createProcess, readProcess)
 import qualified System.Process as Process
 import Text.Printf (printf)
-import Type (Command, Opt, Subcommand (..))
+import Type (Command (..), Opt, Subcommand (..))
 import Utils (convertTabsToSpaces)
 
 data Input
@@ -263,12 +264,12 @@ toCommandIO :: String -> IO Command
 toCommandIO cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let rootOptions = parseMany rootContent
-  let subcmds = nubSort (parseSubcommand rootContent)
-  let subcmdsFilteredM = filterM (isSub cmd . _cmd) subcmds
-  subs <- subcmdsFilteredM
-  let subcmdNames = map _cmd subs
-  let optsListM = mapM (_getSubcommandOpts cmd) subcmdNames
-  let subcmdOptsPairsM = zip <$> subcmdsFilteredM <*> optsListM
+  let subcmdCandidates = nubSort (parseSubcommand rootContent)
+  let toSubcmdOptPair sub = do
+        page <- getHelpSub cmd (_cmd sub)
+        guard (not (null page) && page /= rootContent)
+        return (sub, parseMany page)
+  let subcmdOptsPairsM = mapM toSubcmdOptPair subcmdCandidates
   toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
 
 -- | Generate shell completion script from the root help page
@@ -277,7 +278,7 @@ writeJSON :: String -> IO ()
 writeJSON = TIO.putStr . toJSONText <=< toCommandIO
 
 listSubcommandsIO :: String -> IO [String]
-listSubcommandsIO cmd = do
-  rootContent <- getInputContent (CommandInput cmd)
-  let subcmdNames = nubSort (map _cmd (parseSubcommand rootContent))
-  filterM (isSub cmd) subcmdNames
+listSubcommandsIO s = getSubnames <$> toCommandIO s
+  where
+    getSubnames :: Command -> [String]
+    getSubnames = map _name . _subcommands
