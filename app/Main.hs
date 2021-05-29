@@ -6,7 +6,7 @@
 module Main where
 
 import Control.Monad ((<=<))
-import Data.List.Extra (nubSort, stripInfix)
+import Data.List.Extra (nubOrd, stripInfix)
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -223,7 +223,7 @@ toCommandIO :: String -> IO Command
 toCommandIO cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let rootOptions = parseMany rootContent
-  let subcmdCandidates = nubSort (parseSubcommand rootContent)
+  let subcmdCandidates = nubOrd (parseSubcommand rootContent)
   let toSubcmdOptPair sub = do
         page <- getHelpSub cmd (_cmd sub)
         let criteria = not (null page) && page /= rootContent
