@@ -5,7 +5,7 @@
 
 module Main where
 
-import Control.Monad (guard, (<=<))
+import Control.Monad ((<=<))
 import Data.List.Extra (nubSort, stripInfix)
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
@@ -226,9 +226,9 @@ toCommandIO cmd = do
   let subcmdCandidates = nubSort (parseSubcommand rootContent)
   let toSubcmdOptPair sub = do
         page <- getHelpSub cmd (_cmd sub)
-        guard (not (null page) && page /= rootContent)
-        return (sub, parseMany page)
-  let subcmdOptsPairsM = mapM toSubcmdOptPair subcmdCandidates
+        let criteria = not (null page) && page /= rootContent
+        return ((sub, parseMany page), criteria)
+  let subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
   toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
 
 -- | Generate shell completion script from the root help page
