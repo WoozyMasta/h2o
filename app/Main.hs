@@ -61,8 +61,8 @@ subcommandInput =
     <$> strOption
       ( long "subcommand"
           <> short 's'
-          <> metavar "<STRING>"
-          <> help "Specify command-subcommand name to parse"
+          <> metavar "<string-string>"
+          <> help "Specify command-subcommand pair, like git-log, to parse specific subcommand."
       )
 
 commandInput :: Parser Input
@@ -71,8 +71,8 @@ commandInput =
     <$> strOption
       ( long "command"
           <> short 'c'
-          <> metavar "<STRING>"
-          <> help "Specify command to parse."
+          <> metavar "<string>"
+          <> help "Specify command to parse. Subcommand pages are scanned automatically."
       )
 
 fileInput :: Parser Input
@@ -81,12 +81,12 @@ fileInput =
     <$> strOption
       ( long "file"
           <> short 'f'
-          <> metavar "<FILE>"
-          <> help "Select a text file to parse"
+          <> metavar "<file>"
+          <> help "Select a text file to parse."
       )
 
 inputP :: Parser Input
-inputP = subcommandInput <|> commandInput <|> fileInput
+inputP = commandInput <|> fileInput <|> subcommandInput
 
 config :: Parser Config
 config =
@@ -103,7 +103,7 @@ config =
         )
     <*> switch
       ( long "json"
-          <> help "Output in JSON"
+          <> help "Show parsed results in JSON"
       )
     <*> switch
       ( long "convert-tabs-to-spaces"
@@ -111,11 +111,11 @@ config =
       )
     <*> switch
       ( long "list-subcommands"
-          <> help "List subcommands (experimental)"
+          <> help "List subcommands"
       )
     <*> switch
       ( long "debug"
-          <> help "Run preprocessing only"
+          <> help "Run preprocessing only (for debugging)"
       )
 
 main :: IO ()
