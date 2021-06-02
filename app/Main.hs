@@ -25,7 +25,7 @@ import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (parseSubcommand)
 import System.FilePath (takeBaseName)
-import System.Process (readProcess)
+import System.Process (readProcessWithExitCode)
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
 import Utils (convertTabsToSpaces)
@@ -163,16 +163,16 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
 
 getHelp :: String -> IO String
 getHelp cmd = do
-  content <- readProcess cmd ["--help"] ""
+  (_, content, _) <- readProcessWithExitCode cmd ["--help"] ""
   if null content
-    then readProcess cmd ["help"] ""
+    then (\(_, a, _) -> a) <$> readProcessWithExitCode cmd ["help"] ""
     else return content
 
 getHelpSub :: String -> String -> IO String
 getHelpSub cmd subcmd = do
-  content <- readProcess cmd [subcmd, "--help"] ""
+  (_, content, _) <- readProcessWithExitCode cmd [subcmd, "--help"] ""
   if null content
-    then readProcess cmd ["help", subcmd] "" -- samtools
+    then (\(_, a, _) -> a) <$> readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
     else return content
 
 genScriptSimple :: Shell -> String -> [Opt] -> Text
