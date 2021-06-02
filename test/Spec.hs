@@ -362,6 +362,10 @@ unsupportedCases =
           "-feat[ures]=exon,CDS... "
           (["--feat[ures]"], "exon,CDS..."),
         test_optPartMany "--[no-]dump-logs" [(["--dump-logs"], ""), (["--no-dump-logs"], "")],
+
+        -- Should be supported IF optPart is used for item without description only
+        test_optPart "-h,  --help   " (["-h", "--help"], ""),
+
         -- ========================================================================
 
         -- ================================
