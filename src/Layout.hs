@@ -129,9 +129,13 @@ getDescriptionOffset s optLineNums optOffset =
       | x1 == x2 -> Just x1
       | c1 <= 3 && 3 < c2 -> debug Just x2
       | c2 <= 3 && 3 < c1 -> debug Just x1
+      | 0 < x1 - x2 && x1 - x2 < 5 -> debug (Just x2)  -- sometimes continued lines are indented.
       | otherwise -> debug Nothing
       where
-        debug = debugShow "[WARNING] Disagreement (x1, c1, x2, c2) =" (x1, c1, x2, c2)
+        msg =  "[WARNING] Disagreement in offsets:\n\
+               \   description-only-line offset   %d (with count %d)\n\
+               \   option+description-line offset %d (with count %d)\n"
+        debug = trace (printf msg x1 c1 x2 c2 :: String)
 
 -- | Estimate offset of description part from non-option lines
 -- | Returns Just (offset size, match count) if matches
