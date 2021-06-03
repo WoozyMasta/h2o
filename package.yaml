@@ -25,6 +25,9 @@ dependencies:
   - MissingH
   - extra
   - text
+  - optparse-applicative
+  - filepath
+  - process
 
 library:
   source-dirs: src
@@ -43,9 +46,6 @@ executables:
       - -optl-pthread #                      - -pthread
     dependencies:
       - h2o
-      - optparse-applicative
-      - filepath
-      - process
 
 tests:
   h2o-test:

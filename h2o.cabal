@@ -29,6 +29,7 @@ library
       GenJSON
       GenZshCompletions
       HelpParser
+      Io
       Layout
       Subcommand
       Type
@@ -43,6 +44,9 @@ library
     , base >=4.7 && <5
     , containers
     , extra
+    , filepath
+    , optparse-applicative
+    , process
     , text
   default-language: Haskell2010
 
@@ -83,6 +87,8 @@ test-suite h2o-test
     , filepath
     , h2o
     , hedgehog
+    , optparse-applicative
+    , process
     , tasty
     , tasty-expected-failure
     , tasty-golden
