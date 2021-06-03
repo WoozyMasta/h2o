@@ -1,0 +1,27 @@
+-c --command  ::  <string>
+Specify command to parse. Subcommand pages are scanned automatically.
+
+-f --file  ::  <file>
+Select a text file to parse.
+
+-s --subcommand  ::  <string-string>
+Specify command-subcommand pair, like git-log, to parse specific subcommand.
+
+--shell  ::  {bash|zsh|fish|none}
+Select shell for completion script (bash|zsh|fish|none) (default: "none")
+
+--json  ::  
+Show parsed results in JSON
+
+--convert-tabs-to-spaces  ::  
+Convert tabs to spaces
+
+--list-subcommands  ::  
+List subcommands
+
+--debug  ::  
+Run preprocessing only (for debugging)
+
+-h --help  ::  
+Show this help text
+

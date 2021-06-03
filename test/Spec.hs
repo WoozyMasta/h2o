@@ -11,6 +11,7 @@ import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser (optName, optPart)
+import Io (Config (..), Input (..), Shell (..), run)
 import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
@@ -20,6 +21,7 @@ import Test.Tasty.Golden (goldenVsString)
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
+import Text.Printf (printf)
 import Type
   ( Opt (..),
     OptName (..),
@@ -32,7 +34,7 @@ main =
   defaultMain $
     testGroup
       "Tests"
-      [optNameTests, propertyTests, outdatedTests, devTests, optPartTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, layoutTests]
+      [optNameTests, propertyTests, outdatedTests, devTests, optPartTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, integratedGoldenTests, layoutTests]
 
 outdatedTests :: TestTree
 outdatedTests =
@@ -363,7 +365,6 @@ unsupportedCases =
           "-feat[ures]=exon,CDS... "
           (["--feat[ures]"], "exon,CDS..."),
         test_optPartMany "--[no-]dump-logs" [(["--dump-logs"], ""), (["--no-dump-logs"], "")],
-
         -- ========================================================================
 
         -- ================================
@@ -543,6 +544,22 @@ shellCompGoldenTests =
     actionFish x = toLazyByteString . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
     actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany <$> readFile x
     actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany <$> readFile x
+
+integratedGoldenTests :: TestTree
+integratedGoldenTests =
+  testGroup
+    "Integrated tests"
+    (map toTestTree commands)
+  where
+    commands = ["h2o", "conda", "stack"]
+    toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
+    conf name = Config (CommandInput name) None False False False False
+    runWithCommand name = toLazyByteString <$> run (conf name)
+    toTestTree name =
+      goldenVsString
+        ("h2o --command " ++ name)
+        (printf "test/golden/%s.txt" name :: String)
+        (runWithCommand name)
 
 propertyTests :: TestTree
 propertyTests =
