@@ -12,7 +12,7 @@ bug-reports:    https://github.com/yamaton/h2o/issues
 author:         Yamato Matsuoka
 maintainer:     yamato.matsuoka@tetradresearch.com
 copyright:      2021 Tetrad Research
-license:        BSD3
+license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:

@@ -1,9 +1,9 @@
 name: h2o
 version: 0.1.5
-github: "yamaton/h2o"
-license: BSD3
+github: yamaton/h2o
+license: MIT
 author: "Yamato Matsuoka"
-maintainer: "yamato.matsuoka@tetradresearch.com"
+maintainer: yamato.matsuoka@tetradresearch.com
 copyright: "2021 Tetrad Research"
 
 extra-source-files:
