@@ -6,7 +6,7 @@
 module Main where
 
 import qualified Data.Text.IO as TIO
-import Io (config, run)
+import Io (configOrVersion, run)
 import Options.Applicative
   ( execParser,
     fullDesc,
@@ -21,7 +21,7 @@ main = execParser opts >>= run >>= TIO.putStr
   where
     opts =
       info
-        (config <**> helper)
+        (configOrVersion <**> helper)
         ( fullDesc
             <> progDesc "Parse help or manpage texts, extract command options, and generate shell completion scripts"
         )

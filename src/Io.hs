@@ -5,6 +5,7 @@
 
 module Io where
 
+import qualified Constants
 import Control.Monad ((<=<))
 import Data.List.Extra (nubOrd, stripInfix)
 import qualified Data.Maybe as Maybe
@@ -43,6 +44,8 @@ data Config = Config
     _isListingSubcommands :: Bool,
     _isPreprocessOnly :: Bool
   }
+
+data ConfigOrVersion = Version | C_ Config
 
 data Shell = Bash | Zsh | Fish | None deriving (Eq, Show)
 
@@ -88,39 +91,48 @@ fileInput =
 inputP :: Parser Input
 inputP = commandInput <|> fileInput <|> subcommandInput
 
-config :: Parser Config
+config :: Parser ConfigOrVersion
 config =
-  Config
-    <$> inputP
-    <*> ( toShell
-            <$> strOption
-              ( long "shell"
-                  <> metavar "{bash|zsh|fish|none}"
-                  <> showDefault
-                  <> value "none"
-                  <> help "Select shell for completion script (bash|zsh|fish|none)"
+  C_
+    <$> ( Config
+            <$> inputP
+            <*> ( toShell
+                    <$> strOption
+                      ( long "shell"
+                          <> metavar "{bash|zsh|fish|none}"
+                          <> showDefault
+                          <> value "none"
+                          <> help "Select shell for completion script (bash|zsh|fish|none)"
+                      )
+                )
+            <*> switch
+              ( long "json"
+                  <> help "Show parsed results in JSON"
+              )
+            <*> switch
+              ( long "convert-tabs-to-spaces"
+                  <> help "Convert tabs to spaces"
+              )
+            <*> switch
+              ( long "list-subcommands"
+                  <> help "List subcommands"
+              )
+            <*> switch
+              ( long "debug"
+                  <> help "Run preprocessing only (for debugging)"
               )
         )
-    <*> switch
-      ( long "json"
-          <> help "Show parsed results in JSON"
-      )
-    <*> switch
-      ( long "convert-tabs-to-spaces"
-          <> help "Convert tabs to spaces"
-      )
-    <*> switch
-      ( long "list-subcommands"
-          <> help "List subcommands"
-      )
-    <*> switch
-      ( long "debug"
-          <> help "Run preprocessing only (for debugging)"
-      )
 
-run :: Config -> IO Text
-run (Config (CommandInput name) _ True _ _ _) = trace "[main] JSON output\n" $ writeJSON name
-run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly) = do
+version :: Parser ConfigOrVersion
+version = flag' Version (long "version" <> help "Show version")
+
+configOrVersion :: Parser ConfigOrVersion
+configOrVersion = config <|> version
+
+run :: ConfigOrVersion -> IO Text
+run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
+run (C_ (Config (CommandInput name) _ True _ _ _)) = trace "[main] JSON output\n" $ writeJSON name
+run (C_ (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)) = do
   content <- getInputContent input
   let opts = parseMany content
   let res

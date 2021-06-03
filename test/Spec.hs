@@ -11,7 +11,7 @@ import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser (optName, optPart)
-import Io (Config (..), Input (..), Shell (..), run)
+import Io (Config (..), Input (..), Shell (..), ConfigOrVersion (..), run)
 import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
@@ -553,7 +553,7 @@ integratedGoldenTests =
   where
     commands = ["h2o", "conda", "stack"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf name = Config (CommandInput name) None False False False False
+    conf name = C_ (Config (CommandInput name) None False False False False)
     runWithCommand name = toLazyByteString <$> run (conf name)
     toTestTree name =
       goldenVsString

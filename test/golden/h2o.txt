@@ -22,6 +22,9 @@ List subcommands
 --debug  ::  
 Run preprocessing only (for debugging)
 
+--version  ::  
+Show version
+
 -h --help  ::  
 Show this help text
 
