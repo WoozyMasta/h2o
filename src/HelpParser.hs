@@ -152,11 +152,16 @@ optNameArgPair = do
   return (name, args)
 
 optSep :: ReadP String
-optSep = (sep +++ string " ") <++ string "/"
+optSep = sep <++ munch1 (== ' ') <++ altsep
   where
     sep = do
       s <- string ","
-      optional (string " ")
+      munch (== ' ')
+      return s
+    altsep = do
+      _ <- munch (== ' ')
+      s <- string "/"
+      _ <- munch (== ' ')
       return s
 
 argSep :: ReadP String

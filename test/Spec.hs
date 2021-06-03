@@ -217,6 +217,7 @@ optPartTests =
       test_optPart "-h,--help   " (["-h", "--help"], ""),
       test_optPart "--           " (["--"], ""),
       test_optPart "-h, --help   " (["-h", "--help"], ""),
+      test_optPart "-h,  --help   " (["-h", "--help"], ""),
       test_optPart "-o ARG " (["-o"], "ARG"),
       test_optPart "-o,--out ARG   " (["-o", "--out"], "ARG"),
       test_optPart "-o,--out=ARG  " (["-o", "--out"], "ARG"),
@@ -362,9 +363,6 @@ unsupportedCases =
           "-feat[ures]=exon,CDS... "
           (["--feat[ures]"], "exon,CDS..."),
         test_optPartMany "--[no-]dump-logs" [(["--dump-logs"], ""), (["--no-dump-logs"], "")],
-
-        -- Should be supported IF optPart is used for item without description only
-        test_optPart "-h,  --help   " (["-h", "--help"], ""),
 
         -- ========================================================================
 
