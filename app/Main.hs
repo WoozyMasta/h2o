@@ -5,6 +5,7 @@
 
 module Main where
 
+import qualified Data.Text.IO as TIO
 import Io (config, run)
 import Options.Applicative
   ( execParser,
@@ -16,7 +17,7 @@ import Options.Applicative
   )
 
 main :: IO ()
-main = execParser opts >>= run
+main = execParser opts >>= run >>= TIO.putStr
   where
     opts =
       info

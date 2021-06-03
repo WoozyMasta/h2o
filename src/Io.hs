@@ -118,7 +118,7 @@ config =
           <> help "Run preprocessing only (for debugging)"
       )
 
-run :: Config -> IO ()
+run :: Config -> IO Text
 run (Config (CommandInput name) _ True _ _ _) = trace "[main] JSON output\n" $ writeJSON name
 run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly) = do
   content <- getInputContent input
@@ -126,23 +126,23 @@ run (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPrepro
   let res
         | isConvertingTabsToSpaces =
           trace "[main] Converting tags to spaces...\n" $
-            putStr . convertTabsToSpaces 8 $ content
+            return . T.pack . convertTabsToSpaces 8 $ content
         | isPreprocessOnly =
           trace "[main] processing (option+arg, description) splitting only" $
-            putStr . formatStringPairs . preprocessAll $ content
+            return . T.pack . formatStringPairs . preprocessAll $ content
         | isListingSubcommands =
           trace "[main] Listing subcommands...\n" $
-            putStr . unlines =<< listSubcommandsIO cmd
+            T.unlines . map T.pack <$> listSubcommandsIO cmd
         | otherwise =
           case input of
             SubcommandInput _ subname ->
               trace "[main] processing subcommand-level options" $
-                TIO.putStr (genScriptSubcommandOptions shell cmd subname opts)
+                return $ genScriptSubcommandOptions shell cmd subname opts
             CommandInput name ->
-              TIO.putStr =<< toScriptFull shell name
+              toScriptFull shell name
             FileInput _ ->
               trace "[main] processing options from the file" $
-                TIO.putStr (genScriptSimple shell cmd opts)
+                return $ genScriptSimple shell cmd opts
   res
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
@@ -223,8 +223,11 @@ toCommandIO cmd = do
 
 -- | Generate shell completion script from the root help page
 -- as well as the subcommand's help pages.
-writeJSON :: String -> IO ()
-writeJSON = TIO.putStr . toJSONText <=< toCommandIO
+writeJSON :: String -> IO Text
+writeJSON s = toJSONText <$> toCommandIO s
+
+writeJSON_ :: String -> IO ()
+writeJSON_ = TIO.putStr <=< writeJSON
 
 listSubcommandsIO :: String -> IO [String]
 listSubcommandsIO s = getSubnames <$> toCommandIO s
