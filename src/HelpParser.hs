@@ -156,7 +156,7 @@ optSep = sep <++ munch1 (== ' ') <++ altsep
   where
     sep = do
       s <- string ","
-      munch (== ' ')
+      _ <- munch (== ' ')
       return s
     altsep = do
       _ <- munch (== ' ')
