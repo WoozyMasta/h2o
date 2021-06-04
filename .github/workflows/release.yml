@@ -7,19 +7,17 @@ on:
 
 jobs:
   build-release:
-    name: stack / ghc ${{ matrix.ghc }} for ${{ matrix.build }}
+    name: stack w/ ghc ${{ matrix.ghc }} for ${{ matrix.build }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        stack: ["latest"]
-        ghc: ["latest"]
+        stack: ['latest']
+        ghc: ['latest']
+        build: ['linux', 'macos']
         include:
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux
-          - build: linux-arm
-            os: ubuntu-latest
-            target: arm-unknown-linux-gnueabihf
           - build: macos
             os: macos-latest
             target: x86_64-apple-darwin
@@ -29,7 +27,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Haskell Stack
-        uses: actions/setup-haskell@v1.1.4
+        uses: haskell/actions/setup@v1
         with:
           ghc-version: ${{ matrix.ghc }}
           enable-stack: true
@@ -45,14 +43,13 @@ jobs:
         run: |
           stack build --copy-bins
 
-      - name: Move binary to asset dir
+      - name: Archive the binary
         run: |
-          mv "${stack path --local-bin}/h2o"  ./h2o-${{ matrix.target }}
+          mv -f "$(stack path --local-bin)/h2o" .
+          tar -czf h2o-${{ matrix.target }}.tar.gz h2o
 
       - name: Upload the release binary
         uses: actions/upload-artifact@v2
         with:
-          name: h2o-${{ matrix.build }}
-          path: ./h2o-${{ matrix.target }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: h2o-${{ matrix.target }}.tar.gz
+          path: ./h2o-${{ matrix.target }}.tar.gz

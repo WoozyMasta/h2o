@@ -46,10 +46,10 @@ executables:
       ## Require following to build static executable with ghc-musl docker image:
       ## stack build --docker --docker-image "utdemir/ghc-musl:v19-ghc8104" --copy-bins
       ##
-      - -static
-      - -optl-static  # same as ld-options:  - -static
-      - -optl-pthread #                      - -pthread
-      - -fPIC
+      # - -static
+      # - -optl-static  # same as ld-options:  - -static
+      # - -optl-pthread #                      - -pthread
+      # - -fPIC
 
     dependencies:
       - h2o
