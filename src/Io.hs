@@ -7,7 +7,7 @@ module Io where
 
 import qualified Constants
 import Control.Monad ((<=<))
-import Data.List.Extra (nubOrd, stripInfix)
+import Data.List.Extra (stripInfix)
 import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
