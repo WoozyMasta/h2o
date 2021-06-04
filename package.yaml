@@ -28,6 +28,7 @@ dependencies:
   - optparse-applicative
   - filepath
   - process
+  - ordered-containers
 
 library:
   source-dirs: src

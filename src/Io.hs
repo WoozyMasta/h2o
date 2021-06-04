@@ -8,6 +8,7 @@ module Io where
 import qualified Constants
 import Control.Monad ((<=<))
 import Data.List.Extra (nubOrd, stripInfix)
+import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -29,7 +30,7 @@ import System.FilePath (takeBaseName)
 import System.Process (readProcessWithExitCode)
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
-import Utils (convertTabsToSpaces)
+import Utils (convertTabsToSpaces, debugMsg)
 
 data Input
   = SubcommandInput String String
@@ -225,13 +226,19 @@ toCommandIO :: String -> IO Command
 toCommandIO cmd = do
   rootContent <- getInputContent (CommandInput cmd)
   let rootOptions = parseMany rootContent
-  let subcmdCandidates = nubOrd (parseSubcommand rootContent)
+  let subcmdCandidates =
+        debugMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
   let toSubcmdOptPair sub = do
         page <- getHelpSub cmd (_cmd sub)
         let criteria = not (null page) && page /= rootContent
         return ((sub, parseMany page), criteria)
   let subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
   toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
+  where
+    -- remove duplicate _cmd in [Subcommand]
+    sub2pair (Subcommand s1 s2) = (s1, s2)
+    pair2sub = uncurry Subcommand
+    filterSubcmds = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
 
 -- | Generate shell completion script from the root help page
 -- as well as the subcommand's help pages.
