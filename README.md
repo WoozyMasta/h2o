@@ -1,13 +1,19 @@
-# H2O: Parse CLI help texts / manpages and extract command options
+# H2O: Help to Options
+
+H2O extracts CLI options from help text, and then exports as a shell completion script, or JSON.
+
 
 ## Demo
 
 [Screencasts here...]
 
-## What's this?
+## Features
 
-* Parse a manpage or a help text to extract command-line options
-* Generate shell completion scripts (fish/zsh/bash) from the parsed information
+* Parses a help text, or manpage, to extract command-line options and subcommands.
+* Generates shell completion scripts (fish/zsh/bash) from the parsed information.
+* Exports CLI options / subcommand information in JSON.
+* Works as the backend for [vscode-H2O](https://marketplace.visualstudio.com/items?itemName=tetradresearch.vscode-h2o), a VS Code Extension for shellscript development.
+
 
 ## How to use
 
@@ -22,6 +28,14 @@ h2o --command ls --json
 man ls | col -b > ls.txt
 h2o --file ls.txt --shell fish > ls.fish
 ```
+
+
+## TODOs
+
+- [ ] Support subcommands in bash/zsh completions
+- [ ] Improve parsing to support bioinformatics tools as many as possible.
+
+
 
 ## Related projects
 * [parse-help](https://github.com/sindresorhus/parse-help)
