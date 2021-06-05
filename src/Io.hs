@@ -140,10 +140,10 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     name = case input of
-      CommandInput name -> name
-      SubcommandInput name _ -> name
+      CommandInput n -> n
+      SubcommandInput n _ -> n
       FileInput f -> takeBaseName f
-run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell name
+run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell <$> toCommandIO name
 run (C_ (Config (SubcommandInput name subname) shell _ _ _ _)) =
   trace "[main] processing subcommand-level options" $ genScriptSubcommandOptions shell name subname <$> optsIO
   where
@@ -172,8 +172,8 @@ getMan :: String -> IO String
 getMan cmd =
   (\(_, a, _) -> a) <$> Process.readCreateProcessWithExitCode cp ""
   where
-    command = printf "man %s | col -b" cmd
-    cp = Process.shell command
+    s = printf "man %s | col -b" cmd
+    cp = Process.shell s
 
 getHelpAndMan :: String -> IO String
 getHelpAndMan cmd = do
@@ -208,23 +208,21 @@ getInputContent (SubcommandInput name subname) = getHelpSub name subname
 getInputContent (CommandInput name) = getHelpAndMan name
 getInputContent (FileInput f) = readFile f
 
-toScriptFull :: Shell -> String -> IO Text
-toScriptFull shell cmd = do
-  (Command _ _ rootOptions subs) <- toCommandIO cmd
-  let subcmdNames = map _name subs
-  let subcmdOptsPairs = [(_name sub, _options sub) | sub <- subs]
-  let rootOptScript = genScriptRootOptions shell cmd subcmdNames rootOptions
-  let subcommandScript = genScriptSubcommands shell cmd (toSubcommands subs)
-  let two = [rootOptScript, subcommandScript]
-  let texts = map (uncurry (genScriptSubcommandOptions shell cmd)) subcmdOptsPairs
-  let res =
-        if null subcmdNames
-          then trace "[warning] Ignore subcommands" $ genScriptSimple shell cmd rootOptions
-          else T.intercalate "\n\n\n" (two ++ texts)
-  return res
+toScriptFull :: Shell -> Command -> Text
+toScriptFull shell (Command name _ rootOptions subs) = res
   where
     toSubcommands :: [Command] -> [Subcommand]
-    toSubcommands xs = [Subcommand name desc | (Command name desc _ _) <- xs]
+    toSubcommands xs = [Subcommand n desc | (Command n desc _ _) <- xs]
+    subcmdNames = map _name subs
+    subcmdOptsPairs = [(_name sub, _options sub) | sub <- subs]
+    rootOptScript = genScriptRootOptions shell name subcmdNames rootOptions
+    subcommandScript = genScriptSubcommands shell name (toSubcommands subs)
+    two = [rootOptScript, subcommandScript]
+    texts = map (uncurry (genScriptSubcommandOptions shell name)) subcmdOptsPairs
+    res =
+      if null subcmdNames
+        then trace "[warning] Ignore subcommands" $ genScriptSimple shell name rootOptions
+        else T.intercalate "\n\n\n" (two ++ texts)
 
 toCommandIO :: String -> IO Command
 toCommandIO cmd = do
