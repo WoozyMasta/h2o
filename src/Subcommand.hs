@@ -38,9 +38,9 @@ getAlignedLines s = case layoutMay of
   _ -> []
   where
     offsetMay = getDescriptionOffset s
-    offset = debugMsg "subcommand offset :" $ Maybe.fromMaybe 50 offsetMay
+    offset = debugMsg "[subcommand] description offset :" $ Maybe.fromMaybe 50 offsetMay
     xs = lines $ removeOptionLines s
-    layoutMay = debugMsg "subcommand layout :" $ getLayoutMaybe xs offset
+    layoutMay = debugMsg "[subcommand] layout :" $ getLayoutMaybe xs offset
 
 lowercase :: String
 lowercase = "abcdefghijklmnopqrstuvwxyz"

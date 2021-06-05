@@ -220,6 +220,7 @@ getDescriptionOffsetOptLineNumsPair :: String -> Maybe (Int, [Int])
 getDescriptionOffsetOptLineNumsPair s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
   | length optLineNums <= 3 = Nothing
+  | offset < 7 = Nothing
   | otherwise = Just (offset, optLineNums)
   where
     optionOffsets = debugMsg "Option offsets:" $ getOptionOffsets s
