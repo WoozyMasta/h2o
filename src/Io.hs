@@ -6,13 +6,11 @@
 module Io where
 
 import qualified Constants
-import Control.Monad ((<=<))
 import Data.List.Extra (stripInfix)
 import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
@@ -33,9 +31,9 @@ import Type (Command (..), Opt, Subcommand (..))
 import Utils (convertTabsToSpaces, debugMsg)
 
 data Input
-  = SubcommandInput String String
-  | CommandInput String
+  = CommandInput String
   | FileInput FilePath
+  | SubcommandInput String String
 
 data Config = Config
   { _input :: Input,
@@ -145,11 +143,11 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       FileInput f -> takeBaseName f
 run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell <$> toCommandIO name
 run (C_ (Config (SubcommandInput name subname) shell _ _ _ _)) =
-  trace "[main] processing subcommand-level options" $ genScriptSubcommandOptions shell name subname <$> optsIO
+  trace "[main] processing subcommand-level options" $ toScriptSubcommandOptions shell name subname <$> optsIO
   where
     optsIO = parseMany <$> getInputContent (SubcommandInput name subname)
 run (C_ (Config (FileInput f) shell _ _ _ _)) =
-  trace "[main] processing options from the file" $ genScriptSimple shell name <$> optsIO
+  trace "[main] processing options from the file" $ toScriptSimple shell name <$> optsIO
   where
     name = takeBaseName f
     optsIO = parseMany <$> getInputContent (FileInput f)
@@ -182,23 +180,23 @@ getHelpAndMan cmd = do
     then trace "[IO] Using manpage\n" $ getMan cmd
     else trace "[IO] Using help\n" $ return content
 
-genScriptSimple :: Shell -> String -> [Opt] -> Text
-genScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
-genScriptSimple Zsh cmd opts = genZshScript cmd opts
-genScriptSimple Bash cmd opts = genBashScript cmd opts
-genScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
+toScriptSimple :: Shell -> String -> [Opt] -> Text
+toScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
+toScriptSimple Zsh cmd opts = genZshScript cmd opts
+toScriptSimple Bash cmd opts = genBashScript cmd opts
+toScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
-genScriptRootOptions :: Shell -> String -> [String] -> [Opt] -> Text
-genScriptRootOptions Fish cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
-genScriptRootOptions shell cmd _ opts = genScriptSimple shell cmd opts
+toScriptRootOptions :: Shell -> String -> [String] -> [Opt] -> Text
+toScriptRootOptions Fish cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
+toScriptRootOptions shell cmd _ opts = toScriptSimple shell cmd opts
 
-genScriptSubcommands :: Shell -> String -> [Subcommand] -> Text
-genScriptSubcommands Fish cmd subcmds = genFishScriptSubcommands cmd subcmds
-genScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show) subcmds
+toScriptSubcommands :: Shell -> String -> [Subcommand] -> Text
+toScriptSubcommands Fish cmd subcmds = genFishScriptSubcommands cmd subcmds
+toScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show) subcmds
 
-genScriptSubcommandOptions :: Shell -> String -> String -> [Opt] -> Text
-genScriptSubcommandOptions Fish cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
-genScriptSubcommandOptions _ cmd subcmd opts =
+toScriptSubcommandOptions :: Shell -> String -> String -> [Opt] -> Text
+toScriptSubcommandOptions Fish cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
+toScriptSubcommandOptions _ cmd subcmd opts =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
     prefix = T.pack $ printf "(%s-%s) " cmd subcmd
@@ -215,13 +213,13 @@ toScriptFull shell (Command name _ rootOptions subs) = res
     toSubcommands xs = [Subcommand n desc | (Command n desc _ _) <- xs]
     subcmdNames = map _name subs
     subcmdOptsPairs = [(_name sub, _options sub) | sub <- subs]
-    rootOptScript = genScriptRootOptions shell name subcmdNames rootOptions
-    subcommandScript = genScriptSubcommands shell name (toSubcommands subs)
+    rootOptScript = toScriptRootOptions shell name subcmdNames rootOptions
+    subcommandScript = toScriptSubcommands shell name (toSubcommands subs)
     two = [rootOptScript, subcommandScript]
-    texts = map (uncurry (genScriptSubcommandOptions shell name)) subcmdOptsPairs
+    texts = map (uncurry (toScriptSubcommandOptions shell name)) subcmdOptsPairs
     res =
       if null subcmdNames
-        then trace "[warning] Ignore subcommands" $ genScriptSimple shell name rootOptions
+        then trace "[warning] Ignore subcommands" $ toScriptSimple shell name rootOptions
         else T.intercalate "\n\n\n" (two ++ texts)
 
 toCommandIO :: String -> IO Command
@@ -246,9 +244,6 @@ toCommandIO cmd = do
 -- as well as the subcommand's help pages.
 writeJSON :: String -> IO Text
 writeJSON s = toJSONText <$> toCommandIO s
-
-writeJSON_ :: String -> IO ()
-writeJSON_ = TIO.putStr <=< writeJSON
 
 listSubcommandsIO :: String -> IO [String]
 listSubcommandsIO s = getSubnames <$> toCommandIO s
