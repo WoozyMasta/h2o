@@ -115,8 +115,8 @@ getShortOptionOffset = _getOffsetHelper getShortOptionLocations
 --      	may be separated by 3 or more spaces
 -- Returns Nothing if 1 and 2 disagrees, or no information in 1 and 2
 --
-getDescriptionOffset :: String -> [Int] -> Int -> Maybe Int
-getDescriptionOffset s optLineNums optOffset =
+getDescriptionOffsetFromOptionLocs :: String -> [Int] -> Int -> Maybe Int
+getDescriptionOffsetFromOptionLocs s optLineNums optOffset =
   case (descOffsetWithCountSimple s optLineNums optOffset, descOffsetWithCountInOptionLines s optLineNums) of
     (Nothing, Nothing) -> trace "[WARNING] Retrieved absolutely zero information" Nothing
     (Nothing, q) -> trace "Descriptions always appear in the lines with options" $ fmap fst q
@@ -216,25 +216,34 @@ isSeparatedAtOffset n sep x
 -- ================================================
 -- ============== Main stuff ======================
 
--- | Returns option-description pairs based on layouts AND also returns the dropped
--- line index ranges that is uncaught in the process.
-getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
-getOptionDescriptionPairsFromLayout content
+getDescriptionOffsetOptLineNumsPair :: String -> Maybe (Int, [Int])
+getDescriptionOffsetOptLineNumsPair s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
   | length optLineNums <= 3 = Nothing
-  | otherwise = Just $ traceInfo (res, dropped)
+  | otherwise = Just (offset, optLineNums)
   where
-    s = convertTabsToSpaces 8 content
-    xs = lines s
     optionOffsets = debugMsg "Option offsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
     optLineNums = debugShow "optLocsExcluded:" optLocsExcluded $ debugMsg "optLineNums" $ map fst optLocs
-    optLineNumsSet = Set.fromList optLineNums
 
-    descriptionOffsetMay = getDescriptionOffset s optLineNums (List.maximum optionOffsets)
+    descriptionOffsetMay = getDescriptionOffsetFromOptionLocs s optLineNums (List.maximum optionOffsets)
     offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay
 
+getDescriptionOffset :: String -> Maybe Int
+getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
+
+-- | Returns option-description pairs based on layouts AND also returns the dropped
+-- line index ranges that is uncaught in the process.
+getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
+getOptionDescriptionPairsFromLayout s
+  | Maybe.isNothing tupMay = Nothing
+  | otherwise = Just $ traceInfo (res, dropped)
+  where
+    tupMay = getDescriptionOffsetOptLineNumsPair s
+    (offset, optLineNums) = Maybe.fromJust tupMay
+    xs = lines s
+    optLineNumsSet = Set.fromList optLineNums
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
@@ -280,6 +289,8 @@ handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
     s1 = squashOptsF optFrom (descFrom + 1)
     ss = onelinersF (descFrom + 1) (optTo - 1)
     s2 = squashDescSideF (optTo - 1) descTo
+
+-- ================================================
 
 squashOptions :: [String] -> Int -> Int -> Int -> (String, String)
 squashOptions xs offset a b = trace "[squashOptions] " (opt, desc)
@@ -382,8 +393,9 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
 preprocessAll :: String -> [(String, String)]
 preprocessAll content = res
   where
-    xs = lines content
-    may = getOptionDescriptionPairsFromLayout content
+    s = convertTabsToSpaces 8 content
+    xs = lines s
+    may = getOptionDescriptionPairsFromLayout s
     res = case may of
       Just (layoutResults, droppedIdxRanges) ->
         layoutResults ++ fallbackResults
@@ -391,7 +403,7 @@ preprocessAll content = res
           paragraphs = map (getParagraph xs) droppedIdxRanges
           fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
       Nothing ->
-        trace "[warning] ignore layout" $ preprocessAllFallback content
+        trace "[warning] ignore layout" $ preprocessAllFallback s
 
 parseMany :: String -> [Opt]
 parseMany "" = []

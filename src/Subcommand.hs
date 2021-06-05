@@ -2,8 +2,11 @@ module Subcommand where
 
 import Control.Monad (liftM2)
 import qualified Data.Maybe as Maybe
+import Debug.Trace (trace)
 import HelpParser (newline, optWord, singleSpace, skip, word)
+import Layout (getDescriptionOffset)
 import Text.ParserCombinators.ReadP
+    ( ReadP, (<++), eof, munch, readP_to_S, sepBy1, skipSpaces )
 import Type (Subcommand (..))
 import Utils (convertTabsToSpaces, debugMsg, getMostFrequent, startsWithChar)
 
@@ -22,20 +25,25 @@ firstTwoWordsLoc line = (firstLoc, secondLoc)
     firstLoc = if null w then -1 else length spaces
     secondLoc = if null rest2 then -1 else firstLoc + length w + length midSpaces
 
-getLayout :: [String] -> Maybe Layout
-getLayout xs = liftM2 (,) first second
+getLayoutMaybe :: [String] -> Maybe Layout
+getLayoutMaybe xs = liftM2 (,) first second
   where
     pairs = debugMsg "first two word locations:" $ filter (\(a, b) -> a > 0 && b >= a + 6) $ map firstTwoWordsLoc xs
     second = getMostFrequent [b | (_, b) <- pairs]
     first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
 
 getAlignedLines :: String -> [String]
-getAlignedLines s = case layout of
-  Just lay -> filter (\line -> firstTwoWordsLoc line == lay) xs
+getAlignedLines s = case (layoutMay, offsetMay) of
+  (Just lay, Just offset) ->
+    if offset <= fst lay
+      then trace "[subcommand] discard layout because of description offset" []
+      else filter (\line -> firstTwoWordsLoc line == lay) xs
+  (Just lay, Nothing) -> filter (\line -> firstTwoWordsLoc line == lay) xs
   _ -> []
   where
     xs = lines s
-    layout = debugMsg "subcommand layout :" $ getLayout xs
+    layoutMay = debugMsg "subcommand layout :" $ getLayoutMaybe xs
+    offsetMay = getDescriptionOffset s
 
 subcommand :: ReadP Subcommand
 subcommand = do
