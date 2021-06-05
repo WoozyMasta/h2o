@@ -27,7 +27,7 @@ import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (parseSubcommand)
 import System.FilePath (takeBaseName)
-import System.Process (readProcessWithExitCode)
+import qualified System.Process as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
 import Utils (convertTabsToSpaces, debugMsg)
@@ -166,17 +166,31 @@ run (C_ (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPr
 
 getHelp :: String -> IO String
 getHelp cmd = do
-  (_, content, _) <- readProcessWithExitCode cmd ["--help"] ""
+  (_, content, _) <- Process.readProcessWithExitCode cmd ["--help"] ""
   if null content
-    then (\(_, a, _) -> a) <$> readProcessWithExitCode cmd ["help"] ""
+    then (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help"] ""
     else return content
 
 getHelpSub :: String -> String -> IO String
 getHelpSub cmd subcmd = do
-  (_, content, _) <- readProcessWithExitCode cmd [subcmd, "--help"] ""
+  (_, content, _) <- Process.readProcessWithExitCode cmd [subcmd, "--help"] ""
   if null content
-    then (\(_, a, _) -> a) <$> readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
+    then (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
     else return content
+
+getMan :: String -> IO String
+getMan cmd =
+  (\(_, a, _) -> a) <$> Process.readCreateProcessWithExitCode cp ""
+  where
+    command = printf "man %s | col -b" cmd
+    cp = Process.shell command
+
+getHelpAndMan :: String -> IO String
+getHelpAndMan cmd = do
+  content <- getHelp cmd
+  if null content
+    then trace "[IO] Using manpage\n" $ getMan cmd
+    else trace "[IO] Using help\n" $ return content
 
 genScriptSimple :: Shell -> String -> [Opt] -> Text
 genScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
@@ -201,7 +215,7 @@ genScriptSubcommandOptions _ cmd subcmd opts =
 
 getInputContent :: Input -> IO String
 getInputContent (SubcommandInput name subname) = getHelpSub name subname
-getInputContent (CommandInput name) = getHelp name
+getInputContent (CommandInput name) = getHelpAndMan name
 getInputContent (FileInput f) = readFile f
 
 toScriptFull :: Shell -> String -> IO Text
