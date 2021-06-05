@@ -132,37 +132,27 @@ configOrVersion = config <|> version
 
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
-run (C_ (Config (CommandInput name) _ True _ _ _)) = trace "[main] JSON output\n" $ writeJSON name
-run (C_ (Config input shell _ isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly)) = do
-  content <- getInputContent input
-  let opts = parseMany content
-  let res
-        | isConvertingTabsToSpaces =
-          trace "[main] Converting tags to spaces...\n" $
-            return . T.pack . convertTabsToSpaces 8 $ content
-        | isPreprocessOnly =
-          trace "[main] processing (option+arg, description) splitting only" $
-            return . T.pack . formatStringPairs . preprocessAll $ content
-        | isListingSubcommands =
-          trace "[main] Listing subcommands...\n" $
-            T.unlines . map T.pack <$> listSubcommandsIO cmd
-        | otherwise =
-          case input of
-            SubcommandInput _ subname ->
-              trace "[main] processing subcommand-level options" $
-                return $ genScriptSubcommandOptions shell cmd subname opts
-            CommandInput name ->
-              toScriptFull shell name
-            FileInput _ ->
-              trace "[main] processing options from the file" $
-                return $ genScriptSimple shell cmd opts
-  res
+run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly))
+  | isExportingJSON = trace "[main] JSON output\n" $ writeJSON name
+  | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> getInputContent input
+  | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
+  | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> getInputContent input
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
-    cmd = case input of
-      SubcommandInput name _ -> name
+    name = case input of
       CommandInput name -> name
+      SubcommandInput name _ -> name
       FileInput f -> takeBaseName f
+run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell name
+run (C_ (Config (SubcommandInput name subname) shell _ _ _ _)) =
+  trace "[main] processing subcommand-level options" $ genScriptSubcommandOptions shell name subname <$> optsIO
+  where
+    optsIO = parseMany <$> getInputContent (SubcommandInput name subname)
+run (C_ (Config (FileInput f) shell _ _ _ _)) =
+  trace "[main] processing options from the file" $ genScriptSimple shell name <$> optsIO
+  where
+    name = takeBaseName f
+    optsIO = parseMany <$> getInputContent (FileInput f)
 
 getHelp :: String -> IO String
 getHelp cmd = do
