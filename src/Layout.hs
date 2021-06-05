@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
 import Type (Opt)
-import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, startsWithChar, toRanges)
+import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, startsWithDash, toRanges)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -30,10 +30,6 @@ getWidth s
     n = 8
     f acc '\t' = acc `div` n * n + n
     f acc _ = acc + 1
-
--- | check if the string starts with dash - possibly after spaces and tabs
-startsWithDash :: String -> Bool
-startsWithDash = startsWithChar '-'
 
 -- | a helper function
 _getNonblankLocationTemplate :: (String -> Bool) -> String -> [Location]
@@ -129,12 +125,13 @@ getDescriptionOffset s optLineNums optOffset =
       | x1 == x2 -> Just x1
       | c1 <= 3 && 3 < c2 -> debug Just x2
       | c2 <= 3 && 3 < c1 -> debug Just x1
-      | 0 < x1 - x2 && x1 - x2 < 5 -> debug (Just x2)  -- sometimes continued lines are indented.
+      | 0 < x1 - x2 && x1 - x2 < 5 -> debug (Just x2) -- sometimes continued lines are indented.
       | otherwise -> debug Nothing
       where
-        msg =  "[WARNING] Disagreement in offsets:\n\
-               \   description-only-line offset   %d (with count %d)\n\
-               \   option+description-line offset %d (with count %d)\n"
+        msg =
+          "[WARNING] Disagreement in offsets:\n\
+          \   description-only-line offset   %d (with count %d)\n\
+          \   option+description-line offset %d (with count %d)\n"
         debug = trace (printf msg x1 c1 x2 c2 :: String)
 
 -- | Estimate offset of description part from non-option lines

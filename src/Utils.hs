@@ -91,3 +91,11 @@ startsWithChar :: Char -> String -> Bool
 startsWithChar c s = not (null ss) && head ss == c
   where
     ss = dropWhile (`elem` " \t") s
+
+-- | check if the string starts with dash - possibly after spaces and tabs
+startsWithDash :: String -> Bool
+startsWithDash = startsWithChar '-'
+
+-- | A speculative criteria for non-critical purposes
+containsOptions :: String -> Bool
+containsOptions = (> 5) . length . filter startsWithDash . lines

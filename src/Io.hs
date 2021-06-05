@@ -28,7 +28,7 @@ import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
-import Utils (convertTabsToSpaces, debugMsg)
+import Utils (containsOptions, convertTabsToSpaces, debugMsg)
 
 data Input
   = CommandInput String
@@ -154,17 +154,23 @@ run (C_ (Config (FileInput f) shell _ _ _ _)) =
 
 getHelp :: String -> IO String
 getHelp cmd = do
-  (_, content, _) <- Process.readProcessWithExitCode cmd ["--help"] ""
-  if null content
-    then (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help"] ""
-    else return content
+  (_, stdout, stderr) <- Process.readProcessWithExitCode cmd ["--help"] ""
+  if null stdout
+    then
+      if containsOptions stderr
+        then return stderr
+        else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help"] ""
+    else return stdout
 
 getHelpSub :: String -> String -> IO String
 getHelpSub cmd subcmd = do
-  (_, content, _) <- Process.readProcessWithExitCode cmd [subcmd, "--help"] ""
-  if null content
-    then (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
-    else return content
+  (_, stdout, stderr) <- Process.readProcessWithExitCode cmd [subcmd, "--help"] ""
+  if null stdout
+    then
+      if containsOptions stderr
+        then return stderr
+        else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
+    else return stdout
 
 getMan :: String -> IO String
 getMan cmd =
