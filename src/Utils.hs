@@ -1,4 +1,8 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE MonadComprehensions #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
 -- | get statistical mode (= the most frequently appeareing item)
@@ -9,6 +13,7 @@ import Data.Function (on)
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Map as Map
+import qualified Data.Text as T
 import Debug.Trace (trace)
 import Text.Printf (printf)
 
@@ -22,19 +27,15 @@ getMostFrequentWithCount xs = Just (x, maxCount)
     counter = Map.toList $ Map.fromListWith (+) (map (,1) xs)
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter
 
--- | Covert tabs to spaces
 convertTabsToSpaces :: Int -> String -> String
-convertTabsToSpaces n s = unlines $ map convertLine $ lines s
+convertTabsToSpaces n = T.unpack . T.unlines . map convertLine . T.lines . T.pack
   where
-    convertLine x
-      | '\t' `elem` x = reverse $ List.foldr f "" (reverse x)
-      | otherwise = x
-    f '\t' acc = replicate spaceWidth ' ' ++ acc
+    convertLine = List.foldl1' f . T.splitOn "\t"
+    f acc t = T.concat [acc, T.replicate spaceWidth " ", t]
       where
-        w = length acc
+        w = T.length acc
         offset = (w `div` n) * n + n
         spaceWidth = offset - w
-    f c acc = c : acc
 
 debugMsg :: (Show a) => String -> a -> a
 debugMsg msg x = trace (printf ("[debug] " ++ msg ++ " %s\n") (show x)) x
@@ -90,7 +91,7 @@ getParagraph xs range = unlines $ map (xs !!) indices
 startsWithChar :: Char -> String -> Bool
 startsWithChar c s = not (null ss) && head ss == c
   where
-    ss = dropWhile (`elem` " \t") s
+    ss = dropWhile (`elem` (" \t" :: String)) s
 
 -- | check if the string starts with dash - possibly after spaces and tabs
 startsWithDash :: String -> Bool

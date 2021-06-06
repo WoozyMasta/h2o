@@ -11,8 +11,8 @@ import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser (optName, optPart)
-import Io (Config (..), Input (..), Shell (..), ConfigOrVersion (..), run)
-import Layout (getOptionLocations, getWidth, makeRanges, mergeRanges, mergeRangesFast, parseMany)
+import Io (Config (..), ConfigOrVersion (..), Input (..), Shell (..), run)
+import Layout (getOptionLocations, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
 import Test.Tasty
@@ -27,7 +27,7 @@ import Type
     OptName (..),
     OptNameType (..),
   )
-import Utils (getMostFrequent)
+import Utils (convertTabsToSpaces, getMostFrequent)
 
 main :: IO ()
 main =
@@ -424,10 +424,11 @@ layoutTests :: TestTree
 layoutTests =
   testGroup
     "Test layouts"
-    [ testCase "tab width" $
-        getWidth "   \t          \t\t \t d" @?= 42,
-      testCase "tab width 2" $
-        getWidth "\t" @?= 8,
+    [ -- convertTabsToSpaces inserts newline \n at the last.
+      testCase "convertTabsToSpaces 1" $
+        convertTabsToSpaces 4 "aa\tb\tccddddddddd\t" @?= "aa  b   ccddddddddd \n",
+      testCase "convertTabsToSpaces 2" $
+        convertTabsToSpaces 3 "\t\t\ta\tab\tabc\tkk" @?= "         a  ab abc   kk\n",
       testCase "option location 1" $
         getOptionLocations " \n\n  \t  --option here" @?= [(2, 10)]
     ]
