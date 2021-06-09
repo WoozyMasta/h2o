@@ -1,5 +1,5 @@
 name: h2o
-version: 0.1.7
+version: 0.1.8
 github: yamaton/h2o
 license: MIT
 author: "Yamato Matsuoka"
@@ -46,6 +46,7 @@ executables:
       ## Require following to build static executable with ghc-musl docker image:
       ## stack build --docker --docker-image "utdemir/ghc-musl:v19-ghc8104" --copy-bins
       ##
+      # - -O2
       # - -static
       # - -optl-static  # same as ld-options:  - -static
       # - -optl-pthread #                      - -pthread
