@@ -24,6 +24,7 @@ import GenZshCompletions (genZshScript)
 import Layout (parseMany, preprocessAll)
 import Options.Applicative
 import Subcommand (parseSubcommand)
+import qualified System.Exit
 import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
@@ -132,9 +133,9 @@ run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly))
   | isExportingJSON = trace "[main] JSON output\n" $ writeJSON name
-  | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> getInputContent input
+  | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
-  | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> getInputContent input
+  | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     name = case input of
@@ -145,32 +146,48 @@ run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell <$> toC
 run (C_ (Config (SubcommandInput name subname) shell _ _ _ _)) =
   trace "[main] processing subcommand-level options" $ toScriptSubcommandOptions shell name subname <$> optsIO
   where
-    optsIO = parseMany <$> getInputContent (SubcommandInput name subname)
+    optsIO = parseMany <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
 run (C_ (Config (FileInput f) shell _ _ _ _)) =
   trace "[main] processing options from the file" $ toScriptSimple shell name <$> optsIO
   where
     name = takeBaseName f
-    optsIO = parseMany <$> getInputContent (FileInput f)
+    optsIO = parseMany <$> getInputContent (FileInput f) False
 
-getHelp :: String -> IO String
-getHelp cmd = do
-  (_, stdout, stderr) <- Process.readProcessWithExitCode cmd ["--help"] ""
+getHelp :: Bool -> String -> IO String
+getHelp True = trace "[info] sandboxed" getHelpSandboxed
+getHelp False = trace "[warning] No sandboxing!" getHelp_
+
+getHelpSub :: Bool -> String -> String -> IO String
+getHelpSub True = getHelpSubSandboxed
+getHelpSub False = getHelpSub_
+
+getHelpTemplate :: String -> [String] -> [String] -> IO String
+getHelpTemplate cmd options altOptions = do
+  (_, stdout, stderr) <- Process.readProcessWithExitCode cmd options ""
   if null stdout
     then
       if containsOptions stderr
         then return stderr
-        else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help"] ""
+        else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd altOptions ""
     else return stdout
 
-getHelpSub :: String -> String -> IO String
-getHelpSub cmd subcmd = do
-  (_, stdout, stderr) <- Process.readProcessWithExitCode cmd [subcmd, "--help"] ""
-  if null stdout
-    then
-      if containsOptions stderr
-        then return stderr
-        else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd ["help", subcmd] "" -- samtools
-    else return stdout
+getHelp_ :: String -> IO String
+getHelp_ cmd = getHelpTemplate cmd ["--help"] ["help"]
+
+getHelpSub_ :: String -> String -> IO String
+getHelpSub_ cmd subcmd = getHelpTemplate cmd [subcmd, "--help"] ["help", subcmd]
+
+getHelpSandboxed :: String -> IO String
+getHelpSandboxed cmd = getHelpTemplate "bwrap" options altOptions
+  where
+    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "--help"]
+    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "help"]
+
+getHelpSubSandboxed :: String -> String -> IO String
+getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" options altOptions
+  where
+    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, subcmd, "--help"]
+    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "help", subcmd]
 
 getMan :: String -> IO String
 getMan cmd =
@@ -179,9 +196,9 @@ getMan cmd =
     s = printf "man %s | col -b" cmd
     cp = Process.shell s
 
-getHelpAndMan :: String -> IO String
-getHelpAndMan cmd = do
-  content <- getHelp cmd
+getHelpAndMan :: Bool -> String -> IO String
+getHelpAndMan isSandboxing cmd = do
+  content <- getHelp isSandboxing cmd
   if null content
     then trace "[IO] Using manpage\n" $ getMan cmd
     else trace "[IO] Using help\n" $ return content
@@ -207,10 +224,10 @@ toScriptSubcommandOptions _ cmd subcmd opts =
   where
     prefix = T.pack $ printf "(%s-%s) " cmd subcmd
 
-getInputContent :: Input -> IO String
-getInputContent (SubcommandInput name subname) = getHelpSub name subname
-getInputContent (CommandInput name) = getHelpAndMan name
-getInputContent (FileInput f) = readFile f
+getInputContent :: Input -> Bool -> IO String
+getInputContent (SubcommandInput name subname) isSandboxing = getHelpSub isSandboxing name subname
+getInputContent (CommandInput name) isSandboxing = getHelpAndMan isSandboxing name
+getInputContent (FileInput f) _ = readFile f
 
 toScriptFull :: Shell -> Command -> Text
 toScriptFull shell (Command name _ rootOptions subs) = res
@@ -228,14 +245,18 @@ toScriptFull shell (Command name _ rootOptions subs) = res
         then trace "[warning] Ignore subcommands" $ toScriptSimple shell name rootOptions
         else T.intercalate "\n\n\n" (two ++ texts)
 
+isBwrapAvailableIO :: IO Bool
+isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcessWithExitCode "bash" ["-c", "command -v bwrap"] ""
+
 toCommandIO :: String -> IO Command
 toCommandIO cmd = do
-  rootContent <- getInputContent (CommandInput cmd)
+  !isSandboxing <- isBwrapAvailableIO
+  rootContent <- getInputContent (CommandInput cmd) isSandboxing
   let rootOptions = parseMany rootContent
   let subcmdCandidates =
         debugMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
   let toSubcmdOptPair sub = do
-        page <- getHelpSub cmd (_cmd sub)
+        page <- getHelpSub isSandboxing cmd (_cmd sub)
         let criteria = not (null page) && page /= rootContent
         return ((sub, parseMany page), criteria)
   let subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
