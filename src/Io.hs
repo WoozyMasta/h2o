@@ -65,7 +65,7 @@ subcommandInput =
       ( long "subcommand"
           <> short 's'
           <> metavar "<string-string>"
-          <> help "Specify command-subcommand pair, like git-log, to parse specific subcommand."
+          <> help "Extract CLI options from the subcommand-specific help text or man page. Enter a command-subcommand pair, like git-log, as the argument."
       )
 
 commandInput :: Parser Input
@@ -75,7 +75,7 @@ commandInput =
       ( long "command"
           <> short 'c'
           <> metavar "<string>"
-          <> help "Specify command to parse. Subcommand pages are scanned automatically."
+          <> help "Extract CLI options from the help texts or man pages associated with the command. Subcommand pages are also scanned automatically."
       )
 
 fileInput :: Parser Input
@@ -85,7 +85,7 @@ fileInput =
       ( long "file"
           <> short 'f'
           <> metavar "<file>"
-          <> help "Select a text file to parse."
+          <> help "Extract CLI options form the text file."
       )
 
 inputP :: Parser Input
