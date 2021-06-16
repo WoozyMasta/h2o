@@ -29,7 +29,7 @@ import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
-import Utils (mayContainsSubcommands, mayContainsOptions, convertTabsToSpaces, debugMsg)
+import Utils (convertTabsToSpaces, debugMsg, mayContainsOptions, mayContainsSubcommands)
 
 data Input
   = CommandInput String
@@ -132,7 +132,10 @@ configOrVersion = config <|> version
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly))
-  | isExportingJSON = trace "[main] JSON output\n" $ writeJSON name
+  | isExportingJSON = trace "[main] JSON output\n" $ case input of
+    (CommandInput n) -> writeJSON n
+    (FileInput _) -> toJSONSimple name <$> getInputContent input False
+    _ -> undefined
   | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
@@ -266,6 +269,15 @@ toCommandIO cmd = do
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
     filterSubcmds = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
+
+-- Convert to Command given command name and text
+toCommandSimple :: String -> String -> Command
+toCommandSimple name content = toCommand name name rootOptions []
+  where
+    rootOptions = parseMany content
+
+toJSONSimple :: String -> String -> Text
+toJSONSimple a b = toJSONText (toCommandSimple a b)
 
 -- | Generate shell completion script from the root help page
 -- as well as the subcommand's help pages.
