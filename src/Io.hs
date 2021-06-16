@@ -216,7 +216,11 @@ getHelpAndMan :: Bool -> String -> IO String
 getHelpAndMan isSandboxing cmd = do
   content <- getHelp isSandboxing cmd
   if null content
-    then trace "[Io] Using manpage\n" $ getMan cmd
+    then do
+      content2 <- getMan cmd
+      if null content2
+        then error ("[Io] Neither help or man pages available: " ++ cmd)
+        else trace "[Io] Using manpage\n" $ return content2
     else trace "[Io] Using help\n" $ return content
 
 toScriptSimple :: Shell -> String -> [Opt] -> Text
@@ -265,18 +269,21 @@ isBwrapAvailableIO :: IO Bool
 isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcessWithExitCode "bash" ["-c", "command -v bwrap"] ""
 
 toCommandIO :: String -> IO Command
-toCommandIO cmd = do
+toCommandIO name = do
   !isSandboxing <- isBwrapAvailableIO
-  rootContent <- getInputContent (CommandInput cmd) isSandboxing
+  rootContent <- getInputContent (CommandInput name) isSandboxing
   let rootOptions = parseMany rootContent
   let subcmdCandidates =
         debugMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
   let toSubcmdOptPair sub = do
-        page <- getHelpSub isSandboxing cmd (_cmd sub)
+        page <- getHelpSub isSandboxing name (_cmd sub)
         let criteria = not (null page) && page /= rootContent
         return ((sub, parseMany page), criteria)
   let subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
-  toCommand cmd cmd rootOptions <$> subcmdOptsPairsM
+  subcmdOptsPairs <- subcmdOptsPairsM
+  if null rootOptions && null subcmdOptsPairs
+    then error ("Failed to extract information for a Command: " ++ name)
+    else return $ toCommand name name rootOptions subcmdOptsPairs
   where
     -- remove duplicate _cmd in [Subcommand]
     sub2pair (Subcommand s1 s2) = (s1, s2)
@@ -285,7 +292,10 @@ toCommandIO cmd = do
 
 -- Convert to Command given command name and text
 toCommandSimple :: String -> String -> Command
-toCommandSimple name content = toCommand name name rootOptions []
+toCommandSimple name content =
+  if null rootOptions
+    then error ("Failed to extract information for a Command: " ++ name)
+    else toCommand name name rootOptions []
   where
     rootOptions = parseMany content
 
