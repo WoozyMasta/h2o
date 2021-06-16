@@ -166,13 +166,23 @@ getHelpSub False = getHelpSub_
 
 getHelpTemplate :: String -> [String] -> [String] -> IO String
 getHelpTemplate cmd options altOptions = do
-  (_, stdout, stderr) <- Process.readProcessWithExitCode cmd options ""
-  if null stdout
-    then
-      if mayContainsOptions stderr || mayContainsSubcommands stderr
-        then return stderr
-        else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd altOptions ""
-    else return stdout
+  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode cmd options ""
+  let isNotFound = isCommandNotFound cmd exitCode stderr
+
+  if isNotFound
+    then return ""
+    else
+      if not (null stdout)
+        then return stdout
+        else
+          if mayContainsOptions stderr || mayContainsSubcommands stderr
+            then return stderr
+            else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd altOptions ""
+
+isCommandNotFound :: String -> System.Exit.ExitCode -> String -> Bool
+isCommandNotFound cmd exitCode stderr =
+  exitCode == System.Exit.ExitFailure 127
+    || ("bwrap: execvp " `T.append` T.pack cmd) `T.isPrefixOf` T.pack stderr
 
 getHelp_ :: String -> IO String
 getHelp_ cmd = getHelpTemplate cmd ["--help"] ["help"]
@@ -193,8 +203,11 @@ getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" options altOptions
     altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "help", subcmd]
 
 getMan :: String -> IO String
-getMan cmd =
-  (\(_, a, _) -> a) <$> Process.readCreateProcessWithExitCode cp ""
+getMan cmd = do
+  (exitCode, stdout, _) <- Process.readCreateProcessWithExitCode cp ""
+  if exitCode == System.Exit.ExitFailure 16
+    then return ""
+    else return stdout
   where
     s = printf "man %s | col -b" cmd
     cp = Process.shell s
