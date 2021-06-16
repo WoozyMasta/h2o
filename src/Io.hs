@@ -29,7 +29,7 @@ import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
-import Utils (containsOptions, convertTabsToSpaces, debugMsg)
+import Utils (mayContainsSubcommands, mayContainsOptions, convertTabsToSpaces, debugMsg)
 
 data Input
   = CommandInput String
@@ -166,7 +166,7 @@ getHelpTemplate cmd options altOptions = do
   (_, stdout, stderr) <- Process.readProcessWithExitCode cmd options ""
   if null stdout
     then
-      if containsOptions stderr
+      if mayContainsOptions stderr || mayContainsSubcommands stderr
         then return stderr
         else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd altOptions ""
     else return stdout
@@ -200,8 +200,8 @@ getHelpAndMan :: Bool -> String -> IO String
 getHelpAndMan isSandboxing cmd = do
   content <- getHelp isSandboxing cmd
   if null content
-    then trace "[IO] Using manpage\n" $ getMan cmd
-    else trace "[IO] Using help\n" $ return content
+    then trace "[Io] Using manpage\n" $ getMan cmd
+    else trace "[Io] Using help\n" $ return content
 
 toScriptSimple :: Shell -> String -> [Opt] -> Text
 toScriptSimple Fish cmd opts = genFishScriptSimple cmd opts

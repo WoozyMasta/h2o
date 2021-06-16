@@ -98,5 +98,9 @@ startsWithDash :: String -> Bool
 startsWithDash = startsWithChar '-'
 
 -- | A speculative criteria for non-critical purposes
-containsOptions :: String -> Bool
-containsOptions = (> 5) . length . filter startsWithDash . lines
+mayContainsOptions :: String -> Bool
+mayContainsOptions = (> 3) . List.maximum . map length . List.group . map startsWithDash . lines
+
+-- | Another speculative criteria for non-critical purposes
+mayContainsSubcommands :: String -> Bool
+mayContainsSubcommands = (> 3) . List.maximum . map length . List.group . map (startsWithChar ' ') . lines
