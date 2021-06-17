@@ -164,7 +164,7 @@ descOffsetWithCountInOptionLines s optLineNums =
     -- for example `split sep "--opt     desc"` == ["--opt", "  desc"]`
     -- but I don't want spaces at the beginning of the description
     xss = map (join sep . tail . split sep . reverse . rstrip . (xs !!)) optLineNums
-    res = getMostFrequentWithCount $ map ((n +) . length) $ filter (not . isSpacesOnly) xss
+    res = getMostFrequentWithCount $ map ((n +) . length) $ filter (not . isSpacesOnly) $ filter (not . null) xss
       where
         n = length sep
 
