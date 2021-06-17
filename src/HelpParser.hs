@@ -124,13 +124,15 @@ optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
 
 optArgs :: ReadP String
 optArgs = do
-  _ <- singleSpace +++ char '='
+  _ <- char '=' <++ singleSpace <++ pure ' '
+  _ <- munch (== ' ')
   args <- sepBy1 argWordBare argSep
   return (List.intercalate "," args)
 
 optArgsInBraket :: ReadP String
 optArgsInBraket = do
   _ <- char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
+  _ <- munch (== ' ')
   (s, _) <- gather $ sepBy1 argWordBracketed (char ',' +++ char ' ' +++ pure ' ')
   return s
 
