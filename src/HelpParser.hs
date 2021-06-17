@@ -57,7 +57,7 @@ argWordBracketedHelper bra ket = do
     nonBracketLettersForSure = munch1 (`notElem` ['\n', bra, ket])
 
 argWordBracketed :: ReadP String
-argWordBracketed = argWordAngleBracketed <++ argWordCurlyBracketed <++ argWordParenthesized <++ argWordSquareBracketed
+argWordBracketed = argWordAngleBracketed <++ argWordCurlyBracketed <++ argWordParenthesized <++ argWordSquareBracketed <++ argWordDoubleQuoted <++ argWordSingleQuoted
 
 argWordAngleBracketed :: ReadP String
 argWordAngleBracketed = argWordBracketedHelper '<' '>'
@@ -70,6 +70,12 @@ argWordParenthesized = argWordBracketedHelper '(' ')'
 
 argWordSquareBracketed :: ReadP String
 argWordSquareBracketed = argWordBracketedHelper '[' ']'
+
+argWordDoubleQuoted :: ReadP String
+argWordDoubleQuoted = argWordBracketedHelper '"' '"'
+
+argWordSingleQuoted :: ReadP String
+argWordSingleQuoted = argWordBracketedHelper '\'' '\''
 
 description :: ReadP String
 description = do
