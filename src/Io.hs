@@ -135,7 +135,7 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
   | isExportingJSON = trace "[main] JSON output\n" $ case input of
     (CommandInput n) -> writeJSON n
     (FileInput _) -> toJSONSimple name <$> getInputContent input False
-    _ -> undefined
+    (SubcommandInput n subn) ->  toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
   | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
@@ -147,8 +147,9 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       FileInput f -> takeBaseName f
 run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell <$> toCommandIO name
 run (C_ (Config (SubcommandInput name subname) shell _ _ _ _)) =
-  trace "[main] processing subcommand-level options" $ toScriptSubcommandOptions shell name subname <$> optsIO
+  trace (printf "[main] processing subcommand-level options (%s, %s)" name subname) $ toScriptSimple shell cmdSubcmdName <$> optsIO
   where
+    cmdSubcmdName = name ++ "-" ++ subname
     optsIO = parseMany <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
 run (C_ (Config (FileInput f) shell _ _ _ _)) =
   trace "[main] processing options from the file" $ toScriptSimple shell name <$> optsIO
