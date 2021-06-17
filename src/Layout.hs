@@ -246,7 +246,7 @@ getOptionDescriptionPairsFromLayout s
     xs = lines s
     optLineNumsSet = Set.fromList optLineNums
     -- More accomodating description line matching seems to work better...
-    descLineNumsWithoutOption = [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
+    descLineNumsWithoutOption = debugMsg "descLineNumsWithoutOption" [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
     descriptionLineWidthMax = debugMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
@@ -265,8 +265,10 @@ getOptionDescriptionPairsFromLayout s
         isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
 
     descLineNumsWithOption =
-      [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
-      ]
+      debugMsg
+        "descLineNumsWithOption"
+        [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
+        ]
     descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
     (quartets, dropped) = debugMsg "quartets" $ toConsecutiveRangeQuartets optLineNums descLineNums
@@ -274,6 +276,11 @@ getOptionDescriptionPairsFromLayout s
     res = concatMap (handleQuartet xs offset) quartetsMod
     traceInfo = trace ("[debug] Dropped option indices " ++ show dropped)
 
+-- | Returns option-description pairs based on description's offset value + quartet
+-- lineStr :: [String]
+-- descriptionOffset :: Int
+-- (optionLineIndexFrom, optionLineIndexTo, descriptionLineIndexFrom, descriptionLineIndexTo)
+-- where [from, to) is half-open range
 handleQuartet :: [String] -> Int -> (Int, Int, Int, Int) -> [(String, String)]
 handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
   | optFrom == descFrom && optTo == descTo = debug $ onelinersF optFrom optTo
