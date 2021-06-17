@@ -27,7 +27,7 @@ complete -c bowtie2 -l norc -d 'do not align reverse-complement version of read 
 complete -c bowtie2 -l no-1mm-upfront -d 'do not allow 1 mismatch alignments before attempting to scan for the optimal seeded alignments'
 complete -c bowtie2 -l end-to-end -d 'entire read must align; no clipping (on)'
 complete -c bowtie2 -l local -d 'local alignment; ends might be soft clipped (off)'
-complete -c bowtie2 -l ma -d 'match bonus (0 for --end-to-end, 2 for --local) ' -x
+complete -c bowtie2 -l ma -d 'match bonus (0 for --end-to-end, 2 for --local)' -x
 complete -c bowtie2 -l mp -d 'max penalty for mismatch; lower qual = lower penalty (6)' -x
 complete -c bowtie2 -l np -d 'penalty for non-A/C/G/Ts in read/ref (1)' -x
 complete -c bowtie2 -l rdg -d 'read gap open, extend penalties (5,3)' -x

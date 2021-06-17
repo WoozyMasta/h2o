@@ -5,7 +5,7 @@ module Layout where
 
 import Control.Exception (assert)
 import qualified Data.List as List
-import Data.List.Extra (nubSort)
+import Data.List.Extra (nubSort, trim)
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Data.String.Utils (join, rstrip, split, strip)
@@ -399,7 +399,7 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
     zs = map (drop idxCol) ys
 
 preprocessAll :: String -> [(String, String)]
-preprocessAll content = res
+preprocessAll content = map (\(opt, desc) -> (trim opt, trim desc)) res
   where
     s = convertTabsToSpaces 8 content
     xs = lines s
