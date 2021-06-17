@@ -143,8 +143,8 @@ descOffsetWithCountSimple s optLineNums optOffset =
     locs = getNonoptLocations s
     cols =
       [ x | (r, x) <- locs,
-            -- short option followed by a single space = 3
-            optOffset + 3 <= x,
+            -- description's offset is equal (rare case!) or greater than option's
+            optOffset <= x,
             -- description can exist only around option lines
             head optLineNums < r, r < last optLineNums + 5
             -- previous line cannot be blank
@@ -246,7 +246,7 @@ getOptionDescriptionPairsFromLayout s
     xs = lines s
     optLineNumsSet = Set.fromList optLineNums
     -- More accomodating description line matching seems to work better...
-    descLineNumsWithoutOption = debugMsg "descLineNumsWithoutOption" [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x]
+    descLineNumsWithoutOption = debugMsg "descLineNumsWithoutOption" [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
     descriptionLineWidthMax = debugMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
