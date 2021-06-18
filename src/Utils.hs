@@ -99,8 +99,8 @@ startsWithDash = startsWithChar '-'
 
 -- | A speculative criteria for non-critical purposes
 mayContainsOptions :: String -> Bool
-mayContainsOptions = (> 3) . List.maximum . map length . List.group . map startsWithDash . lines
+mayContainsOptions = (> 3) . List.foldr (max . length) 0 . List.group . map startsWithDash . lines
 
 -- | Another speculative criteria for non-critical purposes
 mayContainsSubcommands :: String -> Bool
-mayContainsSubcommands = (> 3) . List.maximum . map length . List.group . map (startsWithChar ' ') . lines
+mayContainsSubcommands = (> 3) . List.foldr (max . length) 0 . List.group . map (startsWithChar ' ') . lines
