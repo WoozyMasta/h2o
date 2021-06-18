@@ -343,6 +343,10 @@ optPartTests =
       test_optPart
         " --tmux (Long beta testing) "
         (["--tmux"], "(Long beta testing)"),
+      ---- blast ----
+      test_optPart
+        " -window_size <Integer, >=0>\n "
+        (["-window_size"], "<Integer, >=0>"),
       ---- octopus ----
       test_optPart
         " --inactive-flank-scoring arg (=1)"
@@ -381,9 +385,6 @@ unsupportedCases =
         test_optPart
           " -task <String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast'\n          'megablast' 'rmblastn' >\n"
           (["-task"], "<String, Permissible values: 'blastn' 'blastn-short' 'dc-megablast' ...>"),
-        test_optPart
-          " -window_size <Integer, >=0>\n "
-          (["-window_size"], "<Integer, >=0>"),
         ---- delly ----
         test_optPart
           "-o [ --outfile ] arg (=\"sv.bcf\") "

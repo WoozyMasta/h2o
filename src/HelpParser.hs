@@ -3,6 +3,7 @@
 module HelpParser where
 
 import qualified Data.List as List
+import Data.List.Extra (splitOn)
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
 import Type
@@ -52,9 +53,20 @@ argWordBare = do
 argWordBracketedHelper :: Char -> Char -> ReadP String
 argWordBracketedHelper bra ket = do
   (consumed, _) <- gather $ between (char bra) (char ket) nonBracketLettersForSure
-  return consumed
+  lookedAhead <- look
+  let focus = head . splitOn "  " . takeWhile (/= '\n') $ lookedAhead
+  let beforeKet = takeWhile (/= ket) focus
+  extended <-
+    if (ket `List.elem` focus) && not (null beforeKet) && ('-' `List.notElem` beforeKet) && not (init consumed `List.isSuffixOf` beforeKet)
+      then endingWithKet
+      else pure ""
+  return (consumed ++ extended)
   where
-    nonBracketLettersForSure = munch1 (`notElem` ['\n', bra, ket])
+    nonBracketLettersForSure = munch1 (`notElem` ['\n', ket])
+    endingWithKet = do
+      chunk <- nonBracketLettersForSure
+      end <- string [ket]
+      return (chunk ++ end)
 
 argWordBracketed :: ReadP String
 argWordBracketed = argWordAngleBracketed <++ argWordCurlyBracketed <++ argWordParenthesized <++ argWordSquareBracketed <++ argWordDoubleQuoted <++ argWordSingleQuoted
