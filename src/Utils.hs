@@ -13,6 +13,7 @@ import Data.Function (on)
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Map as Map
+import Data.Text (Text)
 import qualified Data.Text as T
 import Debug.Trace (trace)
 import Text.Printf (printf)
@@ -28,7 +29,7 @@ getMostFrequentWithCount xs = Just (x, maxCount)
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter
 
 convertTabsToSpaces :: Int -> String -> String
-convertTabsToSpaces n = T.unpack . T.unlines . map convertLine . T.lines . T.pack
+convertTabsToSpaces n = T.unpack . removeDelimiter ':' . T.unlines . map convertLine . T.lines . T.pack
   where
     convertLine = List.foldl1' f . T.splitOn "\t"
     f acc t = T.concat [acc, T.replicate spaceWidth " ", t]
@@ -36,6 +37,11 @@ convertTabsToSpaces n = T.unpack . T.unlines . map convertLine . T.lines . T.pac
         w = T.length acc
         offset = (w `div` n) * n + n
         spaceWidth = offset - w
+
+removeDelimiter :: Char -> Text -> Text
+removeDelimiter ch = T.intercalate "   " . T.splitOn from_
+  where
+    from_ = T.pack [' ', ch, ' ']
 
 debugMsg :: (Show a) => String -> a -> a
 debugMsg msg x = trace (printf ("[debug] " ++ msg ++ " %s\n") (show x)) x
