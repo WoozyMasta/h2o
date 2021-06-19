@@ -11,7 +11,6 @@ import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
-import Debug.Trace (trace)
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
   ( genFishScriptRootOptions,
@@ -29,7 +28,7 @@ import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..))
-import Utils (convertTabsToSpaces, debugMsg, mayContainsOptions, mayContainsSubcommands)
+import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainsOptions, mayContainsSubcommands, warnTrace)
 
 data Input
   = CommandInput String
@@ -137,16 +136,16 @@ configOrVersion = config <|> version
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
-  | isExportingJSON = trace "[main] JSON output\n" $ case input of
+  | isExportingJSON = infoTrace "io: JSON output\n" $ case input of
     (CommandInput n) -> writeJSON n
     (SubcommandInput n subn) -> toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
     (FileInput _) ->
       if isShallowOnly
         then toJSONSimple name <$> getInputContent input False
         else toJSONText <$> (pageToCommandIO name =<< getInputContent input False)
-  | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
-  | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
-  | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
+  | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     name = case input of
@@ -155,21 +154,21 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       FileInput f -> takeBaseName f
 run (C_ (Config (CommandInput name) shell _ _ _ _ _)) = toScriptFull shell <$> toCommandIO name
 run (C_ (Config (SubcommandInput name subname) shell _ _ _ _ _)) =
-  trace (printf "[main] processing subcommand-level options (%s, %s)" name subname) $ toScriptSimple shell cmdSubcmdName <$> optsIO
+  infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) toScriptSimple shell cmdSubcmdName <$> optsIO
   where
     cmdSubcmdName = name ++ "-" ++ subname
     optsIO = parseMany <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
 run (C_ (Config (FileInput f) shell _ _ _ _ isShallowOnly))
-  | isShallowOnly = trace "[main] processing just the file" $ toScriptSimple shell name <$> optsIO
-  | otherwise = trace "[main] processing the file and more" $ toScriptFull shell <$> (pageToCommandIO name =<< contentIO)
+  | isShallowOnly = infoTrace "io: processing just the file" $ toScriptSimple shell name <$> optsIO
+  | otherwise = infoTrace "io: processing the file and more" $ toScriptFull shell <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
     optsIO = parseMany <$> getInputContent (FileInput f) False
     contentIO = getInputContent (FileInput f) False
 
 getHelp :: Bool -> String -> IO String
-getHelp True = trace "[info] sandboxed" getHelpSandboxed
-getHelp False = trace "[warning] No sandboxing!" getHelp_
+getHelp True = infoTrace ("sandboxed" :: String) getHelpSandboxed
+getHelp False = warnTrace ("No sandboxing!" :: String) getHelp_
 
 getHelpSub :: Bool -> String -> String -> IO String
 getHelpSub True = getHelpSubSandboxed
@@ -230,9 +229,9 @@ getHelpAndMan isSandboxing cmd = do
     then do
       content2 <- getMan cmd
       if null content2
-        then error ("[Io] Neither help or man pages available: " ++ cmd)
-        else trace "[Io] Using manpage\n" $ return content2
-    else trace "[Io] Using help\n" $ return content
+        then error ("io: Neither help or man pages available: " ++ cmd)
+        else infoTrace "io: Using manpage" $ return content2
+    else infoTrace "io: Using help" $ return content
 
 toScriptSimple :: Shell -> String -> [Opt] -> Text
 toScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
@@ -273,7 +272,7 @@ toScriptFull shell (Command name _ rootOptions subs) = res
     texts = map (uncurry (toScriptSubcommandOptions shell name)) subcmdOptsPairs
     res =
       if null subcmdNames
-        then trace "[warning] Ignore subcommands" $ toScriptSimple shell name rootOptions
+        then warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
         else T.intercalate "\n\n\n" (two ++ texts)
 
 isBwrapAvailableIO :: IO Bool
@@ -303,7 +302,7 @@ toCommandIOHelper name rootContent isSandboxing = do
     filterSubcmds = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
     rootOptions = parseMany rootContent
     subcmdCandidates =
-      debugMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
+      infoMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
     toSubcmdOptPair sub = do
       page <- getHelpSub isSandboxing name (_cmd sub)
       let criteria = not (null page) && page /= rootContent

@@ -16,7 +16,6 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as T
 import Debug.Trace (trace)
-import Text.Printf (printf)
 
 getMostFrequent :: (Ord a) => [a] -> Maybe a
 getMostFrequent = fmap fst . getMostFrequentWithCount
@@ -43,11 +42,50 @@ removeDelimiter ch = T.intercalate "   " . T.splitOn from_
   where
     from_ = T.pack [' ', ch, ' ']
 
+debugTag :: String
+debugTag = "[debug]"
+
+infoTag :: String
+infoTag = "[info]"
+
+warnTag :: String
+warnTag = "[warn]"
+
+traceMsgHelper :: (Show a) => String -> String -> a -> a
+traceMsgHelper tag msg x = trace (unwords [tag, msg, show x, "\n"]) x
+
+traceShowHelper :: (Show b) => String -> String -> b -> a -> a
+traceShowHelper tag msg var = trace (unwords [tag, msg, show var ++ "\n"])
+
 debugMsg :: (Show a) => String -> a -> a
-debugMsg msg x = trace (printf ("[debug] " ++ msg ++ " %s\n") (show x)) x
+debugMsg = traceMsgHelper debugTag
+
+infoMsg :: (Show a) => String -> a -> a
+infoMsg = traceMsgHelper infoTag
+
+warnMsg :: (Show a) => String -> a -> a
+warnMsg = traceMsgHelper warnTag
 
 debugShow :: (Show b) => String -> b -> a -> a
-debugShow msg var = trace (unwords ["[debug]", msg, show var] ++ "\n")
+debugShow = traceShowHelper debugTag
+
+infoShow :: (Show b) => String -> b -> a -> a
+infoShow = traceShowHelper infoTag
+
+warnShow :: (Show b) => String -> b -> a -> a
+warnShow = traceShowHelper warnTag
+
+traceHelper :: String -> String -> a -> a
+traceHelper tag msg = trace (unwords [tag, show msg])
+
+debugTrace :: String -> a -> a
+debugTrace = traceHelper debugTag
+
+infoTrace :: String -> a -> a
+infoTrace = traceHelper infoTag
+
+warnTrace :: String -> a -> a
+warnTrace = traceHelper warnTag
 
 traceIf :: (a -> Bool) -> (a -> String) -> a -> a
 traceIf check run x

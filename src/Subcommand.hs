@@ -6,7 +6,7 @@ import HelpParser (alphanumChars, newline, singleSpace, skip, word)
 import Layout (getDescriptionOffset)
 import Text.ParserCombinators.ReadP
 import Type (Subcommand (..))
-import Utils (convertTabsToSpaces, debugMsg, getMostFrequent, startsWithChar)
+import Utils (convertTabsToSpaces, getMostFrequent, infoMsg, startsWithChar)
 
 type Layout = (Int, Int)
 
@@ -27,7 +27,7 @@ getLayoutMaybe :: [String] -> Int -> Maybe Layout
 getLayoutMaybe xs offset = liftM2 (,) first second
   where
     pairs =
-      debugMsg "first two word locations:" $
+      infoMsg "subcommand: first two word locations:" $
         filter (\(a, b) -> a > 0 && b >= a + 6 && a < offset) $ map firstTwoWordsLoc xs
     second = getMostFrequent [b | (_, b) <- pairs]
     first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
@@ -40,13 +40,13 @@ getAlignedLines s = case layoutMay of
     offsetMay = getDescriptionOffset s
     offset = Maybe.fromMaybe 50 offsetMay
     xs = filter removeOptionLine (lines s)
-    layoutMay = debugMsg "[subcommand] layout :" $ getLayoutMaybe xs offset
+    layoutMay = infoMsg "subcommand: layout :" $ getLayoutMaybe xs offset
 
 lowercase :: String
 lowercase = "abcdefghijklmnopqrstuvwxyz"
 
 isAlphanumOrDash :: Char -> Bool
-isAlphanumOrDash c = c `elem` ('-':alphanumChars)
+isAlphanumOrDash c = c `elem` ('-' : alphanumChars)
 
 subcommandWord :: ReadP String
 subcommandWord = do

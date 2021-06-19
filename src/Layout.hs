@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
 import Type (Opt)
-import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, smartUnwords, startsWithDash, toRanges)
+import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, infoMsg, infoShow, smartUnwords, startsWithDash, toRanges, warnShow)
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -54,7 +54,7 @@ _getOffsetHelper getLocs s = traceMessage res
     locs = getLocs s
     xs = map snd locs
     res = getMostFrequent xs
-    droppedOptionLinesInfo = unlines [(printf "[Dropped] %03d: %s" r (lines s !! r) :: String) | (r, c) <- locs, Just c /= res]
+    droppedOptionLinesInfo = unlines [(printf "[info] layout: dropped lines: (%03d) %s" r (lines s !! r) :: String) | (r, c) <- locs, Just c /= res]
     traceMessage = trace droppedOptionLinesInfo
 
 -- | get presumed horizontal offsets of options lines
@@ -118,9 +118,9 @@ getShortOptionOffset = _getOffsetHelper getShortOptionLocations
 getDescriptionOffsetFromOptionLocs :: String -> [Int] -> Int -> Maybe Int
 getDescriptionOffsetFromOptionLocs s optLineNums optOffset =
   case (descOffsetWithCountSimple s optLineNums optOffset, descOffsetWithCountInOptionLines s optLineNums) of
-    (Nothing, Nothing) -> trace "[WARNING] Retrieved absolutely zero information" Nothing
-    (Nothing, q) -> trace "Descriptions always appear in the lines with options" $ fmap fst q
-    (p, Nothing) -> trace "Descriptions never appear in the lines with options" $ fmap fst p
+    (Nothing, Nothing) -> trace "[info] Retrieved absolutely zero information" Nothing
+    (Nothing, q) -> trace "[info] Descriptions always appear in the lines with options" $ fmap fst q
+    (p, Nothing) -> trace "[info] Descriptions never appear in the lines with options" $ fmap fst p
     (Just (x1, c1), Just (x2, c2))
       | x1 == x2 -> Just x1
       | c1 <= 3 && 3 < c2 -> debug Just x2
@@ -129,7 +129,7 @@ getDescriptionOffsetFromOptionLocs s optLineNums optOffset =
       | otherwise -> debug Nothing
       where
         msg =
-          "[WARNING] Disagreement in offsets:\n\
+          "[warn] Disagreement in offsets:\n\
           \   description-only-line offset   %d (with count %d)\n\
           \   option+description-line offset %d (with count %d)\n"
         debug = trace (printf msg x1 c1 x2 c2 :: String)
@@ -223,13 +223,13 @@ getDescriptionOffsetOptLineNumsPair s
   | offset <= 3 = Nothing
   | otherwise = Just (offset, optLineNums)
   where
-    optionOffsets = debugMsg "Option offsets:" $ getOptionOffsets s
+    optionOffsets = infoMsg "layout: Option offsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
-    optLineNums = debugShow "optLocsExcluded:" optLocsExcluded $ debugMsg "optLineNums" $ map fst optLocs
+    optLineNums = debugShow "layout: optLocsExcluded:" optLocsExcluded $ infoMsg "optLineNums" $ map fst optLocs
 
     descriptionOffsetMay = getDescriptionOffsetFromOptionLocs s optLineNums (List.maximum optionOffsets)
-    offset = debugMsg "Description offset:" $ Maybe.fromJust descriptionOffsetMay
+    offset = infoMsg "layout: Description offset:" $ Maybe.fromJust descriptionOffsetMay
 
 getDescriptionOffset :: String -> Maybe Int
 getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
@@ -239,7 +239,7 @@ getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
 getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout s
   | Maybe.isNothing tupMay = Nothing
-  | otherwise = Just $ traceInfo (res, dropped)
+  | otherwise = Just $ infoShow "Dropped option indices:" dropped (res, dropped)
   where
     tupMay = getDescriptionOffsetOptLineNumsPair s
     (offset, optLineNums) = Maybe.fromJust tupMay
@@ -248,7 +248,7 @@ getOptionDescriptionPairsFromLayout s
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption = debugMsg "descLineNumsWithoutOption" [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
-    descriptionLineWidthMax = debugMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
+    descriptionLineWidthMax = infoMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
 
     -- The line must be long when description starts at the option line and continues to the next line.
@@ -265,16 +265,15 @@ getOptionDescriptionPairsFromLayout s
         isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
 
     descLineNumsWithOption =
-      debugMsg
+      infoMsg
         "descLineNumsWithOption"
         [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
         ]
-    descLineNums = debugMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
+    descLineNums = infoMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
-    (quartets, dropped) = debugMsg "quartets" $ toConsecutiveRangeQuartets optLineNums descLineNums
-    quartetsMod = debugMsg "quartetsMod" $ [(a, b, updateDescFrom xs offset a c, d) | (a, b, c, d) <- quartets] -- [(optFrom, optTo, descFrom, descTo)]
+    (quartets, dropped) = toConsecutiveRangeQuartets optLineNums descLineNums
+    quartetsMod = infoMsg "quartets" $ [(a, b, updateDescFrom xs offset a c, d) | (a, b, c, d) <- quartets] -- [(optFrom, optTo, descFrom, descTo)]
     res = concatMap (handleQuartet xs offset) quartetsMod
-    traceInfo = trace ("[debug] Dropped option indices " ++ show dropped)
 
 -- | Returns option-description pairs based on description's offset value + quartet
 -- lineStr :: [String]
@@ -283,13 +282,12 @@ getOptionDescriptionPairsFromLayout s
 -- where [from, to) is half-open range
 handleQuartet :: [String] -> Int -> (Int, Int, Int, Int) -> [(String, String)]
 handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
-  | optFrom == descFrom && optTo == descTo = debug $ onelinersF optFrom optTo
-  | optFrom == descFrom = debug $ onelinersF optFrom (optTo - 1) ++ [squashDescSideF (optTo - 1) descTo]
-  | optTo == descFrom = debug [squashDescTopF descFrom descTo]
-  | optTo == descTo = debug $ squashOptsF optFrom (descFrom + 1) : onelinersF (descFrom + 1) descTo
-  | otherwise = debug $ (s1 : ss) ++ [s2]
+  | optFrom == descFrom && optTo == descTo = onelinersF optFrom optTo
+  | optFrom == descFrom = onelinersF optFrom (optTo - 1) ++ [squashDescSideF (optTo - 1) descTo]
+  | optTo == descFrom = [squashDescTopF descFrom descTo]
+  | optTo == descTo = squashOptsF optFrom (descFrom + 1) : onelinersF (descFrom + 1) descTo
+  | otherwise = (s1 : ss) ++ [s2]
   where
-    debug = trace (show (optFrom, optTo, descFrom, descTo) ++ " ")
     squashOptsF = squashOptions xs offset
     squashDescSideF = squashDescriptionsSide xs offset
     squashDescTopF = squashDescriptionsTop xs offset
@@ -301,7 +299,7 @@ handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
 -- ================================================
 
 squashOptions :: [String] -> Int -> Int -> Int -> (String, String)
-squashOptions xs offset a b = trace "[squashOptions] " (opt, desc)
+squashOptions xs offset a b = (opt, desc)
   where
     optLines = map (xs !!) $ take (b - a) [a, a + 1 ..]
     optLinesLastTruncated = map strip (init optLines ++ [take offset (last optLines)])
@@ -309,14 +307,14 @@ squashOptions xs offset a b = trace "[squashOptions] " (opt, desc)
     desc = drop offset (xs !! (b - 1))
 
 squashDescriptionsSide :: [String] -> Int -> Int -> Int -> (String, String)
-squashDescriptionsSide xs offset a b = trace "[squashDescriptionsSide] " (opt, desc)
+squashDescriptionsSide xs offset a b = (opt, desc)
   where
     descLines = map (drop offset . (xs !!)) $ take (b - a) [a, a + 1 ..]
     opt = strip $ take offset (xs !! a)
     desc = smartUnwords descLines
 
 squashDescriptionsTop :: [String] -> Int -> Int -> Int -> (String, String)
-squashDescriptionsTop xs offset a b = trace "[squashDescriptionsTop] " (opt, desc)
+squashDescriptionsTop xs offset a b = (opt, desc)
   where
     descLines = map (drop offset . (xs !!)) $ take (b - a) [a, a + 1 ..]
     opt = strip (xs !! (a - 1))
@@ -324,7 +322,7 @@ squashDescriptionsTop xs offset a b = trace "[squashDescriptionsTop] " (opt, des
 
 oneliners :: [String] -> Int -> Int -> Int -> [(String, String)]
 oneliners xs offset a b =
-  [ trace "[oneliners] " (strip former, latter)
+  [ (strip former, latter)
     | i <- take (b - a) [a, a + 1 ..],
       let (former, latter) = splitAt offset (xs !! i)
   ]
@@ -409,9 +407,9 @@ preprocessAll content = map (\(opt, desc) -> (trim opt, trim desc)) res
         layoutResults ++ fallbackResults
         where
           paragraphs = map (getParagraph xs) droppedIdxRanges
-          fallbackResults = debugMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
+          fallbackResults = infoMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
       Nothing ->
-        trace "[warning] ignore layout" $ preprocessAllFallback s
+        trace "[warn] ignore layout" $ preprocessAllFallback s
 
 parseMany :: String -> [Opt]
 parseMany "" = []
@@ -419,7 +417,7 @@ parseMany s = List.nub . concat $ results
   where
     pairs = preprocessAll s
     results =
-      [ (\xs -> if null xs then debugShow "[warning] Failed pair:" (optStr, descStr) xs else xs) $
+      [ (\xs -> if null xs then warnShow "Failed pair:" (optStr, descStr) xs else xs) $
           parseWithOptPart optStr descStr
         | (optStr, descStr) <- pairs,
           (optStr, descStr) /= ("", "")
