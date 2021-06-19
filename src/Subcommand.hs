@@ -38,8 +38,8 @@ getAlignedLines s = case layoutMay of
   _ -> []
   where
     offsetMay = getDescriptionOffset s
-    offset = debugMsg "[subcommand] description offset :" $ Maybe.fromMaybe 50 offsetMay
-    xs = lines $ removeOptionLines s
+    offset = Maybe.fromMaybe 50 offsetMay
+    xs = filter removeOptionLine (lines s)
     layoutMay = debugMsg "[subcommand] layout :" $ getLayoutMaybe xs offset
 
 lowercase :: String
@@ -64,15 +64,12 @@ subcommand = do
   let desc = unwords ss
   return (Subcommand cmd desc)
 
-removeOptionLines :: String -> String
-removeOptionLines content = unlines xs
-  where
-    f s =
-      not (null s)
-        && (not . startsWithChar '-' $ s)
-        && (not . startsWithChar '[' $ s)
-        && (head s == ' ')
-    xs = filter f (lines content)
+removeOptionLine :: String -> Bool
+removeOptionLine s =
+  not (null s)
+    && (head s == ' ')
+    && (not . startsWithChar '-' $ s)
+    && (not . startsWithChar '[' $ s)
 
 parseSubcommand :: String -> [Subcommand]
 parseSubcommand content = results
