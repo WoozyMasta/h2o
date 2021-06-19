@@ -2,7 +2,7 @@ module Subcommand where
 
 import Control.Monad (liftM2)
 import qualified Data.Maybe as Maybe
-import HelpParser (isAlphanum, newline, singleSpace, skip, word)
+import HelpParser (alphanumChars, newline, singleSpace, skip, word)
 import Layout (getDescriptionOffset)
 import Text.ParserCombinators.ReadP
 import Type (Subcommand (..))
@@ -28,7 +28,7 @@ getLayoutMaybe xs offset = liftM2 (,) first second
   where
     pairs =
       debugMsg "first two word locations:" $
-        filter (\(a, b) -> a > 0 && b >= a + 6 && a < offset) $ map firstTwoWordsLoc xs
+        filter (\(a, b) -> a > 0 && b >= a + 6 && a <= offset) $ map firstTwoWordsLoc xs
     second = getMostFrequent [b | (_, b) <- pairs]
     first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
 
@@ -45,10 +45,13 @@ getAlignedLines s = case layoutMay of
 lowercase :: String
 lowercase = "abcdefghijklmnopqrstuvwxyz"
 
+isAlphanumOrDash :: Char -> Bool
+isAlphanumOrDash c = c `elem` ('-':alphanumChars)
+
 subcommandWord :: ReadP String
 subcommandWord = do
   x <- satisfy $ \c -> c `elem` lowercase
-  xs <- munch isAlphanum
+  xs <- munch isAlphanumOrDash
   -- For example docker run --help has "--docker*"
   _ <- char '*' <++ pure '*'
   return (x : xs)
@@ -57,6 +60,8 @@ subcommand :: ReadP Subcommand
 subcommand = do
   skipSpaces
   cmd <- subcommandWord
+  skipSpaces
+  _ <- char ':' <++ pure 'x'
   skipSpaces
   ss <- sepBy1 word singleSpace
   skip (munch (`elem` " \t"))
