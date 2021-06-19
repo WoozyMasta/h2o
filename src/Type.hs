@@ -42,7 +42,7 @@ data OptName = OptName
   }
   deriving (Eq)
 
-data OptNameType = LongType | ShortType | OldType | DoubleDashAlone deriving (Eq, Show, Ord)
+data OptNameType = LongType | ShortType | OldType | DoubleDashAlone | SingleDashAlone deriving (Eq, Show, Ord)
 
 instance Show Opt where
   show (Opt names args desc) =

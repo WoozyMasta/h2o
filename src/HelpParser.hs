@@ -116,6 +116,13 @@ doubleDash = do
   _ <- singleSpace <++ pure 'x' -- dummy 'x'
   return res
 
+singleDash :: ReadP OptName
+singleDash = do
+  _ <- dash
+  let res = OptName "-" SingleDashAlone
+  _ <- singleSpace
+  return res
+
 shortOptName :: ReadP OptName
 shortOptName = do
   _ <- dash
@@ -132,7 +139,7 @@ oldOptName = do
   return res
 
 optName :: ReadP OptName
-optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName
+optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName <++ singleDash
 
 optArgs :: ReadP String
 optArgs = do

@@ -418,7 +418,9 @@ optNameTests =
       testCase "optName (old)" $
         readP_to_S optName "-azvhP" @?= [(OptName "-azvhP" OldType, "")],
       testCase "optName (double dash alone)" $
-        readP_to_S optName "-- " @?= [(OptName "--" DoubleDashAlone, "")]
+        readP_to_S optName "-- " @?= [(OptName "--" DoubleDashAlone, "")],
+      testCase "optName (single dash alone)" $
+        readP_to_S optName "- " @?= [(OptName "-" SingleDashAlone, "")]
     ]
 
 layoutTests :: TestTree
