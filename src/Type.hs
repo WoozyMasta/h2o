@@ -34,7 +34,7 @@ data Subcommand = Subcommand
   deriving (Eq, Ord)
 
 instance Show Subcommand where
-  show (Subcommand cmd desc) = cmd ++ "\t\t(" ++ desc ++ ")"
+  show (Subcommand cmd desc) = printf "%-25s (%s)" cmd desc
 
 data OptName = OptName
   { _raw :: String,
