@@ -28,7 +28,7 @@ getLayoutMaybe xs offset = liftM2 (,) first second
   where
     pairs =
       debugMsg "first two word locations:" $
-        filter (\(a, b) -> a > 0 && b >= a + 6 && a <= offset) $ map firstTwoWordsLoc xs
+        filter (\(a, b) -> a > 0 && b >= a + 6 && a < offset) $ map firstTwoWordsLoc xs
     second = getMostFrequent [b | (_, b) <- pairs]
     first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
 
