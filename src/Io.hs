@@ -42,7 +42,8 @@ data Config = Config
     _isOutputJSON :: Bool,
     _isConvertingTabsToSpaces :: Bool,
     _isListingSubcommands :: Bool,
-    _isPreprocessOnly :: Bool
+    _isPreprocessOnly :: Bool,
+    _isShallowOnly :: Bool
   }
 
 data ConfigOrVersion = Version | C_ Config
@@ -121,6 +122,10 @@ config =
               ( long "debug"
                   <> help "Run preprocessing only (for debugging)"
               )
+            <*> switch
+              ( long "shallow"
+                  <> help "Don't scan subcommands. Applies only for file input."
+              )
         )
 
 version :: Parser ConfigOrVersion
@@ -131,11 +136,11 @@ configOrVersion = config <|> version
 
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
-run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly))
+run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly _))
   | isExportingJSON = trace "[main] JSON output\n" $ case input of
     (CommandInput n) -> writeJSON n
     (FileInput _) -> toJSONSimple name <$> getInputContent input False
-    (SubcommandInput n subn) ->  toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
+    (SubcommandInput n subn) -> toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
   | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
@@ -145,17 +150,19 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       CommandInput n -> n
       SubcommandInput n _ -> n
       FileInput f -> takeBaseName f
-run (C_ (Config (CommandInput name) shell _ _ _ _)) = toScriptFull shell <$> toCommandIO name
-run (C_ (Config (SubcommandInput name subname) shell _ _ _ _)) =
+run (C_ (Config (CommandInput name) shell _ _ _ _ _)) = toScriptFull shell <$> toCommandIO name
+run (C_ (Config (SubcommandInput name subname) shell _ _ _ _ _)) =
   trace (printf "[main] processing subcommand-level options (%s, %s)" name subname) $ toScriptSimple shell cmdSubcmdName <$> optsIO
   where
     cmdSubcmdName = name ++ "-" ++ subname
     optsIO = parseMany <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
-run (C_ (Config (FileInput f) shell _ _ _ _)) =
-  trace "[main] processing options from the file" $ toScriptSimple shell name <$> optsIO
+run (C_ (Config (FileInput f) shell _ _ _ _ isShallowOnly))
+  | isShallowOnly = trace "[main] processing just the file" $ toScriptSimple shell name <$> optsIO
+  | otherwise = trace "[main] processing the file and more" $ toScriptFull shell <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
     optsIO = parseMany <$> getInputContent (FileInput f) False
+    contentIO = getInputContent (FileInput f) False
 
 getHelp :: Bool -> String -> IO String
 getHelp True = trace "[info] sandboxed" getHelpSandboxed
@@ -273,14 +280,15 @@ toCommandIO :: String -> IO Command
 toCommandIO name = do
   !isSandboxing <- isBwrapAvailableIO
   rootContent <- getInputContent (CommandInput name) isSandboxing
-  let rootOptions = parseMany rootContent
-  let subcmdCandidates =
-        debugMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
-  let toSubcmdOptPair sub = do
-        page <- getHelpSub isSandboxing name (_cmd sub)
-        let criteria = not (null page) && page /= rootContent
-        return ((sub, parseMany page), criteria)
-  let subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
+  toCommandIOHelper name rootContent isSandboxing
+
+pageToCommandIO :: String -> String -> IO Command
+pageToCommandIO name content = do
+  !isSandboxing <- isBwrapAvailableIO
+  toCommandIOHelper name content isSandboxing
+
+toCommandIOHelper :: String -> String -> Bool -> IO Command
+toCommandIOHelper name rootContent isSandboxing = do
   subcmdOptsPairs <- subcmdOptsPairsM
   if null rootOptions && null subcmdOptsPairs
     then error ("Failed to extract information for a Command: " ++ name)
@@ -290,6 +298,14 @@ toCommandIO name = do
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
     filterSubcmds = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
+    rootOptions = parseMany rootContent
+    subcmdCandidates =
+      debugMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
+    toSubcmdOptPair sub = do
+      page <- getHelpSub isSandboxing name (_cmd sub)
+      let criteria = not (null page) && page /= rootContent
+      return ((sub, parseMany page), criteria)
+    subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
 
 -- Convert to Command given command name and text
 toCommandSimple :: String -> String -> Command

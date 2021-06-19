@@ -22,6 +22,9 @@ List subcommands
 --debug  ::  
 Run preprocessing only (for debugging)
 
+--shallow  ::  
+Don't scan subcommands. Applies only for file input.
+
 --version  ::  
 Show version
 
