@@ -136,11 +136,14 @@ configOrVersion = config <|> version
 
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
-run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly _))
+run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = trace "[main] JSON output\n" $ case input of
     (CommandInput n) -> writeJSON n
-    (FileInput _) -> toJSONSimple name <$> getInputContent input False
     (SubcommandInput n subn) -> toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
+    (FileInput _) ->
+      if isShallowOnly
+        then toJSONSimple name <$> getInputContent input False
+        else toJSONText <$> (pageToCommandIO name =<< getInputContent input False)
   | isConvertingTabsToSpaces = trace "[main] Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = trace "[main] Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = trace "[main] processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
