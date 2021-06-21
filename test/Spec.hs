@@ -350,7 +350,7 @@ optPartTests =
       ---- octopus ----
       test_optPart
         " --inactive-flank-scoring arg (=1)"
-        (["--inactive-flank-scoring"], "arg")
+        (["--inactive-flank-scoring"], "arg (=1)")
     ]
 
 unsupportedCases :: TestTree

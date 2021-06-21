@@ -1675,7 +1675,7 @@ Enable/disable setting the STACK_EXE environment variable to the path for the st
 (stack-ghc) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-ghc) --package  ::  PACKAGE
+(stack-ghc) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-ghc) --rts-options  ::  RTSFLAG
@@ -1732,7 +1732,7 @@ Enable/disable setting the STACK_EXE environment variable to the path for the st
 (stack-exec) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-exec) --package  ::  PACKAGE
+(stack-exec) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-exec) --rts-options  ::  RTSFLAG
@@ -1765,7 +1765,7 @@ Enable/disable setting the STACK_EXE environment variable to the path for the st
 (stack-run) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-run) --package  ::  PACKAGE
+(stack-run) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-run) --rts-options  ::  RTSFLAG
@@ -1807,7 +1807,7 @@ Enable/disable load modules on start-up (default: enabled)
 (stack-ghci) --no-load  ::  
 Enable/disable load modules on start-up (default: enabled)
 
-(stack-ghci) --package  ::  PACKAGE
+(stack-ghci) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-ghci) --main-is  ::  TARGET
@@ -1879,7 +1879,7 @@ Enable/disable load modules on start-up (default: enabled)
 (stack-repl) --no-load  ::  
 Enable/disable load modules on start-up (default: enabled)
 
-(stack-repl) --package  ::  PACKAGE
+(stack-repl) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-repl) --main-is  ::  TARGET
@@ -1942,7 +1942,7 @@ Enable/disable setting the STACK_EXE environment variable to the path for the st
 (stack-runghc) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-runghc) --package  ::  PACKAGE
+(stack-runghc) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-runghc) --rts-options  ::  RTSFLAG
@@ -1975,7 +1975,7 @@ Enable/disable setting the STACK_EXE environment variable to the path for the st
 (stack-runhaskell) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-runhaskell) --package  ::  PACKAGE
+(stack-runhaskell) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-runhaskell) --rts-options  ::  RTSFLAG
@@ -1996,7 +1996,7 @@ Show this help text
 
 
 
-(stack-script) --package  ::  PACKAGE
+(stack-script) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-script) --compile  ::  
@@ -2035,7 +2035,7 @@ Enable/disable setting the STACK_EXE environment variable to the path for the st
 (stack-eval) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-eval) --package  ::  PACKAGE
+(stack-eval) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
 (stack-eval) --rts-options  ::  RTSFLAG

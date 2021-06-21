@@ -47,7 +47,7 @@ word = munch1 (`notElem` " \t\n")
 argWordBare :: ReadP String
 argWordBare = do
   x <- satisfy (\c -> c `elem` alphanumChars ++ "\"`'_^(#.[")
-  xs <- munch (\c -> c `elem` (alphanumChars ++ "\"`'_:<>)+-*/|#.=[]"))
+  xs <- munch (\c -> c `elem` (alphanumChars ++ "\"`'_:<>()+-*/|#.=[]"))
   return (x : xs)
 
 argWordBracketedHelper :: Char -> Char -> ReadP String
@@ -175,8 +175,8 @@ optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
   args <- sepBy (optArgsInBraket <++ optArgs) (char ' ')
-  _ <- twoOrMoreDots <++ pure ""
-  return (name, unwords args)
+  extra <- twoOrMoreDots <++ pure ""
+  return (name, unwords args ++ extra)
   where
     twoOrMoreDots = do
       c <- char '.'
@@ -277,8 +277,6 @@ optPart = do
   let args = case filter (not . null) (map snd pairs) of
         [] -> ""
         x : _ -> x
-  skipSpaces
-  _ <- argWordParenthesized <++ pure " "
   skipSpaces
   eof
   return (names, args)
