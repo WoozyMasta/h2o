@@ -175,6 +175,7 @@ optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
   args <- sepBy (optArgsInBraket <++ optArgs) (char ' ')
+  _ <- string "..." <++ pure ""
   return (name, unwords args)
 
 optSep :: ReadP String
