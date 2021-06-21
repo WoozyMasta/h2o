@@ -175,8 +175,13 @@ optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
   args <- sepBy (optArgsInBraket <++ optArgs) (char ' ')
-  _ <- string "..." <++ pure ""
+  _ <- twoOrMoreDots <++ pure ""
   return (name, unwords args)
+  where
+    twoOrMoreDots = do
+      c <- char '.'
+      rest <- munch1 (== '.')
+      return (c:rest)
 
 optSep :: ReadP String
 optSep = sep <++ munch1 (== ' ') <++ altsep
