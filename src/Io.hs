@@ -203,8 +203,8 @@ getHelpSub_ cmd subcmd = getHelpTemplate cmd [subcmd, "--help"] ["help", subcmd]
 getHelpSandboxed :: String -> IO String
 getHelpSandboxed cmd = getHelpTemplate "bwrap" options altOptions
   where
-    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "--help"]
-    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "help"]
+    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "--help"]
+    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "help"]
 
 getHelpSubSandboxed :: String -> String -> IO String
 getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" options altOptions
