@@ -44,6 +44,9 @@ Remove cached package tarballs.
 (conda-clean) -f --force-pkgs-dirs  ::  
 Remove *all* writable package caches. This option is not included with the --all flag. WARNING: This will break environments with packages installed using symlinks back to the package cache.
 
+(conda-clean) -c --tempfiles  ::  TEMPFILES [TEMPFILES ...]
+Remove temporary files that could not be deleted earlier due to being in-use. Argument is path(s) to prefix(es) where files should be found and removed.
+
 (conda-clean) -d --dry-run  ::  
 Only display what would have been done.
 
@@ -112,6 +115,18 @@ Validate all configuration sources.
 
 (conda-config) --write-default  ::  
 Write the default configuration to a file. Equivalent to `conda config --describe > ~/.condarc`.
+
+(conda-config) --append  ::  KEY VALUE
+Add one configuration value to the end of a list key.
+
+(conda-config) --prepend --add  ::  KEY VALUE
+Add one configuration value to the beginning of a list key.
+
+(conda-config) --set  ::  KEY VALUE
+Set a boolean or string key
+
+(conda-config) --remove  ::  KEY VALUE
+Remove a configuration value from a list key. This removes all instances of the value.
 
 (conda-config) --remove-key  ::  KEY
 Remove a configuration key (and all its values).
@@ -418,6 +433,9 @@ Do not display progress bar.
 
 (conda-package) -h --help  ::  
 Show this help message and exit.
+
+(conda-package) -w --which  ::  PATH [PATH ...]
+Given some PATH print which conda package the file came from.
 
 (conda-package) -r --reset  ::  
 Remove all untracked files and exit.

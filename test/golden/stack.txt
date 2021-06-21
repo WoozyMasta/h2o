@@ -196,6 +196,9 @@ Turn off optimizations (-O0)
 (stack-build) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
+(stack-build) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-build) --dependencies-only  ::  
 A synonym for --only-dependencies
 
@@ -217,7 +220,7 @@ Like --file-watch, but polling the filesystem instead of using events
 (stack-build) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-build) --exec  ::  COMMAND
+(stack-build) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
 (stack-build) --only-configure  ::  
@@ -232,11 +235,23 @@ profiling in libraries, executables, etc. for all expressions and generate a pro
 (stack-build) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
+(stack-build) --library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
+(stack-build) --no-library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
 (stack-build) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
 (stack-build) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
+
+(stack-build) --library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
+
+(stack-build) --no-library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
 
 (stack-build) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
@@ -403,6 +418,9 @@ Turn off optimizations (-O0)
 (stack-install) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
+(stack-install) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-install) --dependencies-only  ::  
 A synonym for --only-dependencies
 
@@ -424,7 +442,7 @@ Like --file-watch, but polling the filesystem instead of using events
 (stack-install) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-install) --exec  ::  COMMAND
+(stack-install) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
 (stack-install) --only-configure  ::  
@@ -439,11 +457,23 @@ profiling in libraries, executables, etc. for all expressions and generate a pro
 (stack-install) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
+(stack-install) --library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
+(stack-install) --no-library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
 (stack-install) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
 (stack-install) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
+
+(stack-install) --library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
+
+(stack-install) --no-library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
 
 (stack-install) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
@@ -622,6 +652,9 @@ Turn off optimizations (-O0)
 (stack-test) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
+(stack-test) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-test) --dependencies-only  ::  
 A synonym for --only-dependencies
 
@@ -643,7 +676,7 @@ Like --file-watch, but polling the filesystem instead of using events
 (stack-test) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-test) --exec  ::  COMMAND
+(stack-test) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
 (stack-test) --only-configure  ::  
@@ -658,11 +691,23 @@ profiling in libraries, executables, etc. for all expressions and generate a pro
 (stack-test) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
+(stack-test) --library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
+(stack-test) --no-library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
 (stack-test) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
 (stack-test) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
+
+(stack-test) --library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
+
+(stack-test) --no-library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
 
 (stack-test) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
@@ -829,6 +874,9 @@ Turn off optimizations (-O0)
 (stack-bench) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
+(stack-bench) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-bench) --dependencies-only  ::  
 A synonym for --only-dependencies
 
@@ -850,7 +898,7 @@ Like --file-watch, but polling the filesystem instead of using events
 (stack-bench) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-bench) --exec  ::  COMMAND
+(stack-bench) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
 (stack-bench) --only-configure  ::  
@@ -865,11 +913,23 @@ profiling in libraries, executables, etc. for all expressions and generate a pro
 (stack-bench) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
+(stack-bench) --library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
+(stack-bench) --no-library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
 (stack-bench) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
 (stack-bench) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
+
+(stack-bench) --library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
+
+(stack-bench) --no-library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
 
 (stack-bench) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
@@ -1036,6 +1096,9 @@ Turn off optimizations (-O0)
 (stack-haddock) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
+(stack-haddock) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-haddock) --dependencies-only  ::  
 A synonym for --only-dependencies
 
@@ -1057,7 +1120,7 @@ Like --file-watch, but polling the filesystem instead of using events
 (stack-haddock) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-haddock) --exec  ::  COMMAND
+(stack-haddock) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
 (stack-haddock) --only-configure  ::  
@@ -1072,11 +1135,23 @@ profiling in libraries, executables, etc. for all expressions and generate a pro
 (stack-haddock) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
+(stack-haddock) --library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
+(stack-haddock) --no-library-profiling  ::  Enable/disable library profiling for TARGETs and all
+its dependencies (default: disabled)
+
 (stack-haddock) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
 (stack-haddock) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
+
+(stack-haddock) --library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
+
+(stack-haddock) --no-library-stripping  ::  Enable/disable library stripping for TARGETs and all
+its dependencies (default: enabled)
 
 (stack-haddock) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
@@ -1564,6 +1639,9 @@ Limit the depth of dependency resolution (Default: No limit)
 (stack-dot) --prune  ::  PACKAGES
 Prune each package name from the comma separated list of package names PACKAGES
 
+(stack-dot) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-dot) --test  ::  
 Consider dependencies of test components
 
@@ -1717,6 +1795,9 @@ Additional options passed to GHCi
 (stack-ghci) --ghc-options  ::  OPTIONS
 Additional options passed to both GHC and GHCi
 
+(stack-ghci) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
+
 (stack-ghci) --with-ghc  ::  GHC
 Use this GHC to run GHCi
 
@@ -1785,6 +1866,9 @@ Additional options passed to GHCi
 
 (stack-repl) --ghc-options  ::  OPTIONS
 Additional options passed to both GHC and GHCi
+
+(stack-repl) --flag  ::  PACKAGE:[-]FLAG Override flags set in stack.yaml (applies to local
+packages and extra-deps)
 
 (stack-repl) --with-ghc  ::  GHC
 Use this GHC to run GHCi

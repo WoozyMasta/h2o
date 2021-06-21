@@ -174,8 +174,8 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  args <- optArgsInBraket <++ optArgs <++ pure ""
-  return (name, args)
+  args <- sepBy (optArgsInBraket <++ optArgs) (char ' ')
+  return (name, unwords args)
 
 optSep :: ReadP String
 optSep = sep <++ munch1 (== ' ') <++ altsep
