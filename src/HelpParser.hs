@@ -192,7 +192,7 @@ optSep = sep <++ munch1 (== ' ') <++ altsep
       return s
     altsep = do
       _ <- munch (== ' ')
-      s <- string "/"
+      s <- string "/" <++ string "|"
       _ <- munch (== ' ')
       return s
 
