@@ -28,8 +28,9 @@ getMostFrequentWithCount xs = Just (x, maxCount)
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter
 
 convertTabsToSpaces :: Int -> String -> String
-convertTabsToSpaces n = T.unpack . removeDelimiter ':' . T.unlines . map convertLine . T.lines . T.pack
+convertTabsToSpaces n = T.unpack . removeDelimiter ':' . T.unlines . map convertLine . T.lines . removeCrNewline . T.pack
   where
+    removeCrNewline = T.replace "\r\n" "\n"
     convertLine = List.foldl1' f . T.splitOn "\t"
     f acc t = T.concat [acc, T.replicate spaceWidth " ", t]
       where
