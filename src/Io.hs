@@ -209,8 +209,8 @@ getHelpSandboxed cmd = getHelpTemplate "bwrap" options altOptions
 getHelpSubSandboxed :: String -> String -> IO String
 getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" options altOptions
   where
-    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, subcmd, "--help"]
-    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--unshare-all", cmd, "help", subcmd]
+    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, subcmd, "--help"]
+    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "help", subcmd]
 
 getMan :: String -> IO String
 getMan cmd = do
