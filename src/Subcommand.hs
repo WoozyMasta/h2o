@@ -77,7 +77,7 @@ removeOptionLine s =
     && (not . startsWithChar '[' $ s)
 
 parseSubcommand :: String -> [Subcommand]
-parseSubcommand content = results
+parseSubcommand content = infoMsg "parseSubcommand" results
   where
     s = convertTabsToSpaces 8 content
     xs = getAlignedLines s

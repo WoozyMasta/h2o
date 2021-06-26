@@ -136,7 +136,7 @@ configOrVersion = config <|> version
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
-  | isExportingJSON = infoTrace "io: JSON output\n" $ case input of
+  | isExportingJSON = infoTrace "io: JSON output" $ case input of
     (CommandInput n) -> writeJSON n
     (SubcommandInput n subn) -> toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
     (FileInput _) ->
@@ -281,8 +281,8 @@ isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.re
 toCommandIO :: String -> IO Command
 toCommandIO name = do
   !isSandboxing <- isBwrapAvailableIO
-  rootContent <- getInputContent (CommandInput name) isSandboxing
-  toCommandIOHelper name rootContent isSandboxing
+  content <- getInputContent (CommandInput name) isSandboxing
+  toCommandIOHelper name content isSandboxing
 
 pageToCommandIO :: String -> String -> IO Command
 pageToCommandIO name content = do
@@ -290,7 +290,7 @@ pageToCommandIO name content = do
   toCommandIOHelper name content isSandboxing
 
 toCommandIOHelper :: String -> String -> Bool -> IO Command
-toCommandIOHelper name rootContent isSandboxing = do
+toCommandIOHelper name content isSandboxing = do
   subcmdOptsPairs <- subcmdOptsPairsM
   if null rootOptions && null subcmdOptsPairs
     then error ("Failed to extract information for a Command: " ++ name)
@@ -299,13 +299,13 @@ toCommandIOHelper name rootContent isSandboxing = do
     -- remove duplicate _cmd in [Subcommand]
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
-    filterSubcmds = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
-    rootOptions = parseMany rootContent
+    uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
+    rootOptions = parseMany content
     subcmdCandidates =
-      infoMsg "subcommand candidates : \n" $ filterSubcmds (parseSubcommand rootContent)
+      infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
     toSubcmdOptPair sub = do
       page <- getHelpSub isSandboxing name (_cmd sub)
-      let criteria = not (null page) && page /= rootContent
+      let criteria = not (null page) && page /= content
       return ((sub, parseMany page), criteria)
     subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
 
