@@ -181,20 +181,15 @@ optNameArgPair = do
     twoOrMoreDots = do
       c <- char '.'
       rest <- munch1 (== '.')
-      return (c:rest)
+      return (c : rest)
 
-optSep :: ReadP String
-optSep = sep <++ munch1 (== ' ') <++ altsep
-  where
-    sep = do
-      s <- string ","
-      _ <- munch (== ' ')
-      return s
-    altsep = do
-      _ <- munch (== ' ')
-      s <- string "/" <++ string "|"
-      _ <- munch (== ' ')
-      return s
+optSep :: ReadP Char
+optSep = do
+  s <- char ',' <++ char '/' <++ char '|' <++ singleSpace
+  -- following is a workaround to handle the bug in squashOptions in Layout
+  _ <- char ',' <++ pure 'x'
+  _ <- munch (== ' ')
+  return s
 
 argSep :: ReadP String
 argSep = string ","
