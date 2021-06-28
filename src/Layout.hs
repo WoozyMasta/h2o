@@ -284,16 +284,16 @@ handleQuartet :: [String] -> Int -> (Int, Int, Int, Int) -> [(String, String)]
 handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
   | optFrom == descFrom && optTo == descTo = onelinersF optFrom optTo
   | optFrom == descFrom = onelinersF optFrom (optTo - 1) ++ [squashDescSideF (optTo - 1) descTo]
-  | optTo == descFrom = [squashDescTopF descFrom descTo]
+  | optTo == descFrom = [squashOptionsAndDescriptionsNoOverlapF optFrom descFrom descTo]
   | optTo == descTo = squashOptsF optFrom (descFrom + 1) : onelinersF (descFrom + 1) descTo
-  | optTo - 1 == descFrom = [squashOptionsAndDescriptionsTopF optFrom optTo descTo]
+  | optTo - 1 == descFrom = [squashOptionsAndDescriptionsOverlapF optFrom optTo descTo]
   | otherwise = (s1 : ss) ++ [s2]
   where
     squashOptsF = squashOptions xs offset
     squashDescSideF = squashDescriptionsSide xs offset
-    squashDescTopF = squashDescriptionsTop xs offset
     onelinersF = oneliners xs offset
-    squashOptionsAndDescriptionsTopF = squashOptionsAndDescriptionsTop xs offset
+    squashOptionsAndDescriptionsOverlapF = squashOptionsAndDescriptionsOverlap xs offset
+    squashOptionsAndDescriptionsNoOverlapF = squashOptionsAndDescriptionsNoOverlap xs offset
     s1 = squashOptsF optFrom (descFrom + 1)
     ss = onelinersF (descFrom + 1) (optTo - 1)
     s2 = squashDescSideF (optTo - 1) descTo
@@ -315,15 +315,16 @@ squashDescriptionsSide xs offset a b = (opt, desc)
     opt = strip $ take offset (xs !! a)
     desc = smartUnwords descLines
 
-squashDescriptionsTop :: [String] -> Int -> Int -> Int -> (String, String)
-squashDescriptionsTop xs offset a b = (opt, desc)
+squashOptionsAndDescriptionsNoOverlap :: [String] -> Int -> Int -> Int -> Int -> (String, String)
+squashOptionsAndDescriptionsNoOverlap xs offset a b c = (opt, desc)
   where
-    descLines = map (drop offset . (xs !!)) $ take (b - a) [a, a + 1 ..]
-    opt = strip (xs !! (a - 1))
+    optLines = map (strip . (xs !!)) $ take (b - a) [a, a + 1 ..]
+    opt = join "," optLines
+    descLines = map (drop offset . (xs !!)) $ take (c - b) [b, b + 1 ..]
     desc = smartUnwords descLines
 
-squashOptionsAndDescriptionsTop :: [String] -> Int -> Int -> Int -> Int -> (String, String)
-squashOptionsAndDescriptionsTop xs offset a b c = (opt, desc)
+squashOptionsAndDescriptionsOverlap :: [String] -> Int -> Int -> Int -> Int -> (String, String)
+squashOptionsAndDescriptionsOverlap xs offset a b c = (opt, desc)
   where
     optLines = map (xs !!) $ take (b - a) [a, a + 1 ..]
     optLinesLastTruncated = map strip (init optLines ++ [take offset (last optLines)])
