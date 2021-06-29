@@ -72,4 +72,3 @@ tests:
       - tasty-hedgehog
       - tasty-expected-failure
       - tasty-golden
-      - filepath
