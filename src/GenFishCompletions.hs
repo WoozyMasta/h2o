@@ -8,7 +8,7 @@ module GenFishCompletions where
 import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Printf (printf)
-import Type (Opt (..), OptName (..), OptNameType (..), Subcommand (..))
+import Type (Opt (..), OptName (..), OptNameType (..), Subcommand (..), Command (..), asSubcommand)
 
 -- https://unix.stackexchange.com/questions/296141/how-to-use-a-special-character-as-a-normal-one-in-unix-shells
 escapeSpecialSymbols :: Text -> Text
@@ -97,12 +97,24 @@ genFishScriptSimple cmd opts = T.unlines [makeFishLineOption cmd opt | opt <- op
 
 -- | Generate fish completion script for root-level options that are suppressed after a subcommand
 genFishScriptRootOptions :: String -> [String] -> [Opt] -> Text
-genFishScriptRootOptions cmd subcmds opts = T.unlines [makeFishLineRootOption cmd subcmds opt | opt <- opts]
+genFishScriptRootOptions name subnames opts = T.unlines [makeFishLineRootOption name subnames opt | opt <- opts]
 
 -- | Generate fish completion script for subcommand names
 genFishScriptSubcommands :: String -> [Subcommand] -> Text
-genFishScriptSubcommands cmd subcmds = T.unlines [makeFishLineSubcommand cmd sub | sub <- subcmds]
+genFishScriptSubcommands name subcmds = T.unlines [makeFishLineSubcommand name sub | sub <- subcmds]
 
 -- | Generate fish completion script for options under a subcommand
-genFishScriptSubcommandOptions :: String -> String -> [Opt] -> Text
-genFishScriptSubcommandOptions cmd subcmd opts = T.unlines [makeFishLineSubcommandOption cmd subcmd opt | opt <- opts]
+genFishScriptSubcommandOptions :: String -> Command -> Text
+genFishScriptSubcommandOptions name (Command subname _ opts _) = T.unlines [makeFishLineSubcommandOption name subname opt | opt <- opts]
+
+toFishScript :: Command -> Text
+toFishScript (Command name _ opts subcmds)
+  | null subcmds = genFishScriptSimple name opts
+  | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) scriptsAll)
+  where
+    subnames = map _name subcmds
+    subcommands = map asSubcommand subcmds
+    scriptRootOptions = genFishScriptRootOptions name subnames opts
+    scriptSubcommands = genFishScriptSubcommands name subcommands
+    scriptSubcommandOptions = [genFishScriptSubcommandOptions name subcmd | subcmd <- subcmds]
+    scriptsAll = [scriptRootOptions, scriptSubcommands] ++ scriptSubcommandOptions

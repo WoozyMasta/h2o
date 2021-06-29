@@ -78,3 +78,6 @@ instance ToJSON Command where
     pairs ("name" .= name <> "description" .= desc <> "options" .= opts)
   toEncoding (Command name desc opts subcommands) =
     pairs ("name" .= name <> "description" .= desc <> "options" .= opts <> "subcommands" .= subcommands)
+
+asSubcommand :: Command -> Subcommand
+asSubcommand (Command n desc _ _) = Subcommand n desc

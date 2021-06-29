@@ -13,10 +13,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GenBashCompletions (genBashScript)
 import GenFishCompletions
-  ( genFishScriptRootOptions,
-    genFishScriptSimple,
-    genFishScriptSubcommandOptions,
-    genFishScriptSubcommands,
+  ( genFishScriptSimple,
+    toFishScript,
   )
 import GenJSON (toCommand, toJSONText)
 import GenZshCompletions (genZshScript)
@@ -27,7 +25,7 @@ import qualified System.Exit
 import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
-import Type (Command (..), Opt, Subcommand (..))
+import Type (Command (..), Opt, Subcommand (..), asSubcommand)
 import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainsOptions, mayContainsSubcommands, warnTrace)
 
 data Input
@@ -137,7 +135,7 @@ run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = infoTrace "io: JSON output" $ case input of
-    (CommandInput n) -> writeJSON n
+    (CommandInput n) -> toJSONText <$> toCommandIO n
     (SubcommandInput n subn) -> toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
     (FileInput _) ->
       if isShallowOnly
@@ -175,8 +173,8 @@ getHelpSub True = getHelpSubSandboxed
 getHelpSub False = getHelpSubBare
 
 getHelpTemplate :: String -> [[String]] -> IO String
-getHelpTemplate cmd argsBag = do
-  xs <- mapM (fetchHelpInfo cmd) argsBag
+getHelpTemplate name argsBag = do
+  xs <- mapM (fetchHelpInfo name) argsBag
   let rest = dropWhile Maybe.isNothing xs
   let result
         | null rest = ""
@@ -184,59 +182,59 @@ getHelpTemplate cmd argsBag = do
   return result
 
 fetchHelpInfo :: FilePath -> [String] -> IO (Maybe String)
-fetchHelpInfo cmd args = do
-  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode cmd args ""
+fetchHelpInfo name args = do
+  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode name args ""
   let res
-        | isCommandNotFound cmd exitCode stderr = Nothing
+        | isCommandNotFound name exitCode stderr = Nothing
         | not (null stdout) = Just stdout
         | mayContainsOptions stderr || mayContainsSubcommands stderr = Just stderr
         | otherwise = Nothing
   return res
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> String -> Bool
-isCommandNotFound cmd exitCode stderr =
+isCommandNotFound name exitCode stderr =
   exitCode == System.Exit.ExitFailure 127
-    || ("bwrap: execvp " `T.append` T.pack cmd) `T.isPrefixOf` T.pack stderr
+    || ("bwrap: execvp " `T.append` T.pack name) `T.isPrefixOf` T.pack stderr
 
 getHelpBare :: String -> IO String
-getHelpBare cmd = getHelpTemplate cmd [["--help"], ["help"]]
+getHelpBare name = getHelpTemplate name [["--help"], ["help"]]
 
 getHelpSubBare :: String -> String -> IO String
-getHelpSubBare cmd subcmd = getHelpTemplate cmd [[subcmd, "--help"], ["help", subcmd]]
+getHelpSubBare name subname = getHelpTemplate name [[subname, "--help"], ["help", subname]]
 
 bwrapArgsBase :: [String]
 bwrapArgsBase = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all"]
 
 getHelpSandboxed :: String -> IO String
-getHelpSandboxed cmd = getHelpTemplate "bwrap" [options, altOptions]
+getHelpSandboxed name = getHelpTemplate "bwrap" [options, altOptions]
   where
-    options = bwrapArgsBase ++ [cmd, "--help"]
-    altOptions = bwrapArgsBase ++ [cmd, "help"]
+    options = bwrapArgsBase ++ [name, "--help"]
+    altOptions = bwrapArgsBase ++ [name, "help"]
 
 getHelpSubSandboxed :: String -> String -> IO String
-getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" [options, altOptions]
+getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, altOptions]
   where
-    options = bwrapArgsBase ++ [cmd, subcmd, "--help"]
-    altOptions = bwrapArgsBase ++ [cmd, "help", subcmd]
+    options = bwrapArgsBase ++ [name, subname, "--help"]
+    altOptions = bwrapArgsBase ++ [name, "help", subname]
 
 getMan :: String -> IO String
-getMan cmd = do
+getMan name = do
   (exitCode, stdout, _) <- Process.readCreateProcessWithExitCode cp ""
   if exitCode == System.Exit.ExitFailure 16
     then return ""
     else return stdout
   where
-    s = printf "man %s | col -b" cmd
+    s = printf "man %s | col -b" name
     cp = Process.shell s
 
 getHelpAndMan :: Bool -> String -> IO String
-getHelpAndMan isSandboxing cmd = do
-  content <- getHelp isSandboxing cmd
+getHelpAndMan isSandboxing name = do
+  content <- getHelp isSandboxing name
   if null content
     then do
-      content2 <- getMan cmd
+      content2 <- getMan name
       if null content2
-        then error ("io: Neither help or man pages available: " ++ cmd)
+        then error ("io: Neither help or man pages available: " ++ name)
         else infoTrace "io: Using manpage" $ return content2
     else infoTrace "io: Using help" $ return content
 
@@ -247,22 +245,16 @@ toScriptSimple Bash name opts = genBashScript name opts
 toScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
 toScriptRootOptions :: Shell -> String -> [String] -> [Opt] -> Text
-toScriptRootOptions Fish name subnames opts = genFishScriptRootOptions name subnames opts
-toScriptRootOptions shell name _ opts = toScriptSimple shell name opts
-
-asSubcommand :: Command -> Subcommand
-asSubcommand (Command n desc _ _) = Subcommand n desc
+toScriptRootOptions shell name _ = toScriptSimple shell name
 
 toScriptSubcommands :: Shell -> String -> [Command] -> Text
-toScriptSubcommands Fish name subcmds = genFishScriptSubcommands name (map asSubcommand subcmds)
 toScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show . asSubcommand) subcmds
 
-toScriptSubcommandOptions :: Shell -> String -> String -> [Opt] -> Text
-toScriptSubcommandOptions Fish cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
-toScriptSubcommandOptions _ cmd subcmd opts =
+toScriptSubcommandOptions :: Shell -> String -> Command -> Text
+toScriptSubcommandOptions _ name (Command subname _ opts _) =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
-    prefix = T.pack $ printf "(%s-%s) " cmd subcmd
+    prefix = T.pack $ printf "(%s-%s) " name subname
 
 getInputContent :: Input -> Bool -> IO String
 getInputContent (SubcommandInput name subname) isSandboxing = getHelpSub isSandboxing name subname
@@ -270,15 +262,15 @@ getInputContent (CommandInput name) isSandboxing = getHelpAndMan isSandboxing na
 getInputContent (FileInput f) _ = readFile f
 
 toScriptFull :: Shell -> Command -> Text
+toScriptFull Fish cmd = toFishScript cmd
 toScriptFull shell (Command name _ rootOptions subs)
-  | null subcmdNames = warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
+  | null subnames = warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
   where
-    subcmdNames = map _name subs
-    subcmdOptsPairs = [(_name sub, _options sub) | sub <- subs]
-    rootOptScript = toScriptRootOptions shell name subcmdNames rootOptions
+    subnames = map _name subs
+    rootOptScript = toScriptRootOptions shell name subnames rootOptions
     subcommandScript = toScriptSubcommands shell name subs
-    subcommandOptionScripts = map (uncurry (toScriptSubcommandOptions shell name)) subcmdOptsPairs
+    subcommandOptionScripts = [toScriptSubcommandOptions shell name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
@@ -325,15 +317,10 @@ toCommandSimple name content =
     rootOptions = parseMany content
 
 toJSONSimple :: String -> String -> Text
-toJSONSimple a b = toJSONText (toCommandSimple a b)
-
--- | Generate shell completion script from the root help page
--- as well as the subcommand's help pages.
-writeJSON :: String -> IO Text
-writeJSON s = toJSONText <$> toCommandIO s
+toJSONSimple name content = toJSONText (toCommandSimple name content)
 
 listSubcommandsIO :: String -> IO [String]
-listSubcommandsIO s = getSubnames <$> toCommandIO s
+listSubcommandsIO name = getSubnames <$> toCommandIO name
 
 getSubnames :: Command -> [String]
 getSubnames = map _name . _subcommands
