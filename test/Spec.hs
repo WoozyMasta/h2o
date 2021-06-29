@@ -34,7 +34,7 @@ main =
   defaultMain $
     testGroup
       "Tests"
-      [optNameTests, propertyTests, outdatedTests, devTests, optPartTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, integratedGoldenTests, layoutTests]
+      [optNameTests, propertyTests, outdatedTests, devTests, optPartTests, unsupportedCases, miscTests, shellCompTests, shellCompGoldenTests, integratedGoldenTestsCommandInput, integratedGoldenTestsFileInput, layoutTests]
 
 outdatedTests :: TestTree
 outdatedTests =
@@ -549,13 +549,13 @@ shellCompGoldenTests =
     actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany <$> readFile x
     actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany <$> readFile x
 
-integratedGoldenTests :: TestTree
-integratedGoldenTests =
+integratedGoldenTestsCommandInput :: TestTree
+integratedGoldenTestsCommandInput =
   testGroup
     "Integrated tests"
     (map toTestTree commands)
   where
-    commands = ["h2o", "conda", "stack", "grep", "rsync"]
+    commands = ["h2o", "conda", "stack", "grep"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
     conf name = C_ (Config (CommandInput name) None False False False False False)
     runWithCommand name = toLazyByteString <$> run (conf name)
@@ -564,6 +564,26 @@ integratedGoldenTests =
         ("h2o --command " ++ name)
         (printf "test/golden/%s.txt" name :: String)
         (runWithCommand name)
+
+integratedGoldenTestsFileInput :: TestTree
+integratedGoldenTestsFileInput =
+  testGroup
+    "Integrated tests"
+    (map toTestTree triples)
+  where
+    commandNames = ["rsync"]
+    inputFiles = [printf "test/golden/%s-input.txt" name | name <- commandNames]
+    outputFiles = [printf "test/golden/%s.txt" name | name <- commandNames]
+    triples = zip3 commandNames inputFiles outputFiles
+
+    toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
+    conf filepath = C_ (Config (FileInput filepath) None False False False False False)
+    runWithCommand filepath = toLazyByteString <$> run (conf filepath)
+    toTestTree (name, inputFile, outputFile) =
+      goldenVsString
+        ("h2o --file " ++ name)
+        outputFile
+        (runWithCommand inputFile)
 
 propertyTests :: TestTree
 propertyTests =
