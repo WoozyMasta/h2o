@@ -168,46 +168,50 @@ run (C_ (Config (FileInput f) shell _ _ _ _ isShallowOnly))
 
 getHelp :: Bool -> String -> IO String
 getHelp True = infoTrace ("sandboxed" :: String) getHelpSandboxed
-getHelp False = warnTrace ("No sandboxing!" :: String) getHelp_
+getHelp False = warnTrace ("No sandboxing!" :: String) getHelpBare
 
 getHelpSub :: Bool -> String -> String -> IO String
 getHelpSub True = getHelpSubSandboxed
-getHelpSub False = getHelpSub_
+getHelpSub False = getHelpSubBare
 
-getHelpTemplate :: String -> [String] -> [String] -> IO String
-getHelpTemplate cmd options altOptions = do
-  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode cmd options ""
-  let isNotFound = isCommandNotFound cmd exitCode stderr
+getHelpTemplate :: String -> [[String]] -> IO String
+getHelpTemplate cmd argsBag = do
+  xs <- mapM (fetchHelpInfo cmd) argsBag
+  let rest = dropWhile Maybe.isNothing xs
+  let result
+        | null rest = ""
+        | otherwise = Maybe.fromJust (head rest)
+  return result
 
-  if isNotFound
-    then return ""
-    else
-      if not (null stdout)
-        then return stdout
-        else
-          if mayContainsOptions stderr || mayContainsSubcommands stderr
-            then return stderr
-            else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd altOptions ""
+fetchHelpInfo :: FilePath -> [String] -> IO (Maybe String)
+fetchHelpInfo cmd args = do
+  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode cmd args ""
+  let res
+        | isCommandNotFound cmd exitCode stderr = Nothing
+        | not (null stdout) = Just stdout
+        | mayContainsOptions stderr || mayContainsSubcommands stderr = Just stderr
+        | otherwise = Nothing
+  return res
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> String -> Bool
 isCommandNotFound cmd exitCode stderr =
   exitCode == System.Exit.ExitFailure 127
     || ("bwrap: execvp " `T.append` T.pack cmd) `T.isPrefixOf` T.pack stderr
 
-getHelp_ :: String -> IO String
-getHelp_ cmd = getHelpTemplate cmd ["--help"] ["help"]
+getHelpBare :: String -> IO String
+getHelpBare cmd = getHelpTemplate cmd [["--help"], ["help"]]
 
-getHelpSub_ :: String -> String -> IO String
-getHelpSub_ cmd subcmd = getHelpTemplate cmd [subcmd, "--help"] ["help", subcmd]
+getHelpSubBare :: String -> String -> IO String
+getHelpSubBare cmd subcmd = getHelpTemplate cmd [[subcmd, "--help"], ["help", subcmd]]
 
 getHelpSandboxed :: String -> IO String
-getHelpSandboxed cmd = getHelpTemplate "bwrap" options altOptions
+getHelpSandboxed cmd = getHelpTemplate "bwrap" [options, altOptions]
   where
     options = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "--help"]
     altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "help"]
 
 getHelpSubSandboxed :: String -> String -> IO String
-getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" options altOptions
+getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" [options, altOptions]
   where
     options = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, subcmd, "--help"]
     altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "help", subcmd]
