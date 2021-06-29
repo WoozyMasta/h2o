@@ -555,7 +555,7 @@ integratedGoldenTests =
     "Integrated tests"
     (map toTestTree commands)
   where
-    commands = ["h2o", "conda", "stack"]
+    commands = ["h2o", "conda", "stack", "grep", "rsync"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
     conf name = C_ (Config (CommandInput name) None False False False False False)
     runWithCommand name = toLazyByteString <$> run (conf name)
