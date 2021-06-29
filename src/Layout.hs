@@ -289,8 +289,8 @@ handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
   | optTo - 1 == descFrom = [squashOptionsAndDescriptionsOverlapF optFrom optTo descTo]
   | otherwise = (s1 : ss) ++ [s2]
   where
-    squashOptsF = squashOptions xs offset
-    squashDescSideF = squashDescriptionsSide xs offset
+    squashOptsF a b = squashOptionsAndDescriptionsOverlap xs offset a b b
+    squashDescSideF a b = squashOptionsAndDescriptionsOverlap xs offset a (a + 1) b
     onelinersF = oneliners xs offset
     squashOptionsAndDescriptionsOverlapF = squashOptionsAndDescriptionsOverlap xs offset
     squashOptionsAndDescriptionsNoOverlapF = squashOptionsAndDescriptionsNoOverlap xs offset
@@ -299,21 +299,6 @@ handleQuartet xs offset (optFrom, optTo, descFrom, descTo)
     s2 = squashDescSideF (optTo - 1) descTo
 
 -- ================================================
-
-squashOptions :: [String] -> Int -> Int -> Int -> (String, String)
-squashOptions xs offset a b = (opt, desc)
-  where
-    optLines = map (xs !!) $ take (b - a) [a, a + 1 ..]
-    optLinesLastTruncated = map strip (init optLines ++ [take offset (last optLines)])
-    opt = join "," optLinesLastTruncated
-    desc = drop offset (xs !! (b - 1))
-
-squashDescriptionsSide :: [String] -> Int -> Int -> Int -> (String, String)
-squashDescriptionsSide xs offset a b = (opt, desc)
-  where
-    descLines = map (drop offset . (xs !!)) $ take (b - a) [a, a + 1 ..]
-    opt = strip $ take offset (xs !! a)
-    desc = smartUnwords descLines
 
 squashOptionsAndDescriptionsNoOverlap :: [String] -> Int -> Int -> Int -> Int -> (String, String)
 squashOptionsAndDescriptionsNoOverlap xs offset a b c = (opt, desc)
