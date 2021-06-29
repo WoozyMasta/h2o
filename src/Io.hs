@@ -241,18 +241,21 @@ getHelpAndMan isSandboxing cmd = do
     else infoTrace "io: Using help" $ return content
 
 toScriptSimple :: Shell -> String -> [Opt] -> Text
-toScriptSimple Fish cmd opts = genFishScriptSimple cmd opts
-toScriptSimple Zsh cmd opts = genZshScript cmd opts
-toScriptSimple Bash cmd opts = genBashScript cmd opts
+toScriptSimple Fish name opts = genFishScriptSimple name opts
+toScriptSimple Zsh name opts = genZshScript name opts
+toScriptSimple Bash name opts = genBashScript name opts
 toScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
 toScriptRootOptions :: Shell -> String -> [String] -> [Opt] -> Text
-toScriptRootOptions Fish cmd subcmds opts = genFishScriptRootOptions cmd subcmds opts
-toScriptRootOptions shell cmd _ opts = toScriptSimple shell cmd opts
+toScriptRootOptions Fish name subnames opts = genFishScriptRootOptions name subnames opts
+toScriptRootOptions shell name _ opts = toScriptSimple shell name opts
 
-toScriptSubcommands :: Shell -> String -> [Subcommand] -> Text
-toScriptSubcommands Fish cmd subcmds = genFishScriptSubcommands cmd subcmds
-toScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show) subcmds
+asSubcommand :: Command -> Subcommand
+asSubcommand (Command n desc _ _) = Subcommand n desc
+
+toScriptSubcommands :: Shell -> String -> [Command] -> Text
+toScriptSubcommands Fish name subcmds = genFishScriptSubcommands name (map asSubcommand subcmds)
+toScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show . asSubcommand) subcmds
 
 toScriptSubcommandOptions :: Shell -> String -> String -> [Opt] -> Text
 toScriptSubcommandOptions Fish cmd subcmd opts = genFishScriptSubcommandOptions cmd subcmd opts
@@ -269,16 +272,14 @@ getInputContent (FileInput f) _ = readFile f
 toScriptFull :: Shell -> Command -> Text
 toScriptFull shell (Command name _ rootOptions subs)
   | null subcmdNames = warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
-  | otherwise = T.intercalate "\n\n\n" (two ++ texts)
+  | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
   where
-    toSubcommands :: [Command] -> [Subcommand]
-    toSubcommands xs = [Subcommand n desc | (Command n desc _ _) <- xs]
     subcmdNames = map _name subs
     subcmdOptsPairs = [(_name sub, _options sub) | sub <- subs]
     rootOptScript = toScriptRootOptions shell name subcmdNames rootOptions
-    subcommandScript = toScriptSubcommands shell name (toSubcommands subs)
-    two = [rootOptScript, subcommandScript]
-    texts = map (uncurry (toScriptSubcommandOptions shell name)) subcmdOptsPairs
+    subcommandScript = toScriptSubcommands shell name subs
+    subcommandOptionScripts = map (uncurry (toScriptSubcommandOptions shell name)) subcmdOptsPairs
+    entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
 isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcessWithExitCode "bash" ["-c", "command -v bwrap"] ""
