@@ -204,17 +204,20 @@ getHelpBare cmd = getHelpTemplate cmd [["--help"], ["help"]]
 getHelpSubBare :: String -> String -> IO String
 getHelpSubBare cmd subcmd = getHelpTemplate cmd [[subcmd, "--help"], ["help", subcmd]]
 
+bwrapArgsBase :: [String]
+bwrapArgsBase = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all"]
+
 getHelpSandboxed :: String -> IO String
 getHelpSandboxed cmd = getHelpTemplate "bwrap" [options, altOptions]
   where
-    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "--help"]
-    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "help"]
+    options = bwrapArgsBase ++ [cmd, "--help"]
+    altOptions = bwrapArgsBase ++ [cmd, "help"]
 
 getHelpSubSandboxed :: String -> String -> IO String
 getHelpSubSandboxed cmd subcmd = getHelpTemplate "bwrap" [options, altOptions]
   where
-    options = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, subcmd, "--help"]
-    altOptions = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all", cmd, "help", subcmd]
+    options = bwrapArgsBase ++ [cmd, subcmd, "--help"]
+    altOptions = bwrapArgsBase ++ [cmd, "help", subcmd]
 
 getMan :: String -> IO String
 getMan cmd = do
@@ -264,7 +267,9 @@ getInputContent (CommandInput name) isSandboxing = getHelpAndMan isSandboxing na
 getInputContent (FileInput f) _ = readFile f
 
 toScriptFull :: Shell -> Command -> Text
-toScriptFull shell (Command name _ rootOptions subs) = res
+toScriptFull shell (Command name _ rootOptions subs)
+  | null subcmdNames = warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
+  | otherwise = T.intercalate "\n\n\n" (two ++ texts)
   where
     toSubcommands :: [Command] -> [Subcommand]
     toSubcommands xs = [Subcommand n desc | (Command n desc _ _) <- xs]
@@ -274,10 +279,6 @@ toScriptFull shell (Command name _ rootOptions subs) = res
     subcommandScript = toScriptSubcommands shell name (toSubcommands subs)
     two = [rootOptScript, subcommandScript]
     texts = map (uncurry (toScriptSubcommandOptions shell name)) subcmdOptsPairs
-    res =
-      if null subcmdNames
-        then warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
-        else T.intercalate "\n\n\n" (two ++ texts)
 
 isBwrapAvailableIO :: IO Bool
 isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcessWithExitCode "bash" ["-c", "command -v bwrap"] ""
