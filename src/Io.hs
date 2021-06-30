@@ -7,7 +7,7 @@ module Io where
 
 import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Constants
-import Control.Concurrent.ParallelIO.Global (parallelFirst)
+import Control.Concurrent.ParallelIO.Global (extraWorkerWhileBlocked, parallelFirst)
 import Control.Exception (SomeException, try)
 import qualified Data.Either as Either
 import qualified Data.Map.Ordered as OMap
@@ -90,7 +90,7 @@ fetchHelpInfo name args = do
         | not (null stdout) = Just stdout
         | mayContainsOptions stderr || mayContainsSubcommands stderr = Just stderr
         | otherwise = Nothing
-  return res
+  extraWorkerWhileBlocked (return res)
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> String -> Bool
 isCommandNotFound name exitCode stderr =
@@ -122,8 +122,8 @@ getMan :: String -> IO String
 getMan name = do
   (exitCode, stdout, _) <- Process.readCreateProcessWithExitCode cp ""
   if exitCode == System.Exit.ExitFailure 16
-    then return ""
-    else return stdout
+    then extraWorkerWhileBlocked (return "")
+    else extraWorkerWhileBlocked (return stdout)
   where
     s = printf "man %s | col -b" name
     cp = Process.shell s
@@ -175,7 +175,7 @@ toScriptFull outputFormat (Command name _ rootOptions subs)
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
-isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcessWithExitCode "bash" ["-c", "command -v bwrap"] ""
+isBwrapAvailableIO = extraWorkerWhileBlocked $ (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcessWithExitCode "bash" ["-c", "command -v bwrap"] ""
 
 toCommandIO :: String -> IO Command
 toCommandIO name = do

@@ -43,6 +43,7 @@ executables:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
+      # - -eventlog     # for threadscope
       ## ---------------------------------------------------------------------------------------
       ## Require following to build static executable with ghc-musl docker image:
       ## stack build --docker --docker-image "utdemir/ghc-musl:v19-ghc8104" --copy-bins
