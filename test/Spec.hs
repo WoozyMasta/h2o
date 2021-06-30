@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), Shell (..))
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Text.Lazy as TL
@@ -11,7 +12,7 @@ import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser (optName, optPart)
-import Io (Config (..), ConfigOrVersion (..), Input (..), Shell (..), run)
+import Io (run)
 import Layout (getOptionLocations, makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
@@ -22,11 +23,7 @@ import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
-import Type
-  ( Opt (..),
-    OptName (..),
-    OptNameType (..),
-  )
+import Type (Opt (..), OptName (..), OptNameType (..))
 import Utils (convertTabsToSpaces, getMostFrequent)
 
 main :: IO ()

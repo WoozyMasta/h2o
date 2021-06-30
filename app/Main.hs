@@ -6,7 +6,8 @@
 module Main where
 
 import qualified Data.Text.IO as TIO
-import Io (configOrVersion, run)
+import Io (run)
+import CommandArgs (configOrVersion)
 import Options.Applicative
   ( execParser,
     fullDesc,

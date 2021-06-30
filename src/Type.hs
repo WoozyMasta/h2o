@@ -81,3 +81,15 @@ instance ToJSON Command where
 
 asSubcommand :: Command -> Subcommand
 asSubcommand (Command n desc _ _) = Subcommand n desc
+
+toSimpleCommand :: String -> String -> [Opt] -> Command
+toSimpleCommand name desc opts = Command name desc opts []
+
+subcommandToCommand :: Subcommand -> [Opt] -> Command
+subcommandToCommand (Subcommand subcmd desc) = toSimpleCommand subcmd desc
+
+toCommand :: String -> String -> [Opt] -> [(Subcommand, [Opt])] -> Command
+toCommand name desc opts subcmdOptsPairs =
+  Command name desc opts subcommands
+  where
+    subcommands = [subcommandToCommand subcmd opts' | (subcmd, opts') <- subcmdOptsPairs]

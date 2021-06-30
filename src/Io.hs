@@ -5,131 +5,24 @@
 
 module Io where
 
+import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), Shell (..))
 import qualified Constants
-import Data.List.Extra (stripInfix)
 import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import GenBashCompletions (genBashScript)
-import GenFishCompletions
-  ( genFishScriptSimple,
-    toFishScript,
-  )
-import GenJSON (toCommand, toJSONText)
+import GenFishCompletions (genFishScriptSimple, toFishScript)
+import GenJSON (toJSONText)
 import GenZshCompletions (genZshScript)
 import Layout (parseMany, preprocessAll)
-import Options.Applicative
 import Subcommand (parseSubcommand)
 import qualified System.Exit
 import System.FilePath (takeBaseName)
 import qualified System.Process as Process
 import Text.Printf (printf)
-import Type (Command (..), Opt, Subcommand (..), asSubcommand)
+import Type (Command (..), Opt, Subcommand (..), asSubcommand, toCommand)
 import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainsOptions, mayContainsSubcommands, warnTrace)
-
-data Input
-  = CommandInput String
-  | FileInput FilePath
-  | SubcommandInput String String
-
-data Config = Config
-  { _input :: Input,
-    _shell :: Shell,
-    _isOutputJSON :: Bool,
-    _isConvertingTabsToSpaces :: Bool,
-    _isListingSubcommands :: Bool,
-    _isPreprocessOnly :: Bool,
-    _isShallowOnly :: Bool
-  }
-
-data ConfigOrVersion = Version | C_ Config
-
-data Shell = Bash | Zsh | Fish | None deriving (Eq, Show)
-
-toShell :: String -> Shell
-toShell s
-  | s' == "bash" = Bash
-  | s' == "zsh" = Zsh
-  | s' == "fish" = Fish
-  | otherwise = None
-  where
-    s' = T.toLower . T.pack $ s
-
-subcommandInput :: Parser Input
-subcommandInput =
-  uncurry SubcommandInput . Maybe.fromJust . stripInfix "-"
-    <$> strOption
-      ( long "subcommand"
-          <> short 's'
-          <> metavar "<string-string>"
-          <> help "Extract CLI options from the subcommand-specific help text or man page. Enter a command-subcommand pair, like git-log, as the argument."
-      )
-
-commandInput :: Parser Input
-commandInput =
-  CommandInput
-    <$> strOption
-      ( long "command"
-          <> short 'c'
-          <> metavar "<string>"
-          <> help "Extract CLI options from the help texts or man pages associated with the command. Subcommand pages are also scanned automatically."
-      )
-
-fileInput :: Parser Input
-fileInput =
-  FileInput
-    <$> strOption
-      ( long "file"
-          <> short 'f'
-          <> metavar "<file>"
-          <> help "Extract CLI options form the text file."
-      )
-
-inputP :: Parser Input
-inputP = commandInput <|> fileInput <|> subcommandInput
-
-config :: Parser ConfigOrVersion
-config =
-  C_
-    <$> ( Config
-            <$> inputP
-            <*> ( toShell
-                    <$> strOption
-                      ( long "shell"
-                          <> metavar "{bash|zsh|fish|none}"
-                          <> showDefault
-                          <> value "none"
-                          <> help "Select shell for completion script (bash|zsh|fish|none)"
-                      )
-                )
-            <*> switch
-              ( long "json"
-                  <> help "Show parsed results in JSON"
-              )
-            <*> switch
-              ( long "convert-tabs-to-spaces"
-                  <> help "Convert tabs to spaces"
-              )
-            <*> switch
-              ( long "list-subcommands"
-                  <> help "List subcommands"
-              )
-            <*> switch
-              ( long "debug"
-                  <> help "Run preprocessing only (for debugging)"
-              )
-            <*> switch
-              ( long "shallow"
-                  <> help "Don't scan subcommands. Applies only for file input."
-              )
-        )
-
-version :: Parser ConfigOrVersion
-version = flag' Version (long "version" <> help "Show version")
-
-configOrVersion :: Parser ConfigOrVersion
-configOrVersion = config <|> version
 
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
@@ -312,7 +205,7 @@ toCommandSimple :: String -> String -> Command
 toCommandSimple name content =
   if null rootOptions
     then error ("Failed to extract information for a Command: " ++ name)
-    else toCommand name name rootOptions []
+    else Command name name rootOptions []
   where
     rootOptions = parseMany content
 
