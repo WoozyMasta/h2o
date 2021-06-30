@@ -5,7 +5,7 @@
 
 module Io where
 
-import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), Shell (..))
+import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Constants
 import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
@@ -43,15 +43,15 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       CommandInput n -> n
       SubcommandInput n _ -> n
       FileInput f -> takeBaseName f
-run (C_ (Config (CommandInput name) shell _ _ _ _ _)) = toScriptFull shell <$> toCommandIO name
-run (C_ (Config (SubcommandInput name subname) shell _ _ _ _ _)) =
-  infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) toScriptSimple shell cmdSubcmdName <$> optsIO
+run (C_ (Config (CommandInput name) outputFormat _ _ _ _ _)) = toScriptFull outputFormat <$> toCommandIO name
+run (C_ (Config (SubcommandInput name subname) outputFormat _ _ _ _ _)) =
+  infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) toScriptSimple outputFormat cmdSubcmdName <$> optsIO
   where
     cmdSubcmdName = name ++ "-" ++ subname
     optsIO = parseMany <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
-run (C_ (Config (FileInput f) shell _ _ _ _ isShallowOnly))
-  | isShallowOnly = infoTrace "io: processing just the file" $ toScriptSimple shell name <$> optsIO
-  | otherwise = infoTrace "io: processing the file and more" $ toScriptFull shell <$> (pageToCommandIO name =<< contentIO)
+run (C_ (Config (FileInput f) outputFormat _ _ _ _ isShallowOnly))
+  | isShallowOnly = infoTrace "io: processing just the file" $ toScriptSimple outputFormat name <$> optsIO
+  | otherwise = infoTrace "io: processing the file and more" $ toScriptFull outputFormat <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
     optsIO = parseMany <$> getInputContent (FileInput f) False
@@ -131,19 +131,19 @@ getHelpAndMan isSandboxing name = do
         else infoTrace "io: Using manpage" $ return content2
     else infoTrace "io: Using help" $ return content
 
-toScriptSimple :: Shell -> String -> [Opt] -> Text
+toScriptSimple :: OutputFormat -> String -> [Opt] -> Text
 toScriptSimple Fish name opts = genFishScriptSimple name opts
 toScriptSimple Zsh name opts = genZshScript name opts
 toScriptSimple Bash name opts = genBashScript name opts
 toScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
 
-toScriptRootOptions :: Shell -> String -> [String] -> [Opt] -> Text
-toScriptRootOptions shell name _ = toScriptSimple shell name
+toScriptRootOptions :: OutputFormat -> String -> [String] -> [Opt] -> Text
+toScriptRootOptions outputFormat name _ = toScriptSimple outputFormat name
 
-toScriptSubcommands :: Shell -> String -> [Command] -> Text
+toScriptSubcommands :: OutputFormat -> String -> [Command] -> Text
 toScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show . asSubcommand) subcmds
 
-toScriptSubcommandOptions :: Shell -> String -> Command -> Text
+toScriptSubcommandOptions :: OutputFormat -> String -> Command -> Text
 toScriptSubcommandOptions _ name (Command subname _ opts _) =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
@@ -154,16 +154,16 @@ getInputContent (SubcommandInput name subname) isSandboxing = getHelpSub isSandb
 getInputContent (CommandInput name) isSandboxing = getHelpAndMan isSandboxing name
 getInputContent (FileInput f) _ = readFile f
 
-toScriptFull :: Shell -> Command -> Text
+toScriptFull :: OutputFormat -> Command -> Text
 toScriptFull Fish cmd = toFishScript cmd
-toScriptFull shell (Command name _ rootOptions subs)
-  | null subnames = warnTrace "Ignore subcommands" $ toScriptSimple shell name rootOptions
+toScriptFull outputFormat (Command name _ rootOptions subs)
+  | null subnames = warnTrace "Ignore subcommands" $ toScriptSimple outputFormat name rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
   where
     subnames = map _name subs
-    rootOptScript = toScriptRootOptions shell name subnames rootOptions
-    subcommandScript = toScriptSubcommands shell name subs
-    subcommandOptionScripts = [toScriptSubcommandOptions shell name subcmd | subcmd <- subs]
+    rootOptScript = toScriptRootOptions outputFormat name subnames rootOptions
+    subcommandScript = toScriptSubcommands outputFormat name subs
+    subcommandOptionScripts = [toScriptSubcommandOptions outputFormat name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool

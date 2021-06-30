@@ -7,8 +7,8 @@ Extract CLI options form the text file.
 -s --subcommand  ::  <string-string>
 Extract CLI options from the subcommand-specific help text or man page. Enter a command-subcommand pair, like git-log, as the argument.
 
---shell  ::  {bash|zsh|fish|none}
-Select shell for completion script (bash|zsh|fish|none) (default: "none")
+--format  ::  {bash|zsh|fish|native}
+Select output format of the completion script (bash|zsh|fish|native) (default: "native")
 
 --json  ::  
 Show parsed results in JSON

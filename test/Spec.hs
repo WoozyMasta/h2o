@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), Shell (..))
+import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
 import qualified Data.Text.Lazy as TL
@@ -554,7 +554,7 @@ integratedGoldenTestsCommandInput =
   where
     commands = ["h2o", "conda", "stack", "grep"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf name = C_ (Config (CommandInput name) None False False False False False)
+    conf name = C_ (Config (CommandInput name) Native False False False False False)
     runWithCommand name = toLazyByteString <$> run (conf name)
     toTestTree name =
       goldenVsString
@@ -574,7 +574,7 @@ integratedGoldenTestsFileInput =
     triples = zip3 commandNames inputFiles outputFiles
 
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf filepath = C_ (Config (FileInput filepath) None False False False False False)
+    conf filepath = C_ (Config (FileInput filepath) Native False False False False False)
     runWithCommand filepath = toLazyByteString <$> run (conf filepath)
     toTestTree (name, inputFile, outputFile) =
       goldenVsString

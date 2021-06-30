@@ -17,7 +17,7 @@ data Input
 
 data Config = Config
   { _input :: Input,
-    _shell :: Shell,
+    _shell :: OutputFormat,
     _isOutputJSON :: Bool,
     _isConvertingTabsToSpaces :: Bool,
     _isListingSubcommands :: Bool,
@@ -27,14 +27,14 @@ data Config = Config
 
 data ConfigOrVersion = Version | C_ Config
 
-data Shell = Bash | Zsh | Fish | None deriving (Eq, Show)
+data OutputFormat = Bash | Zsh | Fish | Native deriving (Eq, Show)
 
-toShell :: String -> Shell
-toShell s
+toOutputFormat :: String -> OutputFormat
+toOutputFormat s
   | s' == "bash" = Bash
   | s' == "zsh" = Zsh
   | s' == "fish" = Fish
-  | otherwise = None
+  | otherwise = Native
   where
     s' = T.toLower . T.pack $ s
 
@@ -76,13 +76,13 @@ config =
   C_
     <$> ( Config
             <$> inputP
-            <*> ( toShell
+            <*> ( toOutputFormat
                     <$> strOption
-                      ( long "shell"
-                          <> metavar "{bash|zsh|fish|none}"
+                      ( long "format"
+                          <> metavar "{bash|zsh|fish|native}"
                           <> showDefault
-                          <> value "none"
-                          <> help "Select shell for completion script (bash|zsh|fish|none)"
+                          <> value "native"
+                          <> help "Select output format of the completion script (bash|zsh|fish|native)"
                       )
                 )
             <*> switch
