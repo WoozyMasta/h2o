@@ -19,14 +19,14 @@ H2O extracts CLI options from help text, and then exports as a shell completion 
 
 ```shell
 # Generate fish completion script from `ls --help` command.
-h2o --command ls --shell fish > ls.fish
+h2o --command ls --format fish > ls.fish
 
 # Export info from `ls --help` in JSON
 h2o --command ls --json
 
 # Parse manpage text file
 man ls | col -b > ls.txt
-h2o --file ls.txt --shell fish > ls.fish
+h2o --file ls.txt --format fish > ls.fish
 ```
 
 
