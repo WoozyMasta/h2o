@@ -5,9 +5,10 @@
 
 module Main where
 
+import CommandArgs (configOrVersion)
+import Control.Concurrent.ParallelIO.Global (stopGlobalPool)
 import qualified Data.Text.IO as TIO
 import Io (run)
-import CommandArgs (configOrVersion)
 import Options.Applicative
   ( execParser,
     fullDesc,
@@ -18,7 +19,7 @@ import Options.Applicative
   )
 
 main :: IO ()
-main = execParser opts >>= run >>= TIO.putStr
+main = execParser opts >>= run >>= TIO.putStr >> stopGlobalPool
   where
     opts =
       info

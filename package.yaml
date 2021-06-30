@@ -29,6 +29,7 @@ dependencies:
   - filepath
   - process
   - ordered-containers
+  - parallel-io
 
 library:
   source-dirs: src

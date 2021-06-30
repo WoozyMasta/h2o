@@ -7,7 +7,11 @@ module Io where
 
 import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Constants
+import Control.Concurrent.ParallelIO.Global (parallelFirst)
+import Control.Exception (SomeException, try)
+import qualified Data.Either as Either
 import qualified Data.Map.Ordered as OMap
+import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import GenBashCompletions (genBashScript)
@@ -64,40 +68,29 @@ getHelpSub :: Bool -> String -> String -> IO String
 getHelpSub True = getHelpSubSandboxed
 getHelpSub False = getHelpSubBare
 
-getHelpTemplate :: String -> [String] -> [String] -> IO String
-getHelpTemplate cmd options altOptions = do
-  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode cmd options ""
-  let isNotFound = isCommandNotFound cmd exitCode stderr
-  if isNotFound
-    then return ""
-    else
-      if not (null stdout)
-        then return stdout
-        else
-          if mayContainsOptions stderr || mayContainsSubcommands stderr
-            then return stderr
-            else (\(_, a, _) -> a) <$> Process.readProcessWithExitCode cmd altOptions ""
-
 -- | Following implementation takes more than 2x longer than the above... WHY??
 -- |
--- getHelpTemplate :: String -> [[String]] -> IO String
--- getHelpTemplate name argsBag = do
---   xs <- mapM (fetchHelpInfo name) argsBag
---   let rest = dropWhile Maybe.isNothing xs
---   let result
---         | null rest = ""
---         | otherwise = Maybe.fromJust (head rest)
---   return result
+getHelpTemplate :: String -> [[String]] -> IO String
+getHelpTemplate _ [] = return ""
+getHelpTemplate name (args : argsBag) = do
+  mx <- try (fetchHelpInfo name args) :: IO (Either SomeException (Maybe String))
+  if Either.isLeft mx
+    then return ""
+    else
+      maybe
+        (fmap (Maybe.fromMaybe "") $ parallelFirst $ map (fetchHelpInfo name) argsBag)
+        return
+        (Either.fromRight Nothing mx)
 
--- fetchHelpInfo :: FilePath -> [String] -> IO (Maybe String)
--- fetchHelpInfo name args = do
---   (exitCode, stdout, stderr) <- Process.readProcessWithExitCode name args ""
---   let res
---         | isCommandNotFound name exitCode stderr = Nothing
---         | not (null stdout) = Just stdout
---         | mayContainsOptions stderr || mayContainsSubcommands stderr = Just stderr
---         | otherwise = Nothing
---   return res
+fetchHelpInfo :: FilePath -> [String] -> IO (Maybe String)
+fetchHelpInfo name args = do
+  (exitCode, stdout, stderr) <- Process.readProcessWithExitCode name args ""
+  let res
+        | isCommandNotFound name exitCode stderr = error "CommandNotFound"
+        | not (null stdout) = Just stdout
+        | mayContainsOptions stderr || mayContainsSubcommands stderr = Just stderr
+        | otherwise = Nothing
+  return res
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> String -> Bool
 isCommandNotFound name exitCode stderr =
@@ -105,22 +98,22 @@ isCommandNotFound name exitCode stderr =
     || ("bwrap: execvp " `T.append` T.pack name) `T.isPrefixOf` T.pack stderr
 
 getHelpBare :: String -> IO String
-getHelpBare name = getHelpTemplate name ["--help"] ["help"]
+getHelpBare name = getHelpTemplate name [["--help"], ["help"]]
 
 getHelpSubBare :: String -> String -> IO String
-getHelpSubBare name subname = getHelpTemplate name [subname, "--help"] ["help", subname]
+getHelpSubBare name subname = getHelpTemplate name [[subname, "--help"], ["help", subname]]
 
 bwrapArgsBase :: [String]
 bwrapArgsBase = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all"]
 
 getHelpSandboxed :: String -> IO String
-getHelpSandboxed name = getHelpTemplate "bwrap" options altOptions
+getHelpSandboxed name = getHelpTemplate "bwrap" [options, altOptions]
   where
     options = bwrapArgsBase ++ [name, "--help"]
     altOptions = bwrapArgsBase ++ [name, "help"]
 
 getHelpSubSandboxed :: String -> String -> IO String
-getHelpSubSandboxed name subname = getHelpTemplate "bwrap" options altOptions
+getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, altOptions]
   where
     options = bwrapArgsBase ++ [name, subname, "--help"]
     altOptions = bwrapArgsBase ++ [name, "help", subname]
