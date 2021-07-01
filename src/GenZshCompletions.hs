@@ -22,6 +22,9 @@ import Type
 zshHeader :: String -> Text
 zshHeader cmd = sformat ("#compdef _" % string % " " % string % "\n\n") cmd cmd
 
+zshHeaderOld :: String -> Text
+zshHeaderOld = sformat ("#compdef "% string % "\n\n")
+
 quote :: Text -> Text
 quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
@@ -127,7 +130,7 @@ genZshBodySubcommandOptions cmd subcommands =
 genZshScript :: String -> [Opt] -> Text
 genZshScript cmd opts = header `T.append` body
   where
-    header = zshHeader cmd
+    header = zshHeaderOld cmd
     body = genZshBodyOptions cmd opts
 
 toZshScript :: Command -> Text
