@@ -43,13 +43,12 @@ jobs:
         run: |
           stack build --copy-bins
 
-      - name: Archive the binary
+      - name: Rename the binary
         run: |
-          mv -f "$(stack path --local-bin)/h2o" .
-          tar -czf h2o-${{ matrix.target }}.tar.gz h2o
+          mv -f "$(stack path --local-bin)/h2o" h2o-${{ matrix.target }}
 
       - name: Upload the release binary
         uses: actions/upload-artifact@v2
         with:
-          name: h2o-${{ matrix.target }}.tar.gz
-          path: ./h2o-${{ matrix.target }}.tar.gz
+          name: h2o-${{ matrix.target }}
+          path: ./h2o-${{ matrix.target }}
