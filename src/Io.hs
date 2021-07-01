@@ -17,7 +17,7 @@ import qualified Data.Text as T
 import GenBashCompletions (genBashScript)
 import GenFishCompletions (genFishScriptSimple, toFishScript)
 import GenJSON (toJSONText)
-import GenZshCompletions (genZshScript)
+import GenZshCompletions (genZshScript, toZshScript)
 import Layout (parseMany, preprocessAll)
 import Subcommand (parseSubcommand)
 import qualified System.Exit
@@ -164,6 +164,7 @@ getInputContent (FileInput f) _ = readFile f
 
 toScriptFull :: OutputFormat -> Command -> Text
 toScriptFull Fish cmd = toFishScript cmd
+toScriptFull Zsh cmd = toZshScript cmd
 toScriptFull outputFormat (Command name _ rootOptions subs)
   | null subnames = warnTrace "Ignore subcommands" $ toScriptSimple outputFormat name rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
