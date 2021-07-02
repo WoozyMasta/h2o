@@ -14,7 +14,7 @@ import qualified Data.Map.Ordered as OMap
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
-import GenBashCompletions (genBashScript)
+import GenBashCompletions (genBashScript, toBashScript)
 import GenFishCompletions (genFishScriptSimple, toFishScript)
 import GenJSON (toJSONText)
 import GenZshCompletions (genZshScript, toZshScript)
@@ -165,6 +165,7 @@ getInputContent (FileInput f) _ = readFile f
 toScriptFull :: OutputFormat -> Command -> Text
 toScriptFull Fish cmd = toFishScript cmd
 toScriptFull Zsh cmd = toZshScript cmd
+toScriptFull Bash cmd = toBashScript cmd
 toScriptFull outputFormat (Command name _ rootOptions subs)
   | null subnames = warnTrace "Ignore subcommands" $ toScriptSimple outputFormat name rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
