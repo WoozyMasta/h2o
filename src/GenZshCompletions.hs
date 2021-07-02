@@ -23,20 +23,23 @@ zshHeader :: String -> Text
 zshHeader cmd = sformat ("#compdef _" % string % " " % string % "\n\n") cmd cmd
 
 zshHeaderOld :: String -> Text
-zshHeaderOld = sformat ("#compdef "% string % "\n\n")
+zshHeaderOld = sformat ("#compdef " % string % "\n\n")
 
 quote :: Text -> Text
 quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
 getOptAsText :: Opt -> Text
-getOptAsText (Opt optnames _ desc) = case raws of
-  [raw] -> T.pack $ printf "'%s[%s]'" raw quotedDesc
-  _ -> T.pack $ printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc
+getOptAsText (Opt optnames arg desc)
+  | "file" `List.isInfixOf` arg || "path" `List.isInfixOf` arg = text `T.append` ":file:_files"
+  | otherwise = text
   where
     raws = map _raw optnames
     exclusionList = unwords raws
     optionNames = List.intercalate "," raws
     quotedDesc = quote . T.pack $ desc
+    text = case raws of
+      [raw] -> T.pack $ printf "'%s[%s]'" raw quotedDesc
+      _ -> T.pack $ printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc
 
 getSubcommandAsText :: Subcommand -> Text
 getSubcommandAsText (Subcommand name desc) =
@@ -68,8 +71,7 @@ genZshBodyRootOptions _ opts =
         "    _arguments -C \\"
       ]
     linesSuffix =
-      [ "        \"1: :_commands\" \\",
-        "        \"*::arg:->args\"",
+      [ "        \"1: :_commands\"",
         ""
       ]
     linesCore = map (addSuffix " \\" . indent 8 . getOptAsText) opts
@@ -101,8 +103,7 @@ zshSubcommandOptionFunction name (Command subname desc opts _) =
         "        _arguments \\"
       ]
     linesSuffix =
-      [ "        \"1: :_commands\" \\",
-        "        \"*::arg:->args\"",
+      [ "            \"1: :_commands\"",
         "    }",
         ""
       ]
@@ -143,8 +144,7 @@ toZshScript (Command name desc opts subcmds) =
     textSubcmdFuncs = T.concat $ map (zshSubcommandOptionFunction name) subcmds
     textFunctionOpening =
       T.unlines
-        [
-          "",
+        [ "",
           sformat ("function _" % string % " {") name,
           "    local line",
           ""
