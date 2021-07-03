@@ -7,7 +7,7 @@ module Io where
 
 import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Constants
-import Control.Concurrent.ParallelIO.Global (extraWorkerWhileBlocked, parallelFirst)
+import Control.Concurrent.ParallelIO.Global (parallelFirst)
 import Control.Exception (SomeException, try)
 import qualified Data.Either as Either
 import qualified Data.Map.Ordered as OMap

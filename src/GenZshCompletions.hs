@@ -30,14 +30,14 @@ quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
 getOptAsText :: Opt -> Text
 getOptAsText (Opt optnames arg desc)
-  | "file" `List.isInfixOf` arg || "path" `List.isInfixOf` arg = T.concat ["'", text, ":file:_files", "'"]
-  | otherwise = T.concat ["'", text, "'"]
+  | "file" `List.isInfixOf` arg || "path" `List.isInfixOf` arg = T.concat ["'", formatted, ":file:_files", "'"]
+  | otherwise = T.concat ["'", formatted, "'"]
   where
     raws = map _raw optnames
     exclusionList = unwords raws
     optionNames = List.intercalate "," raws
     quotedDesc = quote . T.pack $ desc
-    text = case raws of
+    formatted = case raws of
       [raw] -> T.pack $ printf "%s[%s]" raw quotedDesc
       _ -> T.pack $ printf "(%s)'{%s}'[%s]" exclusionList optionNames quotedDesc
 
@@ -83,8 +83,8 @@ genZshBodyRootOptions _ opts isSubcmdsNull =
         ]
     linesCore = map (addSuffix " \\" . indent 8 . getOptAsText) opts
 
-genZshBodySubcommands :: String -> [Subcommand] -> Text
-genZshBodySubcommands cmd subcommands = res
+genZshBodySubcommands :: [Subcommand] -> Text
+genZshBodySubcommands subcommands = res
   where
     textPrefix =
       [ "    function _commands {",
@@ -102,7 +102,7 @@ genZshBodySubcommands cmd subcommands = res
     res = T.unlines $ concat [textPrefix, textCore, textSuffix]
 
 zshSubcommandOptionFunction :: String -> Command -> Text
-zshSubcommandOptionFunction name (Command subname desc opts _) =
+zshSubcommandOptionFunction name (Command subname _ opts _) =
   T.concat $ map T.unlines [linesPrefix, linesCore, linesSuffix]
   where
     linesPrefix =
@@ -157,7 +157,7 @@ genZshScript cmd opts = header `T.append` body
     body = genZshBodyOptions cmd opts
 
 toZshScript :: Command -> Text
-toZshScript (Command name desc opts subcmds) =
+toZshScript (Command name _ opts subcmds) =
   T.concat [textHeader, textSubcmdFuncs, textFunctionOpening, textSubcommands, textRootOptions, textSubcommandOptionCalls, textFunctionClosing]
   where
     subcommands = map asSubcommand subcmds
@@ -171,7 +171,7 @@ toZshScript (Command name desc opts subcmds) =
           "    local line state",
           ""
         ]
-    textSubcommands = genZshBodySubcommands name subcommands
+    textSubcommands = genZshBodySubcommands subcommands
     textRootOptions = genZshBodyRootOptions name opts (null subcmds)
     textSubcommandOptionCalls = genZshBodySubcommandOptions name subcmds
     textFunctionClosing = T.unlines ["}", ""]

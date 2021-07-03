@@ -22,7 +22,7 @@ getSubcommandCall name subname =
     ]
 
 getSubcommandFunc :: String -> Command -> Text
-getSubcommandFunc name (Command subname desc opts subsubcmds)
+getSubcommandFunc name (Command subname _ opts subsubcmds)
   | null subsubcmds && null opts = ""
   | null subsubcmds = T.concat [prefix, suffix]
   | otherwise = T.concat [prefix, subsubCallPrefix, subsubCallBody, subsubCallSuffix, suffix, subsubFuncs]
@@ -89,7 +89,7 @@ genBashScript :: String -> [Opt] -> Text
 genBashScript name opts = toBashScript (Command name name opts [])
 
 toBashScript :: Command -> Text
-toBashScript (Command name desc opts subcmds)
+toBashScript (Command name _ opts subcmds)
   | null subcmds = T.concat [mainPrefix, mainSuffix, compStatement]
   | otherwise = T.concat [mainPrefix, mainSubcommandCalls, mainSuffix, subcommandFuncs, compStatement]
   where
