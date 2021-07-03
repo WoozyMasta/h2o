@@ -62,19 +62,25 @@ genZshBodyOptions _ opts = res
     template = "args=(\n%s)\n\n_arguments %s$args\n"
     res = T.pack $ printf template args flags
 
-genZshBodyRootOptions :: String -> [Opt] -> Text
-genZshBodyRootOptions _ opts =
+genZshBodyRootOptions :: String -> [Opt] -> Bool -> Text
+genZshBodyRootOptions _ opts isSubcmdsNull =
   T.concat $ map T.unlines [linesPrefix, linesCore, linesSuffix]
   where
     linesPrefix =
       [ "",
         "    _arguments -C \\"
       ]
-    linesSuffix =
-      [ "        \"1: :_commands\" \\",
-        "        \"*: :_files\"",
-        ""
-      ]
+    linesSuffix
+      | isSubcmdsNull =
+        [ "        '1: :_commands' \\",
+          "        '*: :_files'",
+          ""
+        ]
+      | otherwise =
+        [ "        ': :->cmd' \\",
+          "        '*:: :->subcmd'",
+          ""
+        ]
     linesCore = map (addSuffix " \\" . indent 8 . getOptAsText) opts
 
 genZshBodySubcommands :: String -> [Subcommand] -> Text
@@ -104,8 +110,7 @@ zshSubcommandOptionFunction name (Command subname desc opts _) =
         "        _arguments \\"
       ]
     linesSuffix =
-      [ "            \"1: :_commands\" \\",
-        "            \"*: :_files\"",
+      [ "            \"*: :_files\"",
         "",
         "    }",
         ""
@@ -116,9 +121,8 @@ zshSubcommandOptionCall :: String -> String -> Text
 zshSubcommandOptionCall name subname = T.unlines xs
   where
     xs =
-      [ sformat ("        " % string % ")") subname,
+      [ sformat ("        (" % string % ")") subname,
         sformat ("            _" % string % "_" % string) name subname,
-        "            return",
         "            ;;",
         ""
       ]
@@ -128,9 +132,23 @@ genZshBodySubcommandOptions cmd subcommands =
   T.concat [textPrefix, textCore, textSuffix]
   where
     subnames = [subname | (Command subname _ _ _) <- subcommands]
-    textPrefix = "    case $line[1] in\n"
+    textPrefix =
+      T.unlines
+        [ "    case $state in",
+          "    (cmd)",
+          "        _commands",
+          "        ;;",
+          "    (subcmd)",
+          "        case $line[1] in"
+        ]
     textCore = T.concat $ map (zshSubcommandOptionCall cmd) subnames
-    textSuffix = "    esac\n\n"
+    textSuffix =
+      T.unlines
+        [ "        esac",
+          "        ;;",
+          "     esac",
+          ""
+        ]
 
 genZshScript :: String -> [Opt] -> Text
 genZshScript cmd opts = header `T.append` body
@@ -150,10 +168,10 @@ toZshScript (Command name desc opts subcmds) =
       T.unlines
         [ "",
           sformat ("function _" % string % " {") name,
-          "    local line",
+          "    local line state",
           ""
         ]
     textSubcommands = genZshBodySubcommands name subcommands
-    textRootOptions = genZshBodyRootOptions name opts
+    textRootOptions = genZshBodyRootOptions name opts (null subcmds)
     textSubcommandOptionCalls = genZshBodySubcommandOptions name subcmds
     textFunctionClosing = T.unlines ["}", ""]
