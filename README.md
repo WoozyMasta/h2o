@@ -43,7 +43,7 @@ Then `<command-name>` can neither connect to the network or write to your filesy
 
 ## TODOs
 
-- [ ] Support subcommands in bash/zsh completions
+- [x] Support subcommands in bash/zsh completions
 - [ ] Improve parsing to support bioinformatics tools as many as possible
 - [ ] Improve extraction of subcommand descriptions
 
