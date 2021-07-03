@@ -30,16 +30,16 @@ quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
 getOptAsText :: Opt -> Text
 getOptAsText (Opt optnames arg desc)
-  | "file" `List.isInfixOf` arg || "path" `List.isInfixOf` arg = text `T.append` ":file:_files"
-  | otherwise = text
+  | "file" `List.isInfixOf` arg || "path" `List.isInfixOf` arg = T.concat ["'", text, ":file:_files", "'"]
+  | otherwise = T.concat ["'", text, "'"]
   where
     raws = map _raw optnames
     exclusionList = unwords raws
     optionNames = List.intercalate "," raws
     quotedDesc = quote . T.pack $ desc
     text = case raws of
-      [raw] -> T.pack $ printf "'%s[%s]'" raw quotedDesc
-      _ -> T.pack $ printf "'(%s)'{%s}'[%s]'" exclusionList optionNames quotedDesc
+      [raw] -> T.pack $ printf "%s[%s]" raw quotedDesc
+      _ -> T.pack $ printf "(%s)'{%s}'[%s]" exclusionList optionNames quotedDesc
 
 getSubcommandAsText :: Subcommand -> Text
 getSubcommandAsText (Subcommand name desc) =
@@ -71,7 +71,8 @@ genZshBodyRootOptions _ opts =
         "    _arguments -C \\"
       ]
     linesSuffix =
-      [ "        \"1: :_commands\"",
+      [ "        \"1: :_commands\" \\",
+        "        \"*: :_files\"",
         ""
       ]
     linesCore = map (addSuffix " \\" . indent 8 . getOptAsText) opts
@@ -103,7 +104,9 @@ zshSubcommandOptionFunction name (Command subname desc opts _) =
         "        _arguments \\"
       ]
     linesSuffix =
-      [ "            \"1: :_commands\"",
+      [ "            \"1: :_commands\" \\",
+        "            \"*: :_files\"",
+        "",
         "    }",
         ""
       ]
@@ -115,7 +118,8 @@ zshSubcommandOptionCall name subname = T.unlines xs
     xs =
       [ sformat ("        " % string % ")") subname,
         sformat ("            _" % string % "_" % string) name subname,
-        "        ;;",
+        "            return",
+        "            ;;",
         ""
       ]
 
