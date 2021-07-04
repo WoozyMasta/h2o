@@ -174,7 +174,7 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  args <- sepBy (optArgsInBraket <++ optArgs) (char ' ')
+  args <- sepBy (optArgsInBraket <++ optArgs) (char ':' <++ char ' ' <++ char '-')
   extra <- twoOrMoreDots <++ pure ""
   return (name, unwords args ++ extra)
   where
