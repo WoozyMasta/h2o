@@ -555,9 +555,9 @@ shellCompGoldenTests =
     ]
   where
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    actionFish x = toLazyByteString . genFishScriptSimple (takeBaseName x) . parseMany <$> readFile x
-    actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany <$> readFile x
-    actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany <$> readFile x
+    actionFish x = toLazyByteString . genFishScriptSimple (takeBaseName x) . parseMany . convertTabsToSpaces 8 <$> readFile x
+    actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany . convertTabsToSpaces 8 <$> readFile x
+    actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany . convertTabsToSpaces 8 <$> readFile x
 
 integratedGoldenTestsCommandInput :: TestTree
 integratedGoldenTestsCommandInput =

@@ -13,7 +13,8 @@ import Debug.Trace (trace)
 import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
 import Type (Opt)
-import Utils (convertTabsToSpaces, debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, infoMsg, infoShow, smartUnwords, startsWithDash, toRanges, warnShow)
+import Utils (debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, infoMsg, infoShow, smartUnwords, startsWithDash, toRanges, warnShow)
+import qualified Utils
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -396,9 +397,8 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
 preprocessAll :: String -> [(String, String)]
 preprocessAll content = map (\(opt, desc) -> (trim opt, trim desc)) res
   where
-    s = convertTabsToSpaces 8 content
-    xs = lines s
-    may = getOptionDescriptionPairsFromLayout s
+    xs = lines content
+    may = getOptionDescriptionPairsFromLayout content
     res = case may of
       Just (layoutResults, droppedIdxRanges) ->
         layoutResults ++ fallbackResults
@@ -406,7 +406,7 @@ preprocessAll content = map (\(opt, desc) -> (trim opt, trim desc)) res
           paragraphs = map (getParagraph xs) droppedIdxRanges
           fallbackResults = infoMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
       Nothing ->
-        trace "[warn] ignore layout" $ preprocessAllFallback s
+        trace "[warn] ignore layout" $ preprocessAllFallback content
 
 parseMany :: String -> [Opt]
 parseMany "" = []

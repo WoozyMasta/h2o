@@ -6,7 +6,7 @@ import HelpParser (alphanumChars, newline, singleSpace, skip, word)
 import Layout (getDescriptionOffset)
 import Text.ParserCombinators.ReadP
 import Type (Subcommand (..))
-import Utils (convertTabsToSpaces, getMostFrequent, infoMsg, startsWithChar)
+import Utils (getMostFrequent, infoMsg, startsWithChar)
 
 type Layout = (Int, Int)
 
@@ -79,6 +79,5 @@ removeOptionLine s =
 parseSubcommand :: String -> [Subcommand]
 parseSubcommand content = infoMsg "parseSubcommand" results
   where
-    s = convertTabsToSpaces 8 content
-    xs = getAlignedLines s
+    xs = getAlignedLines content
     results = (map (fst . last) . filter (not . null)) [readP_to_S subcommand x | x <- xs]

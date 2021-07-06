@@ -37,7 +37,7 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       if isShallowOnly
         then toJSONSimple name <$> getInputContent input False
         else toJSONText <$> (pageToCommandIO name =<< getInputContent input False)
-  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack . convertTabsToSpaces 8 <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
   where
@@ -158,9 +158,9 @@ toScriptSubcommandOptions _ name (Command subname _ opts _) =
     prefix = T.pack $ printf "(%s-%s) " name subname
 
 getInputContent :: Input -> Bool -> IO String
-getInputContent (SubcommandInput name subname) isSandboxing = getHelpSub isSandboxing name subname
-getInputContent (CommandInput name) isSandboxing = getHelpAndMan isSandboxing name
-getInputContent (FileInput f) _ = readFile f
+getInputContent (SubcommandInput name subname) isSandboxing = Utils.convertTabsToSpaces 8 <$> getHelpSub isSandboxing name subname
+getInputContent (CommandInput name) isSandboxing = Utils.convertTabsToSpaces 8 <$> getHelpAndMan isSandboxing name
+getInputContent (FileInput f) _ = Utils.convertTabsToSpaces 8 <$> readFile f
 
 toScriptFull :: OutputFormat -> Command -> Text
 toScriptFull Fish cmd = toFishScript cmd
