@@ -149,3 +149,14 @@ mayContainsOptions = (>= 2) . List.foldr (max . length) 0 . List.group . map sta
 -- | Another speculative criteria for non-critical purposes
 mayContainsSubcommands :: String -> Bool
 mayContainsSubcommands = (>= 4) . List.foldr (max . length) 0 . List.group . map (startsWithChar ' ') . lines
+
+-- | splitsAt ... like Data.List.splitAt but multiple indices
+splitsAt :: [a] -> [Int] -> [[a]]
+splitsAt xs ns = reverse $ filter (not . null) $ List.unfoldr f (xs, reverse ns)
+  where
+    f :: ([a], [Int]) -> Maybe ([a], ([a], [Int]))
+    f ([], _) = Nothing
+    f (ys, []) = Just (ys, ([], []))
+    f (ys, k:ks) = Just (latter, (former, ks))
+      where
+        (former, latter) = List.splitAt k ys

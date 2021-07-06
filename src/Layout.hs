@@ -394,6 +394,41 @@ extractRectangleToRight (rowFrom, rowTo) idxCol xs =
     ys = take (rowTo - rowFrom) (drop rowFrom xs)
     zs = map (drop idxCol) ys
 
+-- | Get line indices of headers
+getHeadingIndices :: [String] -> [Int]
+getHeadingIndices [] = []
+getHeadingIndices xs
+  | count >= 2 || null indentations' = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == minval]
+  | otherwise = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == secondMinval]
+  where
+    indentations = map (length . takeWhile (== ' ')) xs
+    minval = List.minimum indentations
+    count = length $ filter (== minval) indentations
+    indentations' = filter (/= minval) indentations
+    secondMinval = List.minimum indentations'
+
+splitByHeaders :: [String] -> [[String]]
+splitByHeaders xs = Utils.splitsAt xs (getHeadingIndices xs)
+
+preprocessBlockwise :: String -> [(String, String)]
+preprocessBlockwise content = concatMap preprocessAll contents
+  where
+    xs = lines content
+    contents = map unlines $ splitByHeaders xs
+
+parseBlockwise :: String -> [Opt]
+parseBlockwise "" = []
+parseBlockwise s = List.nub . concat $ results
+  where
+    pairs = preprocessAll s
+    results =
+      [ (\xs -> if null xs then warnShow "Failed pair:" (optStr, descStr) xs else xs) $
+          parseWithOptPart optStr descStr
+        | (optStr, descStr) <- pairs,
+          (optStr, descStr) /= ("", "")
+      ]
+
+
 preprocessAll :: String -> [(String, String)]
 preprocessAll content = map (\(opt, desc) -> (trim opt, trim desc)) res
   where
