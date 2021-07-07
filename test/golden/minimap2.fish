@@ -14,13 +14,13 @@ complete -c minimap2 -s n -d 'Discard chains consisting of <INT number of minimi
 complete -c minimap2 -s m -d 'Discard chains with chaining score <INT [40].' -x
 complete -c minimap2 -s D -d 'If query sequence name/length are identical to the target name/length, ignore diagonal anchors.'
 complete -c minimap2 -s P -d 'Retain all chains and don\'t attempt to set primary chains.'
-complete -c minimap2 -l dual -d 'If no, skip query-target pairs wherein the query name is lexicographically greater than  the  target name [yes]' -x
+complete -c minimap2 -l dual -d 'If no, skip query-target pairs wherein the query name is lexicographically greater than the target name [yes]' -x
 complete -c minimap2 -s X -d 'Equivalent to \'-DP --dual=no --no-long-join\'.'
 complete -c minimap2 -s p -d 'Minimal secondary-to-primary score ratio to output secondary mappings [0.8].' -x
 complete -c minimap2 -s N -d 'Output at most INT secondary alignments [5].' -x
 complete -c minimap2 -s G -d 'Maximum gap on the reference (effective with -xsplice/--splice).' -x
 complete -c minimap2 -s F -d 'Maximum fragment length (aka insert size; effective with -xsr/--frag=yes) [800]' -x
-complete -c minimap2 -s M -d 'Mark  as  secondary  a chain that overlaps with a better chain by FLOAT or more of the shorter chain [0.5]' -x
+complete -c minimap2 -s M -d 'Mark as secondary a chain that overlaps with a better chain by FLOAT or more of the shorter chain [0.5]' -x
 complete -c minimap2 -l hard-mask-level -d 'Honor option -M and disable a heurstic to save unmapped subsequences and disables --mask-len.'
 complete -c minimap2 -l mask-len -d 'Keep an alignment if dropping it leaves an unaligned region on query longer than INT [inf].' -x
 complete -c minimap2 -l max-chain-skip -d 'A heuristics that stops chaining early [25].' -x

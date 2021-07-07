@@ -200,11 +200,11 @@ outdatedTests =
         [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
         "       -w INT\t Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-"
-        [(["-w"], "INT", "Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-")],
+        [(["-w"], "INT", "Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive k-")],
       test_parseMany
         "       -w INT\t Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-\n\t\t mers.\n\n       -H\t Use  homopolymer-compressed (HPC) minimizers. An HPC sequence is constructed by contracting homopolymer runs to\n\t\t a single base. An HPC minimizer is a minimizer on the HPC sequence.\n"
-        [ (["-w"], "INT", "Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-"),
-          (["-H"], "", "Use  homopolymer-compressed (HPC) minimizers. An HPC sequence is constructed by contracting homopolymer runs to")
+        [ (["-w"], "INT", "Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive k-"),
+          (["-H"], "", "Use homopolymer-compressed (HPC) minimizers. An HPC sequence is constructed by contracting homopolymer runs to")
         ]
     ]
 

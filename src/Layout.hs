@@ -430,7 +430,7 @@ parseBlockwise s = List.nub . concat $ results
 
 
 preprocessAll :: String -> [(String, String)]
-preprocessAll content = map (\(opt, desc) -> (trim opt, trim desc)) res
+preprocessAll content = map (\(opt, desc) -> (trim opt, unwords $ words $ trim desc)) res
   where
     xs = lines content
     may = getOptionDescriptionPairsFromLayout content
