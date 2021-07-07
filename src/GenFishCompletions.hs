@@ -5,10 +5,11 @@
 
 module GenFishCompletions where
 
+import Data.List.Extra (nubOrd)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Printf (printf)
-import Type (Opt (..), OptName (..), OptNameType (..), Subcommand (..), Command (..), asSubcommand)
+import Type (Command (..), Opt (..), OptName (..), OptNameType (..), Subcommand (..), asSubcommand)
 
 -- https://unix.stackexchange.com/questions/296141/how-to-use-a-special-character-as-a-normal-one-in-unix-shells
 escapeSpecialSymbols :: Text -> Text
@@ -93,19 +94,19 @@ makeFishLineSubcommandOption cmd subcmd (Opt names arg desc) = line
 
 -- | Generate simple fish completion script WITHOUT subcommands
 genFishScriptSimple :: String -> [Opt] -> Text
-genFishScriptSimple cmd opts = T.unlines [makeFishLineOption cmd opt | opt <- opts]
+genFishScriptSimple cmd opts = T.unlines . nubOrd $ [makeFishLineOption cmd opt | opt <- opts]
 
 -- | Generate fish completion script for root-level options that are suppressed after a subcommand
 genFishScriptRootOptions :: String -> [String] -> [Opt] -> Text
-genFishScriptRootOptions name subnames opts = T.unlines [makeFishLineRootOption name subnames opt | opt <- opts]
+genFishScriptRootOptions name subnames opts = T.unlines . nubOrd $ [makeFishLineRootOption name subnames opt | opt <- opts]
 
 -- | Generate fish completion script for subcommand names
 genFishScriptSubcommands :: String -> [Subcommand] -> Text
-genFishScriptSubcommands name subcmds = T.unlines [makeFishLineSubcommand name sub | sub <- subcmds]
+genFishScriptSubcommands name subcmds = T.unlines . nubOrd $ [makeFishLineSubcommand name sub | sub <- subcmds]
 
 -- | Generate fish completion script for options under a subcommand
 genFishScriptSubcommandOptions :: String -> Command -> Text
-genFishScriptSubcommandOptions name (Command subname _ opts _) = T.unlines [makeFishLineSubcommandOption name subname opt | opt <- opts]
+genFishScriptSubcommandOptions name (Command subname _ opts _) = T.unlines . nubOrd $ [makeFishLineSubcommandOption name subname opt | opt <- opts]
 
 toFishScript :: Command -> Text
 toFishScript (Command name _ opts subcmds)
