@@ -10,7 +10,7 @@ complete -c bowtie2 -s s -l skip -d 'skip the first <int> reads/pairs in the inp
 complete -c bowtie2 -s u -l upto -d 'stop after first <int> reads/pairs (no limit)' -x
 complete -c bowtie2 -s 5 -l trim5 -d 'trim <int> bases from 5\'/left end of reads (0)' -x
 complete -c bowtie2 -s 3 -l trim3 -d 'trim <int> bases from 3\'/right end of reads (0)' -x
-complete -c bowtie2 -l trim-to -d 'If the read end is not specified then it defaults to 3 (0)' -x
+complete -c bowtie2 -l trim-to -d 'trim reads exceeding <int> bases from either 3\' or 5\' end   If the read end is not specified then it defaults to 3 (0)' -x
 complete -c bowtie2 -l phred33 -d 'qualities are Phred+33 (default)'
 complete -c bowtie2 -l phred64 -d 'qualities are Phred+64'
 complete -c bowtie2 -l int-quals -d 'qualities encoded as space-delimited integers'

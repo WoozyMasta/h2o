@@ -157,6 +157,14 @@ splitsAt xs ns = reverse $ filter (not . null) $ List.unfoldr f (xs, reverse ns)
     f :: ([a], [Int]) -> Maybe ([a], ([a], [Int]))
     f ([], _) = Nothing
     f (ys, []) = Just (ys, ([], []))
-    f (ys, k:ks) = Just (latter, (former, ks))
+    f (ys, k : ks) = Just (latter, (former, ks))
       where
         (former, latter) = List.splitAt k ys
+
+topTenPercentile :: (Ord a) => [a] -> a
+topTenPercentile [] = error "Cannot compute percentile against null!"
+topTenPercentile xs = sortedXs !! idx
+  where
+    n = length xs
+    idx = fromInteger $ floor (fromIntegral (n - 1) * 0.9 :: Rational) :: Int
+    sortedXs = List.sort xs

@@ -249,7 +249,7 @@ getOptionDescriptionPairsFromLayout s
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption = debugMsg "descLineNumsWithoutOption" [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
-    descriptionLineWidthMax = infoMsg "descriptionLineMax" $ if null linewidths then 80 else List.maximum linewidths
+    descriptionLineWidthMax = infoMsg "descriptionLineLength at 93%: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
 
     -- The line must be long when description starts at the option line and continues to the next line.
