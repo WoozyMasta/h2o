@@ -3,6 +3,7 @@
 import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Data.List as List
 import Data.List.Extra (nubSort)
+import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import GenBashCompletions (genBashScript)
@@ -555,9 +556,9 @@ shellCompGoldenTests =
     ]
   where
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    actionFish x = toLazyByteString . genFishScriptSimple (takeBaseName x) . parseMany . convertTabsToSpaces 8 <$> readFile x
-    actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany . convertTabsToSpaces 8 <$> readFile x
-    actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany . convertTabsToSpaces 8 <$> readFile x
+    actionFish x = toLazyByteString . genFishScriptSimple (takeBaseName x) . parseMany . T.unpack . convertTabsToSpaces 8 . T.pack <$> readFile x
+    actionZsh x = toLazyByteString . genZshScript (takeBaseName x) . parseMany . T.unpack . convertTabsToSpaces 8 . T.pack <$> readFile x
+    actionBash x = toLazyByteString . genBashScript (takeBaseName x) . parseMany . T.unpack . convertTabsToSpaces 8 . T.pack <$> readFile x
 
 integratedGoldenTestsCommandInput :: TestTree
 integratedGoldenTestsCommandInput =

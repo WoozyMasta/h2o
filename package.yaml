@@ -28,7 +28,7 @@ dependencies:
   - formatting
   - optparse-applicative
   - filepath
-  - process
+  - typed-process
   - ordered-containers
   - parallel-io
 

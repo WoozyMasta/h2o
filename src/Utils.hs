@@ -27,8 +27,8 @@ getMostFrequentWithCount xs = Just (x, maxCount)
     counter = Map.toList $ Map.fromListWith (+) (map (,1) xs)
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter
 
-convertTabsToSpaces :: Int -> String -> String
-convertTabsToSpaces n = T.unpack . removeDelimiter ':' . T.unlines . map convertLine . T.lines . removeCrNewline . T.pack
+convertTabsToSpaces :: Int -> Text -> Text
+convertTabsToSpaces n = removeDelimiter ':' . T.unlines . map convertLine . T.lines . removeCrNewline
   where
     removeCrNewline = T.replace "\r\n" "\n"
     convertLine = List.foldl1' f . T.splitOn "\t"
@@ -143,12 +143,12 @@ startsWithDash :: String -> Bool
 startsWithDash = startsWithChar '-'
 
 -- | A speculative criteria for non-critical purposes
-mayContainsOptions :: String -> Bool
-mayContainsOptions = (>= 2) . List.foldr (max . length) 0 . List.group . map startsWithDash . lines
+mayContainsOptions :: Text -> Bool
+mayContainsOptions = (>= 2) . List.foldr (max . length) 0 . List.group . map (startsWithDash . T.unpack) . T.lines
 
 -- | Another speculative criteria for non-critical purposes
-mayContainsSubcommands :: String -> Bool
-mayContainsSubcommands = (>= 4) . List.foldr (max . length) 0 . List.group . map (startsWithChar ' ') . lines
+mayContainsSubcommands :: Text -> Bool
+mayContainsSubcommands = (>= 4) . List.foldr (max . length) 0 . List.group . map (startsWithChar ' ' . T.unpack) . T.lines
 
 -- | splitsAt ... like Data.List.splitAt but multiple indices
 splitsAt :: [a] -> [Int] -> [[a]]
