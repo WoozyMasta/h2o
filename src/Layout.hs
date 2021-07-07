@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
 import Type (Opt)
-import Utils (debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, infoMsg, infoShow, smartUnwords, startsWithDash, toRanges, warnShow)
+import Utils (debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, infoMsg, infoShow, smartUnwords, toRanges, warnShow)
 import qualified Utils
 
 -- | Location is defined by (row, col) order
@@ -43,11 +43,11 @@ _getNonblankLocationTemplate f s = [(i, getCol x) | (i, x) <- enumLines, f x]
 -- λ> getOptionLocations " \n\n  \t  --option here"
 -- [(2, 10)]
 getOptionLocations :: String -> [Location]
-getOptionLocations = _getNonblankLocationTemplate startsWithDash
+getOptionLocations = _getNonblankLocationTemplate Utils.startsWithDash
 
 -- | Get locations of lines NOT starting with dash
 getNonoptLocations :: String -> [Location]
-getNonoptLocations = _getNonblankLocationTemplate (not . startsWithDash)
+getNonoptLocations = _getNonblankLocationTemplate (not . Utils.startsWithDash)
 
 _getOffsetHelper :: (String -> [Location]) -> String -> Maybe Int
 _getOffsetHelper getLocs s = traceMessage res
@@ -401,33 +401,32 @@ getHeadingIndices xs
   | count >= 2 || null indentations' = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == minval]
   | otherwise = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == secondMinval]
   where
-    indentations = map (length . takeWhile (== ' ')) xs
+    indentations = debugMsg "indentations: " $ map (\x -> if null x then 80 else length . takeWhile (== ' ') . dropWhile (== '\n') $ x) xs
     minval = List.minimum indentations
     count = length $ filter (== minval) indentations
     indentations' = filter (/= minval) indentations
     secondMinval = List.minimum indentations'
 
 splitByHeaders :: [String] -> [[String]]
-splitByHeaders xs = Utils.splitsAt xs (getHeadingIndices xs)
+splitByHeaders xs = filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs $ debugMsg "headingIndices: " (getHeadingIndices xs)
 
 preprocessBlockwise :: String -> [(String, String)]
 preprocessBlockwise content = concatMap preprocessAll contents
   where
     xs = lines content
-    contents = map unlines $ splitByHeaders xs
+    contents = debugMsg "contents" $ map unlines $ splitByHeaders xs
 
 parseBlockwise :: String -> [Opt]
 parseBlockwise "" = []
 parseBlockwise s = List.nub . concat $ results
   where
-    pairs = preprocessAll s
+    pairs = preprocessBlockwise s
     results =
       [ (\xs -> if null xs then warnShow "Failed pair:" (optStr, descStr) xs else xs) $
           parseWithOptPart optStr descStr
         | (optStr, descStr) <- pairs,
           (optStr, descStr) /= ("", "")
       ]
-
 
 preprocessAll :: String -> [(String, String)]
 preprocessAll content = map (\(opt, desc) -> (trim opt, unwords $ words $ trim desc)) res
