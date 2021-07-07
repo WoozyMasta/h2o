@@ -145,7 +145,9 @@ optArgs = do
   _ <- char '=' <++ singleSpace <++ pure ' '
   _ <- munch (== ' ')
   args <- sepBy1 argWordBare argSep
-  return (List.intercalate "," args)
+  if length args >= 5
+    then pfail
+    else return $ List.intercalate "," args
 
 optArgsInBraket :: ReadP String
 optArgsInBraket = do
