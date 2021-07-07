@@ -4,6 +4,7 @@ module HelpParser where
 
 import qualified Data.List as List
 import Data.List.Extra (splitOn)
+import Data.String.Utils (strip)
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
 import Type
@@ -178,16 +179,18 @@ optNameArgPair = do
   name <- optName
   args <- sepBy (optArgsInBraket <++ optArgs) (char ':' <++ char ' ' <++ char '-')
   extra <- twoOrMoreDots <++ pure ""
-  return (name, unwords args ++ extra)
+  if (length args == 1 && strip (head args) == "or") || length args >= 5
+    then pfail
+    else return (name, unwords args ++ extra)
   where
     twoOrMoreDots = do
       c <- char '.'
       rest <- munch1 (== '.')
       return (c : rest)
 
-optSep :: ReadP Char
+optSep :: ReadP String
 optSep = do
-  s <- char ',' <++ char '/' <++ char '|' <++ singleSpace
+  s <- string "," <++ string "/" <++ string "|" <++ string " or " <++ string " "
   -- following is a workaround to handle the bug in squashOptions in Layout
   _ <- char ',' <++ pure 'x'
   _ <- munch (== ' ')
