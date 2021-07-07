@@ -68,6 +68,20 @@ getHelpSub :: Bool -> String -> String -> IO String
 getHelpSub True = getHelpSubSandboxed
 getHelpSub False = getHelpSubBare
 
+getManSub :: String -> String -> IO String
+getManSub name subname = getMan (name ++ "-" ++ subname)
+
+getManAndHelpSub :: Bool -> String -> String -> IO String
+getManAndHelpSub isSandboxing name subname = do
+  content <- getManSub name subname
+  if null content
+    then do
+      content2 <- getHelpSub isSandboxing name subname
+      if null content2
+        then error ("io: Neither help or man pages available: " ++ name ++ "-" ++ subname)
+        else infoTrace "io: Using help for subcommand" $ return content2
+    else infoTrace "io: Using manpage for subcommand" $ return content
+
 -- | Following implementation takes more than 2x longer than the above... WHY??
 -- |
 getHelpTemplate :: String -> [[String]] -> IO String
@@ -121,23 +135,23 @@ getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, altOptions]
 getMan :: String -> IO String
 getMan name = do
   (exitCode, stdout, _) <- Process.readCreateProcessWithExitCode cp ""
+    -- The exit code is actually thrown when piped to others...
   if exitCode == System.Exit.ExitFailure 16
     then return ""
     else return stdout
   where
-    s = printf "man %s | col -b" name
-    cp = Process.shell s
+    cp = Process.shell $ printf "man %s | col -bx" name
 
-getHelpAndMan :: Bool -> String -> IO String
-getHelpAndMan isSandboxing name = do
-  content <- getHelp isSandboxing name
+getManAndHelp :: Bool -> String -> IO String
+getManAndHelp isSandboxing name = do
+  content <- getMan name
   if null content
     then do
-      content2 <- getMan name
+      content2 <- getHelp isSandboxing name
       if null content2
         then error ("io: Neither help or man pages available: " ++ name)
-        else infoTrace "io: Using manpage" $ return content2
-    else infoTrace "io: Using help" $ return content
+        else infoTrace "io: Using help" $ return content2
+    else infoTrace "io: Using manpage" $ return content
 
 toScriptSimple :: OutputFormat -> String -> [Opt] -> Text
 toScriptSimple Fish name opts = genFishScriptSimple name opts
@@ -158,9 +172,12 @@ toScriptSubcommandOptions _ name (Command subname _ opts _) =
     prefix = T.pack $ printf "(%s-%s) " name subname
 
 getInputContent :: Input -> Bool -> IO String
-getInputContent (SubcommandInput name subname) isSandboxing = Utils.convertTabsToSpaces 8 <$> getHelpSub isSandboxing name subname
-getInputContent (CommandInput name) isSandboxing = Utils.convertTabsToSpaces 8 <$> getHelpAndMan isSandboxing name
-getInputContent (FileInput f) _ = Utils.convertTabsToSpaces 8 <$> readFile f
+getInputContent (SubcommandInput name subname) isSandboxing =
+  Utils.convertTabsToSpaces 8 <$> getManAndHelpSub isSandboxing name subname
+getInputContent (CommandInput name) isSandboxing =
+  Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
+getInputContent (FileInput f) _ =
+  Utils.convertTabsToSpaces 8 <$> readFile f
 
 toScriptFull :: OutputFormat -> Command -> Text
 toScriptFull Fish cmd = toFishScript cmd
@@ -197,18 +214,20 @@ toCommandIOHelper name content isSandboxing = do
     then error ("Failed to extract information for a Command: " ++ name)
     else return $ toCommand name name rootOptions subcmdOptsPairs
   where
-    -- remove duplicate _cmd in [Subcommand]
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
     uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
     rootOptions = parseMany content
     subcmdCandidates =
       infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
-    toSubcmdOptPair sub = do
-      page <- getHelpSub isSandboxing name (_cmd sub)
+    toSubcmdOptPair useMan sub = do
+      page <- if useMan then getManSub name (_cmd sub) else getHelpSub isSandboxing name (_cmd sub)
       let criteria = not (null page) && page /= content
       return ((sub, parseMany page), criteria)
-    subcmdOptsPairsM = map fst . filter snd <$> mapM toSubcmdOptPair subcmdCandidates
+    pairsIO = do
+      !isManAvailable <- not . null <$> getMan name
+      mapM (toSubcmdOptPair isManAvailable) subcmdCandidates
+    subcmdOptsPairsM = map fst . filter snd <$> pairsIO
 
 -- Convert to Command given command name and text
 toCommandSimple :: String -> String -> Command
