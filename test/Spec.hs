@@ -583,7 +583,7 @@ integratedGoldenTestsFileInput =
     "Integrated tests"
     (map toTestTree triples)
   where
-    commandNames = ["rsync", "grep"]
+    commandNames = ["rsync", "grep"] :: [String]
     inputFiles = [printf "test/golden/%s-input.txt" name | name <- commandNames]
     outputFiles = [printf "test/golden/%s.txt" name | name <- commandNames]
     triples = zip3 commandNames inputFiles outputFiles
@@ -591,9 +591,9 @@ integratedGoldenTestsFileInput =
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
     conf filepath = C_ (Config (FileInput filepath) Native False False False False False)
     runWithCommand filepath = toLazyByteString <$> run (conf filepath)
-    toTestTree (name, inputFile, outputFile) =
+    toTestTree (_, inputFile, outputFile) =
       goldenVsString
-        ("h2o --file " ++ name)
+        ("h2o --file " ++ inputFile)
         outputFile
         (runWithCommand inputFile)
 
