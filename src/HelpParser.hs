@@ -3,7 +3,7 @@
 module HelpParser where
 
 import qualified Data.List as List
-import Data.List.Extra (splitOn, dropPrefix)
+import Data.List.Extra (dropPrefix, nubOrd, splitOn)
 import Data.String.Utils (strip)
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
@@ -275,7 +275,7 @@ optPart :: ReadP ([OptName], OptArg)
 optPart = do
   skipSpaces
   pairs <- sepBy1 optNameArgPair optSep
-  let names = map fst pairs
+  let names = nubOrd $ map fst pairs
   let args = case filter (not . null) (map snd pairs) of
         [] -> ""
         x : _ -> x
