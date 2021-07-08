@@ -142,6 +142,33 @@ startsWithChar c s = not (null ss) && head ss == c
 startsWithDash :: String -> Bool
 startsWithDash = startsWithChar '-'
 
+-- | check if the string starts with -- possibly after spaces and tabs
+startsWithDoubleDash :: String -> Bool
+startsWithDoubleDash s = case ss of
+  "" -> False
+  [_] -> False
+  c1 : c2 : _ -> c1 == '-' && c2 == '-'
+  where
+    ss = dropWhile (== ' ') s
+
+startsWithSingleDash :: String -> Bool
+startsWithSingleDash s = case ss of
+  "" -> False
+  [_] -> False
+  c1 : c2 : _ -> c1 == '-' && c2 /= '-'
+  where
+    ss = dropWhile (== ' ') s
+
+startsWithLongOption :: String -> Bool
+startsWithLongOption s = startsWithDoubleDash s && length ss >= 4 && ss !! 2 /= ' '
+  where
+    ss = dropWhile (== ' ') s
+
+startsWithShortOrOldOption :: String -> Bool
+startsWithShortOrOldOption s = startsWithDash s && length ss >= 2 && ss !! 1 /= ' '
+  where
+    ss = dropWhile (== ' ') s
+
 -- | A speculative criteria for non-critical purposes
 mayContainsOptions :: Text -> Bool
 mayContainsOptions = (>= 2) . List.foldr (max . length) 0 . List.group . map (startsWithDash . T.unpack) . T.lines

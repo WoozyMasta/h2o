@@ -64,30 +64,13 @@ getOptionOffsets s = case (short, long) of
 ----------------------------------------
 -- For 3-pane layout (short-option   long-option   description)
 
--- | check if the string starts with -- possibly after spaces and tabs
-startsWithDoubleDash :: String -> Bool
-startsWithDoubleDash s = case ss of
-  "" -> False
-  [_] -> False
-  c1 : c2 : _ -> c1 == '-' && c2 == '-'
-  where
-    ss = dropWhile (== ' ') s
-
-startsWithSingleDash :: String -> Bool
-startsWithSingleDash s = case ss of
-  "" -> False
-  [_] -> False
-  c1 : c2 : _ -> c1 == '-' && c2 /= '-'
-  where
-    ss = dropWhile (== ' ') s
-
 -- | get location of long options
 getLongOptionLocations :: String -> [Location]
-getLongOptionLocations = _getNonblankLocationTemplate startsWithDoubleDash
+getLongOptionLocations = _getNonblankLocationTemplate Utils.startsWithDoubleDash
 
 -- | get location of long options
 getShortOptionLocations :: String -> [Location]
-getShortOptionLocations = _getNonblankLocationTemplate startsWithSingleDash
+getShortOptionLocations = _getNonblankLocationTemplate Utils.startsWithSingleDash
 
 -- | get presumed horizontal offset of long options
 getLongOptionOffset :: String -> Maybe Int
