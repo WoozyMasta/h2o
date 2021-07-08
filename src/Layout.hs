@@ -89,36 +89,49 @@ getShortOptionOffset = _getOffsetHelper getShortOptionLocations
 --      	may be separated by 3 or more spaces
 -- Returns Nothing if 1 and 2 disagrees, or no information in 1 and 2
 --
-getDescriptionOffsetFromOptionLocs :: String -> [Int] -> Int -> Maybe Int
-getDescriptionOffsetFromOptionLocs s optLineNums optOffset =
-  case (descOffsetWithCountSimple s optLineNums optOffset, descOffsetWithCountInOptionLines s optLineNums) of
-    (Nothing, Nothing) -> trace "[info] Retrieved absolutely zero information" Nothing
-    (Nothing, q) -> trace "[info] Descriptions always appear in the lines with options" $ fmap fst q
-    (p, Nothing) -> trace "[info] Descriptions never appear in the lines with options" $ fmap fst p
-    (Just (x1, c1), Just (x2, c2))
-      | x1 == x2 -> Just x1
-      | c1 <= 3 && 3 < c2 -> debug Just x2
-      | c2 <= 3 && 3 < c1 -> debug Just x1
-      | 0 < x1 - x2 && x1 - x2 < 5 -> debug (Just x2) -- sometimes continued lines are indented.
-      | otherwise -> debug Nothing
-      where
-        msg =
-          "[warn] Disagreement in offsets:\n\
-          \   description-only-line offset   %d (with count %d)\n\
-          \   option+description-line offset %d (with count %d)\n"
-        debug = trace (printf msg x1 c1 x2 c2 :: String)
+getDescriptionOffsetFromOptionLocs :: String -> [Location] -> (Maybe Int, [Location])
+getDescriptionOffsetFromOptionLocs s optLocs =
+  case descOffsetWithCountSimple s optLocs of
+    (Nothing, optLocsRemoved) ->
+      case descOffsetWithCountInOptionLines s (filter (`notElem` optLocsRemoved) optLocs) of
+        Nothing -> trace "[info] Retrieved absolutely zero information" (Nothing, optLocsRemoved)
+        q -> trace "[info] Descriptions always appear in the lines with options" (fmap fst q, optLocsRemoved)
+    (Just (x1, c1), optLocsRemoved) ->
+      case descOffsetWithCountInOptionLines s (filter (`notElem` optLocsRemoved) optLocs) of
+        Nothing -> trace "[info] Descriptions never appear in the lines with options" (Just x1, optLocsRemoved)
+        Just (x2, c2)
+          | x1 == x2 -> (Just x1, optLocsRemoved)
+          | c1 <= 3 && 3 < c2 -> (debug Just x2, optLocsRemoved)
+          | c2 <= 3 && 3 < c1 -> (debug Just x1, optLocsRemoved)
+          | 0 < x1 - x2 && x1 - x2 < 5 -> (debug (Just x2), optLocsRemoved) -- sometimes continued lines are indented.
+          | otherwise -> (debug Nothing, optLocsRemoved)
+          where
+            msg =
+              "[warn] Disagreement in offsets:\n\
+              \   description-only-line offset   %d (with count %d)\n\
+              \   option+description-line offset %d (with count %d)\n"
+            debug = trace (printf msg x1 c1 x2 c2 :: String)
 
--- | Estimate offset of description part from non-option lines
+-- | Estimate offset of description part from non-option lines.
 -- | Returns Just (offset size, match count) if matches
-descOffsetWithCountSimple :: String -> [Int] -> Int -> Maybe (Int, Int)
-descOffsetWithCountSimple s optLineNums optOffset =
-  assert ('\t' `notElem` s) res
+descOffsetWithCountSimple :: String -> [Location] -> (Maybe (Int, Int), [Location])
+descOffsetWithCountSimple s optLocs
+  | null offsetOverlaps = (res, [])
+  | otherwise = (res, optLocsRemoved)
   where
-    locs = getNonoptLocations s
+    descLocs = getNonoptLocations s
+    (_, descOffsets) = unzip descLocs
+    (optLineNums, optOffsets) = unzip optLocs
+    offsetOverlaps = Set.toList $ Set.intersection (Set.fromList optOffsets) (Set.fromList descOffsets)
+    descOverlapCounts = map (\overlap -> length . filter (== overlap) $ descOffsets) offsetOverlaps
+    optOverlapCounts = map (\overlap -> length . filter (== overlap) $ optOffsets) offsetOverlaps
+    optOffsetsRemoved = [offset | (offset, optCount, descCount) <- zip3 offsetOverlaps optOverlapCounts descOverlapCounts, optCount <= descCount]
+    optOffsets' = filter (`notElem` optOffsetsRemoved) optOffsets
+    optLocsRemoved = filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
     cols =
-      [ x | (r, x) <- locs,
+      [ x | (r, x) <- descLocs,
             -- description's offset is equal (rare case!) or greater than option's
-            optOffset <= x,
+            null optOffsets' || (List.maximum optOffsets' < x),
             -- description can exist only around option lines
             head optLineNums < r, r < last optLineNums + 5
             -- previous line cannot be blank
@@ -127,16 +140,16 @@ descOffsetWithCountSimple s optLineNums optOffset =
 
 -- | Estimate offset of description part from the lines with options
 -- | Returns Just (offset size, match count) if matches
-descOffsetWithCountInOptionLines :: String -> [Int] -> Maybe (Int, Int)
-descOffsetWithCountInOptionLines s optLineNums =
+descOffsetWithCountInOptionLines :: String -> [Location] -> Maybe (Int, Int)
+descOffsetWithCountInOptionLines s optLocs =
   assert ('\t' `notElem` s) res
   where
     sep = "   " -- Hardcode as 3 spaces for now
     xs = lines s
-
     -- reversed to handle spacing not multiples of 3
     -- for example `split sep "--opt     desc"` == ["--opt", "  desc"]`
     -- but I don't want spaces at the beginning of the description
+    optLineNums = map fst optLocs
     xss = map (join sep . tail . split sep . reverse . rstrip . (xs !!)) optLineNums
     res = getMostFrequentWithCount $ map ((n +) . length) $ filter (not . isSpacesOnly) $ filter (not . null) xss
       where
@@ -193,17 +206,17 @@ isSeparatedAtOffset n sep x
 getDescriptionOffsetOptLineNumsPair :: String -> Maybe (Int, [Int])
 getDescriptionOffsetOptLineNumsPair s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
-  | length optLineNums <= 3 = Nothing
   | offset <= 3 = Nothing
-  | otherwise = Just (offset, optLineNums)
+  | otherwise = Just (offset, optLineNumsFixed)
   where
     optionOffsets = infoMsg "layout: Option offsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
     optLineNums = debugShow "layout: optLocsExcluded:" optLocsExcluded $ infoMsg "optLineNums" $ map fst optLocs
 
-    descriptionOffsetMay = getDescriptionOffsetFromOptionLocs s optLineNums (List.maximum optionOffsets)
+    (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs s optLocs
     offset = infoMsg "layout: Description offset:" $ Maybe.fromJust descriptionOffsetMay
+    optLineNumsFixed = filter (`notElem` map fst optLocsRemoved) optLineNums
 
 getDescriptionOffset :: String -> Maybe Int
 getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
@@ -220,7 +233,11 @@ getOptionDescriptionPairsFromLayout s
     xs = lines s
     optLineNumsSet = Set.fromList optLineNums
     -- More accomodating description line matching seems to work better...
-    descLineNumsWithoutOption = debugMsg "descLineNumsWithoutOption" [idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet]
+    descLineNumsWithoutOption =
+      debugMsg
+        "descLineNumsWithoutOption"
+        [ idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet
+        ]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
     descriptionLineWidthMax = infoMsg "descriptionLineLength at 93%: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
@@ -374,7 +391,7 @@ getHeadingIndices xs
   | count >= 2 || null indentations' = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == minval]
   | otherwise = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == secondMinval]
   where
-    indentations = debugMsg "indentations: " $ map (\x -> if null x then 80 else length . takeWhile (== ' ') . dropWhile (== '\n') $ x) xs
+    indentations = debugMsg "indentations: " $ map (\x -> if null x then 80 else length . takeWhile (== ' ') $ x) xs
     minval = List.minimum indentations
     count = length $ filter (== minval) indentations
     indentations' = filter (/= minval) indentations
@@ -382,17 +399,21 @@ getHeadingIndices xs
 
 splitByHeaders :: [String] -> [[String]]
 splitByHeaders xs
-  | any Utils.startsWithLongOption headings || any Utils.startsWithShortOrOldOption xs = [xs]
-  | otherwise = filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs headingIndices
+  | any Utils.startsWithLongOption headings || any Utils.startsWithShortOrOldOption headings = [xs]
+  | otherwise = map tail $ filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs headingIndices
   where
     headingIndices = debugMsg "headingIndices: " (getHeadingIndices xs)
     headings = map (xs !!) headingIndices
 
 preprocessBlockwise :: String -> [(String, String)]
-preprocessBlockwise content = concatMap preprocessAll contents
+preprocessBlockwise content = trace msg $ concatMap preprocessAll contents
   where
     xs = lines content
     contents = debugMsg "contents" $ map unlines $ splitByHeaders xs
+    msg =
+      if length contents > 1
+        then printf "[info] Block-wise processing (#blocks = %d)" (length contents)
+        else "[warn] No block-wise processing!"
 
 parseBlockwise :: String -> [Opt]
 parseBlockwise "" = []

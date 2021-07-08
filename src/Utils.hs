@@ -160,7 +160,7 @@ startsWithSingleDash s = case ss of
     ss = dropWhile (== ' ') s
 
 startsWithLongOption :: String -> Bool
-startsWithLongOption s = startsWithDoubleDash s && length ss >= 4 && ss !! 2 /= ' '
+startsWithLongOption s = startsWithDoubleDash s && length ss >= 3 && ss !! 2 /= ' '
   where
     ss = dropWhile (== ' ') s
 

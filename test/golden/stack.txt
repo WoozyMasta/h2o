@@ -142,6 +142,9 @@ Override project stack.yaml file (overrides any STACK_YAML environment variable)
 --lock-file  ::  ARG
 Specify how to interact with lock files. Default: read/write. If resolver is overridden: read-only
 
+--full  ::  '
+query Query general build information (experimental)
+
 
 
 
@@ -629,7 +632,7 @@ Show this help text
 
 
 (stack-uninstall) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-uninstall) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
@@ -1334,7 +1337,7 @@ Show this help text
 
 
 (stack-templates) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-templates) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
@@ -1484,7 +1487,7 @@ Show this help text
 
 
 (stack-ls) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-ls) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
@@ -1511,7 +1514,7 @@ Show this help text
 
 
 (stack-update) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-update) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
@@ -2072,7 +2075,7 @@ Show this help text
 
 
 (stack-purge) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-purge) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
@@ -2084,7 +2087,7 @@ Show this help text
 
 
 (stack-query) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-query) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
@@ -2096,7 +2099,7 @@ Show this help text
 
 
 (stack-list) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack
+Alternate URL or relative / absolute path for stack dependencies
 
 (stack-list) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots

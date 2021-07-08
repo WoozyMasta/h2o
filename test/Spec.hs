@@ -62,6 +62,12 @@ outdatedTests =
       test_parser
         "-i <file>, --input <file>   with comma, without = sign"
         (["-i", "--input"], "<file>", "with comma, without = sign"),
+      test_parser
+        "-o<ARG1> <ARG2>   baba"
+        (["-o"], "<ARG1> <ARG2>", "baba"),
+      test_parser
+        "-o{arg} --output{arg}    baba"
+        (["-o", "--output"], "{arg}", "baba"),
       -- examples in the wild
       test_parser
         "  -E, --show-ends          display $ at end of each line"
@@ -99,9 +105,7 @@ outdatedTests =
       ---- minimap2 ----
       test_parseMany
         "--cs[=STR]   output the cs tag; STR is 'short' (if absent) or 'long' [none]"
-        [ (["--cs"], "", "output the cs tag; STR is 'short' (if absent) or 'long' [none]"),
-          (["--cs"], "STR", "output the cs tag; STR is 'short' (if absent) or 'long' [none]")
-        ],
+        [(["--cs"], "[=STR]", "output the cs tag; STR is 'short' (if absent) or 'long' [none]")],
       test_parseMany
         " -O INT[,INT] gap open penalty [4,24]"
         [ (["-O"], "INT", "gap open penalty [4,24]"),
@@ -136,15 +140,17 @@ outdatedTests =
         " -template_type <String, `coding', `coding_and_optimal', `optimal'>\n    Discontiguous MegaBLAST template type"
         (["-template_type"], "<String, `coding', `coding_and_optimal', `optimal'>", "Discontiguous MegaBLAST template type"),
       ---- readseq ----
+      -- [FIXME] I'm unsure this behavior is okay...
       test_parseMany
         " -wid[th]=#            sequence line width"
-        [(["-wid"], "#", "sequence line width"), (["-width"], "#", "sequence line width")],
+        [(["-wid"], "[th]=#", "sequence line width")],
       test_parser
         "-extract=1000..9999  * extract all features, sequence from given base range"
         (["-extract"], "1000..9999", "* extract all features, sequence from given base range"),
       test_parseMany
+        -- [FIXME] I'm unsure this behavior is okay...
         "-feat[ures]=exon,CDS...   extract sequence of selected features"
-        [(["-feat"], "exon,CDS...", "extract sequence of selected features"), (["-features"], "exon,CDS...", "extract sequence of selected features")],
+        [(["-feat"], "[ures]=exon,CDS...", "extract sequence of selected features")],
       ---- bowtie2 ----
       test_parser
         "-t/--time          print wall-clock time taken by search phases"
@@ -161,18 +167,14 @@ outdatedTests =
         (["-d"], "STR:STR", "only include reads with tag STR and associated value STR [null]"),
       test_parseMany
         " --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form"
-        [ (["--input-fmt-option"], "OPT", "Specify a single input file format option in the form"),
-          (["--input-fmt-option"], "OPT=VAL", "Specify a single input file format option in the form")
-        ],
+        [(["--input-fmt-option"], "OPT[=VAL]", "Specify a single input file format option in the form")],
       test_parser
         "-@, --threads INT\n           Number of additional threads to use [0]"
         (["-@", "--threads"], "INT", "Number of additional threads to use [0]"),
       ---- bcftools ----
       test_parseMany
         "-S, --samples-file [^]<file>   file of samples to annotate (or exclude with \"^\" prefix)"
-        [ (["-S", "--samples-file"], "<file>", "file of samples to annotate (or exclude with \"^\" prefix)"),
-          (["-S", "--samples-file"], "^<file>", "file of samples to annotate (or exclude with \"^\" prefix)")
-        ],
+        [(["-S", "--samples-file"], "[^]<file>", "file of samples to annotate (or exclude with \"^\" prefix)")],
       ---- gridss ----
       test_parser "-o/--output: output VCF." (["-o", "--output"], "", "output VCF."),
       ---- minimap2 ----
@@ -197,7 +199,7 @@ outdatedTests =
         "--he[lp]   baba\n      !!!JUNK LINE!!!\n    -i <file>, --input=<file>   keke"
         [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
-        "--he[lp]\n       baba\n      !!!JUNK LINE!!!\n      !!!ANOTHER JUNK!!!\n       -i <file>, --input=<file>   keke"
+        "\n  --he[lp]\n                  baba\n          !!!JUNK LINE!!!\n          !!!ANOTHER JUNK!!!\n  -i <file>, --input=<file>   keke"
         [(["--help"], "", "baba"), (["--he"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
       test_parseMany
         "       -w INT\t Minimizer window size [2/3 of k-mer length]. A minimizer is the smallest k-mer in a window of w consecutive  k-"
@@ -360,10 +362,6 @@ unsupportedCases =
     testGroup
       "\n ============= Unsupported corner cases parse fail ============= "
       [ -- ========================================================================
-        -- Just shows test_parser behaves unexpectedly in single-line processing.
-        -- In reality layout information and/or following matches corrects it.
-        test_parser "-o<ARG1> <ARG2>   baba" (["-o"], "<ARG1> <ARG2>", "baba"),
-        test_parser "-o{arg} --output{arg}    baba" (["-o", "--output"], "{arg}", "baba"),
         -- Just shows optPart alone cannot handle if square brackets appear in option names.
         -- In reality parseWithOptPart invokes fallback and prodesses nicely.
         test_optPart

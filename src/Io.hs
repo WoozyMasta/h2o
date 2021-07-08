@@ -20,7 +20,7 @@ import GenBashCompletions (genBashScript, toBashScript)
 import GenFishCompletions (genFishScriptSimple, toFishScript)
 import GenJSON (toJSONText)
 import GenZshCompletions (genZshScript, toZshScript)
-import Layout (parseMany, preprocessAll)
+import Layout (parseBlockwise, preprocessBlockwise)
 import Subcommand (parseSubcommand)
 import qualified System.Exit
 import System.FilePath (takeBaseName)
@@ -41,7 +41,7 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
         else toJSONText <$> (pageToCommandIO name =<< getInputContent input False)
   | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
-  | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessAll <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> (getInputContent input =<< isBwrapAvailableIO)
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     name = case input of
@@ -53,13 +53,13 @@ run (C_ (Config (SubcommandInput name subname) outputFormat _ _ _ _ _)) =
   infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) toScriptSimple outputFormat cmdSubcmdName <$> optsIO
   where
     cmdSubcmdName = name ++ "-" ++ subname
-    optsIO = parseMany <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
+    optsIO = parseBlockwise <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
 run (C_ (Config (FileInput f) outputFormat _ _ _ _ isShallowOnly))
   | isShallowOnly = infoTrace "io: processing just the file" $ toScriptSimple outputFormat name <$> optsIO
   | otherwise = infoTrace "io: processing the file and more" $ toScriptFull outputFormat <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
-    optsIO = parseMany <$> getInputContent (FileInput f) False
+    optsIO = parseBlockwise <$> getInputContent (FileInput f) False
     contentIO = getInputContent (FileInput f) False
 
 getHelp :: Bool -> String -> IO Text
@@ -221,13 +221,13 @@ toCommandIOHelper name content isSandboxing = do
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
     uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
-    rootOptions = parseMany content
+    rootOptions = parseBlockwise content
     subcmdCandidates =
       infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
     toSubcmdOptPair useMan sub = do
       page <- if useMan then getManSub name (_cmd sub) else getHelpSub isSandboxing name (_cmd sub)
       let criteria = not (T.null page) && page /= T.pack content
-      return ((sub, parseMany (T.unpack page)), criteria)
+      return ((sub, parseBlockwise (T.unpack page)), criteria)
     pairsIO = do
       !isManAvailable <- not . T.null <$> getMan name
       mapM (toSubcmdOptPair isManAvailable) subcmdCandidates
@@ -240,7 +240,7 @@ toCommandSimple name content =
     then error ("Failed to extract information for a Command: " ++ name)
     else Command name name rootOptions []
   where
-    rootOptions = parseMany content
+    rootOptions = parseBlockwise content
 
 toJSONSimple :: String -> String -> Text
 toJSONSimple name content = toJSONText (toCommandSimple name content)

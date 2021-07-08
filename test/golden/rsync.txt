@@ -296,7 +296,7 @@ auto-ignore files in the same way CVS does
 add a file-filtering RULE
 
 -F  ::  
-same as --filter='dir-merge /.rsync-filter'
+same as --filter='dir-merge /.rsync-filter' repeated: --filter='- .rsync-filter'
 
 --exclude  ::  PATTERN
 exclude files matching PATTERN
@@ -319,10 +319,7 @@ all *-from/filter files are delimited by 0s
 --protect-args -s  ::  
 no space-splitting; wildcard chars only
 
---copy-as  ::  USER
-specify user & optional group for the copy
-
---copy-as  ::  USER:GROUP
+--copy-as  ::  USER[:GROUP]
 specify user & optional group for the copy
 
 --address  ::  ADDRESS
