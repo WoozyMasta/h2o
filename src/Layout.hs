@@ -22,22 +22,12 @@ type Location = (Int, Int)
 -- [TODO] memoise the calls
 -- https://stackoverflow.com/questions/3208258/memoization-in-haskell
 
--- | Get widLocation is defined byth when viewed with tabsize 8
-getWidth :: String -> Int
-getWidth s
-  | '\t' `elem` s = List.foldl' f 0 s
-  | otherwise = length s
-  where
-    n = 8
-    f acc '\t' = acc `div` n * n + n
-    f acc _ = acc + 1
-
 -- | a helper function
 _getNonblankLocationTemplate :: (String -> Bool) -> String -> [Location]
-_getNonblankLocationTemplate f s = [(i, getCol x) | (i, x) <- enumLines, f x]
+_getNonblankLocationTemplate f s = [(i, getHorizOffset x) | (i, x) <- enumLines, f x]
   where
     enumLines = zip [(0 :: Int) ..] (lines s)
-    getCol = getWidth . takeWhile (`elem` " \t")
+    getHorizOffset = length . takeWhile (== ' ')
 
 -- | Get location that starts with '-'
 -- λ> getOptionLocations " \n\n  \t  --option here"
@@ -81,7 +71,7 @@ startsWithDoubleDash s = case ss of
   [_] -> False
   c1 : c2 : _ -> c1 == '-' && c2 == '-'
   where
-    ss = dropWhile (`elem` " \t") s
+    ss = dropWhile (== ' ') s
 
 startsWithSingleDash :: String -> Bool
 startsWithSingleDash s = case ss of
@@ -89,7 +79,7 @@ startsWithSingleDash s = case ss of
   [_] -> False
   c1 : c2 : _ -> c1 == '-' && c2 /= '-'
   where
-    ss = dropWhile (`elem` " \t") s
+    ss = dropWhile (== ' ') s
 
 -- | get location of long options
 getLongOptionLocations :: String -> [Location]

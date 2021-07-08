@@ -432,9 +432,7 @@ layoutTests =
       testCase "convertTabsToSpaces 1" $
         convertTabsToSpaces 4 "aa\tb\tccddddddddd\t" @?= "aa  b   ccddddddddd \n",
       testCase "convertTabsToSpaces 2" $
-        convertTabsToSpaces 3 "\t\t\ta\tab\tabc\tkk" @?= "         a  ab abc   kk\n",
-      testCase "option location 1" $
-        getOptionLocations " \n\n  \t  --option here" @?= [(2, 10)]
+        convertTabsToSpaces 3 "\t\t\ta\tab\tabc\tkk" @?= "         a  ab abc   kk\n"
     ]
 
 miscTests :: TestTree
