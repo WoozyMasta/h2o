@@ -567,7 +567,7 @@ integratedGoldenTestsCommandInput =
     "Integrated tests"
     (map toTestTree commands)
   where
-    commands = ["h2o", "conda", "stack", "grep"]
+    commands = ["h2o", "conda", "stack"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
     conf name = C_ (Config (CommandInput name) Native False False False False False)
     runWithCommand name = toLazyByteString <$> run (conf name)
@@ -583,7 +583,7 @@ integratedGoldenTestsFileInput =
     "Integrated tests"
     (map toTestTree triples)
   where
-    commandNames = ["rsync"]
+    commandNames = ["rsync", "grep"]
     inputFiles = [printf "test/golden/%s-input.txt" name | name <- commandNames]
     outputFiles = [printf "test/golden/%s.txt" name | name <- commandNames]
     triples = zip3 commandNames inputFiles outputFiles
