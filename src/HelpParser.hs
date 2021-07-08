@@ -3,7 +3,7 @@
 module HelpParser where
 
 import qualified Data.List as List
-import Data.List.Extra (splitOn)
+import Data.List.Extra (splitOn, dropPrefix)
 import Data.String.Utils (strip)
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP
@@ -114,14 +114,19 @@ doubleDash :: ReadP OptName
 doubleDash = do
   _ <- count 2 dash
   let res = OptName "--" DoubleDashAlone
-  _ <- singleSpace <++ pure 'x' -- dummy 'x'
-  return res
+  s <- look
+  if null s || head s `elem` " "
+    then return res
+    else pfail
 
 singleDash :: ReadP OptName
 singleDash = do
   _ <- char '-'
-  _ <- singleSpace <++ pure 'x'
-  return $ OptName "-" SingleDashAlone
+  let res = OptName "-" SingleDashAlone
+  s <- look
+  if null s || head s `elem` " "
+    then return res
+    else pfail
 
 shortOptName :: ReadP OptName
 shortOptName = do
@@ -141,21 +146,17 @@ oldOptName = do
 optName :: ReadP OptName
 optName = longOptName <++ doubleDash <++ oldOptName <++ shortOptName <++ singleDash
 
-optArgs :: ReadP String
-optArgs = do
+optArg :: ReadP String
+optArg = do
   _ <- char '=' <++ singleSpace <++ pure ' '
   _ <- munch (== ' ')
-  args <- sepBy1 argWordBare argSep
-  if length args >= 5
-    then pfail
-    else return $ List.intercalate "," args
+  argWordBare
 
-optArgsInBraket :: ReadP String
-optArgsInBraket = do
+optArgInBraket :: ReadP String
+optArgInBraket = do
   _ <- char '=' <++ singleSpace <++ pure ' ' -- ok not to have a delimiter before
   _ <- munch (== ' ')
-  (s, _) <- gather $ sepBy1 argWordBracketed (char ',' +++ char ' ' +++ pure ' ')
-  return s
+  argWordBracketed
 
 skip :: ReadP a -> ReadP ()
 skip a = a *> pure ()
@@ -177,11 +178,12 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  args <- sepBy (optArgsInBraket <++ optArgs) (char ':' <++ char ' ' <++ char '-')
+  (s, args) <- gather $ sepBy (optArgInBraket <++ optArg) (char ':' <++ char ',' <++ char ' ' <++ char '-' <++ pure ' ')
   extra <- twoOrMoreDots <++ pure ""
+  let s' = strip $ dropPrefix "=" s
   if (length args == 1 && strip (head args) == "or") || length args >= 5
     then pfail
-    else return (name, unwords args ++ extra)
+    else return (name, s' ++ extra)
   where
     twoOrMoreDots = do
       c <- char '.'
