@@ -381,7 +381,12 @@ getHeadingIndices xs
     secondMinval = List.minimum indentations'
 
 splitByHeaders :: [String] -> [[String]]
-splitByHeaders xs = filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs $ debugMsg "headingIndices: " (getHeadingIndices xs)
+splitByHeaders xs
+  | any Utils.startsWithLongOption headings || any Utils.startsWithShortOrOldOption xs = [xs]
+  | otherwise = filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs headingIndices
+  where
+    headingIndices = debugMsg "headingIndices: " (getHeadingIndices xs)
+    headings = map (xs !!) headingIndices
 
 preprocessBlockwise :: String -> [(String, String)]
 preprocessBlockwise content = concatMap preprocessAll contents
