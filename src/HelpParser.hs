@@ -178,7 +178,7 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  (s, args) <- gather $ sepBy (optArgInBraket <++ optArg) (char ':' <++ char ',' <++ char ' ' <++ char '-' <++ pure ' ')
+  (s, args) <- gather $ sepBy (optArgInBraket <++ optArg) argSep
   extra <- twoOrMoreDots <++ pure ""
   let s' = strip $ dropPrefix "=" s
   if (length args == 1 && strip (head args) == "or") || length args >= 5
@@ -192,14 +192,27 @@ optNameArgPair = do
 
 optSep :: ReadP String
 optSep = do
-  s <- string "," <++ string "/" <++ string "|" <++ string " or " <++ string " "
+  s <- delimiter <++ string " "
   -- following is a workaround to handle the bug in squashOptions in Layout
-  _ <- char ',' <++ pure 'x'
   _ <- munch (== ' ')
   return s
+  where
+    modComma = do
+      s <- string ","
+      _ <- char ',' <++ pure 'x'
+      return s
+    delimiter = do
+      _ <- char ' ' <++ pure 'x'
+      modComma <++ string "/" <++ string "|" <++ string "or"
 
 argSep :: ReadP String
-argSep = string ","
+argSep = delimiter <++ string " " <++ pure " "
+  where
+    delimiter = do
+      _ <- char ' ' <++ pure ' '
+      s <- string ":" <++ string "," <++ string "-" <++ string "|"
+      _ <- char ' ' <++ pure ' '
+      return s
 
 surroundedBySquareBracket :: ReadP String
 surroundedBySquareBracket = do

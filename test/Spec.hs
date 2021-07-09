@@ -234,6 +234,9 @@ optPartTests =
       test_optPart "--out=ARG[,ARG2]  " (["--out"], "ARG[,ARG2]"),
       test_optPart "--out, -o ARG    " (["--out", "-o"], "ARG"),
       test_optPart "--out=ARG1:ARG2\n " (["--out"], "ARG1:ARG2"),
+      test_optPart "--out=baba/keke/koko" (["--out"], "baba/keke/koko"),
+      test_optPart "--out baba | keke | koko" (["--out"], "baba | keke | koko"),
+      test_optPart "-F or --preformat" (["-F", "--preformat"], ""),  -- seen in BSD man man
       test_optPart
         "-o FILE --out=FILE  "
         (["-o", "--out"], "FILE"),
@@ -302,6 +305,13 @@ optPartTests =
       test_optPart
         "    -u, --username USERNAME"
         (["-u", "--username"], "USERNAME"),
+      ---- softwareupdate ----
+      test_optPart
+        "-d | --download"
+        (["-d", "--download"], ""),
+      test_optPart
+        "--schedule on | off"
+        (["--schedule"], "on | off"),
       ---- blastn ----
       test_optPart
         " -template_type <String, `coding', `coding_and_optimal', `optimal'> \n "
