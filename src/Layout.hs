@@ -125,7 +125,9 @@ descOffsetWithCountSimple s optLocs
     offsetOverlaps = Set.toList $ Set.intersection (Set.fromList optOffsets) (Set.fromList descOffsets)
     descOverlapCounts = map (\overlap -> length . filter (== overlap) $ descOffsets) offsetOverlaps
     optOverlapCounts = map (\overlap -> length . filter (== overlap) $ optOffsets) offsetOverlaps
-    optOffsetsRemoved = [offset | (offset, optCount, descCount) <- zip3 offsetOverlaps optOverlapCounts descOverlapCounts, optCount <= descCount]
+    optOffsetsRemoved =
+      [ offset | (offset, optCount, descCount) <- zip3 offsetOverlaps optOverlapCounts descOverlapCounts, optCount <= descCount, 10 <= offset
+      ]
     optOffsets' = filter (`notElem` optOffsetsRemoved) optOffsets
     optLocsRemoved = infoMsg "[info] optLocsRemoved: " $ filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
     cols =
@@ -406,7 +408,7 @@ splitByHeaders xs
     headings = map (xs !!) headingIndices
 
 preprocessBlockwise :: String -> [(String, String)]
-preprocessBlockwise content = trace msg $ concatMap preprocessAll contents
+preprocessBlockwise content = trace decoratedMsg $ concatMap preprocessAll contents
   where
     xs = lines content
     contents = debugMsg "contents" $ map unlines $ splitByHeaders xs
@@ -414,6 +416,7 @@ preprocessBlockwise content = trace msg $ concatMap preprocessAll contents
       | null contents = "[warn] Found no block containing options!"
       | length contents == 1 = "[info] Found a single block with options"
       | otherwise = printf "[info] Block-wise processing (#blocks = %d)" (length contents)
+    decoratedMsg = "\n-------------------------------------------\n" ++ msg ++ "\n-------------------------------------------\n"
 
 parseBlockwise :: String -> [Opt]
 parseBlockwise "" = []
@@ -439,7 +442,11 @@ preprocessAll content = map (\(opt, desc) -> (trim opt, unwords $ words $ trim d
           paragraphs = map (getParagraph xs) droppedIdxRanges
           fallbackResults = infoMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
       Nothing ->
-        trace "[warn] ignore layout" $ preprocessAllFallback content
+        trace
+          "\n===============================================\n\
+          \[warn] ignore layout: processing with fallback \n\
+          \===============================================\n"
+          $ preprocessAllFallback content
 
 parseMany :: String -> [Opt]
 parseMany "" = []
