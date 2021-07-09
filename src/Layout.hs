@@ -127,7 +127,7 @@ descOffsetWithCountSimple s optLocs
     optOverlapCounts = map (\overlap -> length . filter (== overlap) $ optOffsets) offsetOverlaps
     optOffsetsRemoved = [offset | (offset, optCount, descCount) <- zip3 offsetOverlaps optOverlapCounts descOverlapCounts, optCount <= descCount]
     optOffsets' = filter (`notElem` optOffsetsRemoved) optOffsets
-    optLocsRemoved = filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
+    optLocsRemoved = infoMsg "[info] optLocsRemoved: " $ filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
     cols =
       [ x | (r, x) <- descLocs,
             -- description's offset is equal (rare case!) or greater than option's
@@ -206,7 +206,7 @@ isSeparatedAtOffset n sep x
 getDescriptionOffsetOptLineNumsPair :: String -> Maybe (Int, [Int])
 getDescriptionOffsetOptLineNumsPair s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
-  | offset <= 3 = Nothing
+  | offset <= 3 || null optLineNumsFixed = Nothing
   | otherwise = Just (offset, optLineNumsFixed)
   where
     optionOffsets = infoMsg "layout: Option offsets:" $ getOptionOffsets s
@@ -216,7 +216,7 @@ getDescriptionOffsetOptLineNumsPair s
 
     (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs s optLocs
     offset = infoMsg "layout: Description offset:" $ Maybe.fromJust descriptionOffsetMay
-    optLineNumsFixed = filter (`notElem` map fst optLocsRemoved) optLineNums
+    optLineNumsFixed = infoMsg "layout: optLineNumsFixed" $ filter (`notElem` map fst optLocsRemoved) optLineNums
 
 getDescriptionOffset :: String -> Maybe Int
 getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
@@ -225,7 +225,7 @@ getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
 -- line index ranges that is uncaught in the process.
 getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout s
-  | Maybe.isNothing tupMay = Nothing
+  | Maybe.isNothing tupMay || null res = Nothing
   | otherwise = Just $ infoShow "Dropped option indices:" dropped (res, dropped)
   where
     tupMay = getDescriptionOffsetOptLineNumsPair s
@@ -410,10 +410,10 @@ preprocessBlockwise content = trace msg $ concatMap preprocessAll contents
   where
     xs = lines content
     contents = debugMsg "contents" $ map unlines $ splitByHeaders xs
-    msg =
-      if length contents > 1
-        then printf "[info] Block-wise processing (#blocks = %d)" (length contents)
-        else "[warn] No block-wise processing!"
+    msg
+      | null contents = "[warn] Found no block containing options!"
+      | length contents == 1 = "[info] Found a single block with options"
+      | otherwise = printf "[info] Block-wise processing (#blocks = %d)" (length contents)
 
 parseBlockwise :: String -> [Opt]
 parseBlockwise "" = []
