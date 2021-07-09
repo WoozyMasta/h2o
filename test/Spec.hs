@@ -14,7 +14,8 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser (optName, optPart)
 import Io (run)
-import Layout (getOptionLocations, makeRanges, mergeRanges, mergeRangesFast, parseMany)
+import Layout (makeRanges, mergeRanges, mergeRangesFast, parseMany)
+import qualified Postprocess
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
 import Test.Tasty
@@ -236,7 +237,7 @@ optPartTests =
       test_optPart "--out=ARG1:ARG2\n " (["--out"], "ARG1:ARG2"),
       test_optPart "--out=baba/keke/koko" (["--out"], "baba/keke/koko"),
       test_optPart "--out baba | keke | koko" (["--out"], "baba | keke | koko"),
-      test_optPart "-F or --preformat" (["-F", "--preformat"], ""),  -- seen in BSD man man
+      test_optPart "-F or --preformat" (["-F", "--preformat"], ""), -- seen in BSD man man
       test_optPart
         "-o FILE --out=FILE  "
         (["-o", "--out"], "FILE"),
@@ -476,7 +477,10 @@ miscTests =
       testCase "truncateAfterPeriod 3" $
         truncateAfterPeriod "baba... keke" @?= "baba...",
       testCase "truncateAfterPeriod 4" $
-        truncateAfterPeriod "baba .. keke" @?= "baba .."
+        truncateAfterPeriod "baba .. keke" @?= "baba ..",
+      testCase "fixOpt 1" $
+        Postprocess.fixOpt (Opt [OptName "-Ttagsfile" OldType, OptName "--tag-file" LongType] "tagsfile" "Specifies a tags file...")
+          @?= Opt [OptName "-T" ShortType, OptName "--tag-file" LongType] "tagsfile" "Specifies a tags file..."
     ]
 
 shellCompTests :: TestTree

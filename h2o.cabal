@@ -33,6 +33,7 @@ library
       HelpParser
       Io
       Layout
+      Postprocess
       Subcommand
       Type
       Utils

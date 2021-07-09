@@ -21,6 +21,7 @@ import GenFishCompletions (genFishScriptSimple, toFishScript)
 import GenJSON (toJSONText)
 import GenZshCompletions (genZshScript, toZshScript)
 import Layout (parseBlockwise, preprocessBlockwise)
+import qualified Postprocess
 import Subcommand (parseSubcommand)
 import qualified System.Exit
 import System.FilePath (takeBaseName)
@@ -139,7 +140,7 @@ getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, altOptions]
 getMan :: String -> IO Text
 getMan name = do
   (exitCode, stdout, _) <- Process.readProcess cp
-    -- The exit code is actually thrown when piped to others...
+  -- The exit code is actually thrown when piped to others...
   if exitCode == System.Exit.ExitFailure 16
     then return ""
     else return . TL.toStrict . TLE.decodeUtf8 $ stdout
@@ -216,7 +217,7 @@ toCommandIOHelper name content isSandboxing = do
   subcmdOptsPairs <- subcmdOptsPairsM
   if null rootOptions && null subcmdOptsPairs
     then error ("Failed to extract information for a Command: " ++ name)
-    else return $ toCommand name name rootOptions subcmdOptsPairs
+    else return $ Postprocess.fixCommand $ toCommand name name rootOptions subcmdOptsPairs
   where
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
@@ -238,7 +239,7 @@ toCommandSimple :: String -> String -> Command
 toCommandSimple name content =
   if null rootOptions
     then error ("Failed to extract information for a Command: " ++ name)
-    else Command name name rootOptions []
+    else Postprocess.fixCommand $ Command name name rootOptions []
   where
     rootOptions = parseBlockwise content
 
