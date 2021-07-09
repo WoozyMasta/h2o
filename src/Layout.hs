@@ -241,7 +241,7 @@ getOptionDescriptionPairsFromLayout s
         [ idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet
         ]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
-    descriptionLineWidthMax = infoMsg "descriptionLineLength at 93%: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths
+    descriptionLineWidthTop10Percent = infoMsg "descriptionLineLength at 93%: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
 
     -- The line must be long when description starts at the option line and continues to the next line.
@@ -250,9 +250,9 @@ getOptionDescriptionPairsFromLayout s
       | not (isOptionLine idx) = False
       | otherwise =
         (not (isOptionLine (idx + 1)) && not (isDescriptionOnly (idx + 1)))
-          || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descriptionLineWidthMax))
-          || (not . null . parseLine $ (xs !! idx))
-          || isOptionAndDescriptionLine (idx + 1)
+          || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descriptionLineWidthTop10Percent))
+          || isOptionLine (idx + 1)
+          || (not . null . parseLine $ (xs !! idx)) && (length (xs !! idx) + 25 > descriptionLineWidthTop10Percent)
       where
         isOptionLine i = i `Set.member` optLineNumsSet
         isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
