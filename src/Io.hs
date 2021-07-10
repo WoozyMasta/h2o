@@ -53,7 +53,9 @@ run (C_ (Config input@(CommandInput name) format _ _ _ _ isShallowOnly))
   | isShallowOnly = toScript format . pageToCommandSimple name <$> (getInputContent input =<< isBwrapAvailableIO)
   | otherwise = toScript format <$> toCommandIO name
 run (C_ (Config input@(SubcommandInput name subname) format _ _ _ _ _)) =
-  toScript format . pageToCommandSimple name <$> (getInputContent input =<< isBwrapAvailableIO)
+  toScript format . pageToCommandSimple nameSubname <$> (getInputContent input =<< isBwrapAvailableIO)
+  where
+    nameSubname = name ++ "-" ++ subname
 
 getHelp :: Bool -> String -> IO Text
 getHelp True = infoTrace ("sandboxed" :: String) getHelpSandboxed
