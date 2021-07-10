@@ -33,13 +33,7 @@ import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainsOptions, mayCo
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
-  | isExportingJSON = infoTrace "io: JSON output" $ case input of
-    (CommandInput n) -> toJSONText <$> toCommandIO n
-    (SubcommandInput n subn) -> toJSONText . toCommandSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
-    (FileInput _) ->
-      if isShallowOnly
-        then toJSONText . toCommandSimple name <$> getInputContent input False
-        else toJSONText <$> (pageToCommandIO name =<< getInputContent input False)
+  | isExportingJSON = infoTrace "io: JSON output" $ run (C_ (Config input Json False False False False isShallowOnly))
   | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> (getInputContent input =<< isBwrapAvailableIO)
@@ -49,15 +43,17 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       CommandInput n -> n
       SubcommandInput n _ -> n
       FileInput f -> takeBaseName f
-run (C_ (Config (CommandInput name) format _ _ _ _ _)) = toScript format <$> toCommandIO name
-run (C_ (Config (SubcommandInput name subname) format _ _ _ _ _)) =
-  infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) $ toScript format <$> toCommandIO (name ++ "-" ++ subname)
-run (C_ (Config (FileInput f) format _ _ _ _ isShallowOnly))
-  | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . toCommandSimple name <$> contentIO
+run (C_ (Config input@(FileInput f) format _ _ _ _ isShallowOnly))
+  | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . pageToCommandSimple name <$> contentIO
   | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
-    contentIO = getInputContent (FileInput f) False
+    contentIO = getInputContent input False
+run (C_ (Config input@(CommandInput name) format _ _ _ _ isShallowOnly))
+  | isShallowOnly = toScript format . pageToCommandSimple name <$> (getInputContent input =<< isBwrapAvailableIO)
+  | otherwise = toScript format <$> toCommandIO name
+run (C_ (Config input@(SubcommandInput name subname) format _ _ _ _ _)) =
+  toScript format . pageToCommandSimple name <$> (getInputContent input =<< isBwrapAvailableIO)
 
 getHelp :: Bool -> String -> IO Text
 getHelp True = infoTrace ("sandboxed" :: String) getHelpSandboxed
@@ -178,6 +174,7 @@ toScript :: OutputFormat -> Command -> Text
 toScript Fish cmd = toFishScript cmd
 toScript Zsh cmd = toZshScript cmd
 toScript Bash cmd = toBashScript cmd
+toScript Json cmd = toJSONText cmd
 toScript Native (Command name _ rootOptions subs)
   | null subs = warnTrace "Ignore subcommands" $ T.unlines $ map (T.pack . show) rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
@@ -224,8 +221,8 @@ toCommandIOHelper name content isSandboxing = do
     subcmdOptsPairsM = map fst . filter snd <$> pairsIO
 
 -- Convert to Command given command name and text
-toCommandSimple :: String -> String -> Command
-toCommandSimple name content =
+pageToCommandSimple :: String -> String -> Command
+pageToCommandSimple name content =
   if null rootOptions
     then error ("Failed to extract information for a Command: " ++ name)
     else Postprocess.fixCommand $ Command name name rootOptions []

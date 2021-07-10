@@ -27,13 +27,14 @@ data Config = Config
 
 data ConfigOrVersion = Version | C_ Config
 
-data OutputFormat = Bash | Zsh | Fish | Native deriving (Eq, Show)
+data OutputFormat = Bash | Zsh | Fish | Json | Native deriving (Eq, Show)
 
 toOutputFormat :: String -> OutputFormat
 toOutputFormat s
   | s' == "bash" = Bash
   | s' == "zsh" = Zsh
   | s' == "fish" = Fish
+  | s' == "json" = Json
   | otherwise = Native
   where
     s' = T.toLower . T.pack $ s
@@ -87,7 +88,7 @@ config =
                 )
             <*> switch
               ( long "json"
-                  <> help "Show parsed results in JSON"
+                  <> help "[Deprecated] Show parsed results in JSON. Use --format json instead."
               )
             <*> switch
               ( long "convert-tabs-to-spaces"
