@@ -16,10 +16,10 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
-import GenBashCompletions (genBashScript, toBashScript)
-import GenFishCompletions (genFishScriptSimple, toFishScript)
+import GenBashCompletions (toBashScript)
+import GenFishCompletions (toFishScript)
 import GenJSON (toJSONText)
-import GenZshCompletions (genZshScript, toZshScript)
+import GenZshCompletions (toZshScript)
 import Layout (parseBlockwise, preprocessBlockwise)
 import qualified Postprocess
 import Subcommand (parseSubcommand)
@@ -35,10 +35,10 @@ run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = infoTrace "io: JSON output" $ case input of
     (CommandInput n) -> toJSONText <$> toCommandIO n
-    (SubcommandInput n subn) -> toJSONSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
+    (SubcommandInput n subn) -> toJSONText . toCommandSimple (n ++ "-" ++ subn) <$> (getInputContent input =<< isBwrapAvailableIO)
     (FileInput _) ->
       if isShallowOnly
-        then toJSONSimple name <$> getInputContent input False
+        then toJSONText . toCommandSimple name <$> getInputContent input False
         else toJSONText <$> (pageToCommandIO name =<< getInputContent input False)
   | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
@@ -49,18 +49,14 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       CommandInput n -> n
       SubcommandInput n _ -> n
       FileInput f -> takeBaseName f
-run (C_ (Config (CommandInput name) outputFormat _ _ _ _ _)) = toScriptFull outputFormat <$> toCommandIO name
-run (C_ (Config (SubcommandInput name subname) outputFormat _ _ _ _ _)) =
-  infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) toScriptSimple outputFormat cmdSubcmdName <$> optsIO
-  where
-    cmdSubcmdName = name ++ "-" ++ subname
-    optsIO = parseBlockwise <$> (getInputContent (SubcommandInput name subname) =<< isBwrapAvailableIO)
-run (C_ (Config (FileInput f) outputFormat _ _ _ _ isShallowOnly))
-  | isShallowOnly = infoTrace "io: processing just the file" $ toScriptSimple outputFormat name <$> optsIO
-  | otherwise = infoTrace "io: processing the file and more" $ toScriptFull outputFormat <$> (pageToCommandIO name =<< contentIO)
+run (C_ (Config (CommandInput name) format _ _ _ _ _)) = toScript format <$> toCommandIO name
+run (C_ (Config (SubcommandInput name subname) format _ _ _ _ _)) =
+  infoTrace (printf "io: processing subcommand-level options (%s, %s)" name subname) $ toScript format <$> toCommandIO (name ++ "-" ++ subname)
+run (C_ (Config (FileInput f) format _ _ _ _ isShallowOnly))
+  | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . toCommandSimple name <$> contentIO
+  | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
-    optsIO = parseBlockwise <$> getInputContent (FileInput f) False
     contentIO = getInputContent (FileInput f) False
 
 getHelp :: Bool -> String -> IO Text
@@ -158,20 +154,14 @@ getManAndHelp isSandboxing name = do
         else infoTrace "io: Using help" $ return content2
     else infoTrace "io: Using manpage" $ return content
 
-toScriptSimple :: OutputFormat -> String -> [Opt] -> Text
-toScriptSimple Fish name opts = genFishScriptSimple name opts
-toScriptSimple Zsh name opts = genZshScript name opts
-toScriptSimple Bash name opts = genBashScript name opts
-toScriptSimple _ _ opts = T.unlines $ map (T.pack . show) opts
+toScriptRootOptions :: [Opt] -> Text
+toScriptRootOptions = T.unlines . map (T.pack . show)
 
-toScriptRootOptions :: OutputFormat -> String -> [String] -> [Opt] -> Text
-toScriptRootOptions outputFormat name _ = toScriptSimple outputFormat name
+toScriptSubcommands :: [Command] -> Text
+toScriptSubcommands = T.unlines . map (T.pack . show . asSubcommand)
 
-toScriptSubcommands :: OutputFormat -> String -> [Command] -> Text
-toScriptSubcommands _ _ subcmds = T.unlines $ map (T.pack . show . asSubcommand) subcmds
-
-toScriptSubcommandOptions :: OutputFormat -> String -> Command -> Text
-toScriptSubcommandOptions _ name (Command subname _ opts _) =
+toScriptSubcommandOptions :: String -> Command -> Text
+toScriptSubcommandOptions name (Command subname _ opts _) =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
     prefix = T.pack $ printf "(%s-%s) " name subname
@@ -184,18 +174,17 @@ getInputContent (CommandInput name) isSandboxing =
 getInputContent (FileInput f) _ =
   T.unpack . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
 
-toScriptFull :: OutputFormat -> Command -> Text
-toScriptFull Fish cmd = toFishScript cmd
-toScriptFull Zsh cmd = toZshScript cmd
-toScriptFull Bash cmd = toBashScript cmd
-toScriptFull outputFormat (Command name _ rootOptions subs)
-  | null subnames = warnTrace "Ignore subcommands" $ toScriptSimple outputFormat name rootOptions
+toScript :: OutputFormat -> Command -> Text
+toScript Fish cmd = toFishScript cmd
+toScript Zsh cmd = toZshScript cmd
+toScript Bash cmd = toBashScript cmd
+toScript Native (Command name _ rootOptions subs)
+  | null subs = warnTrace "Ignore subcommands" $ T.unlines $ map (T.pack . show) rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
   where
-    subnames = map _name subs
-    rootOptScript = toScriptRootOptions outputFormat name subnames rootOptions
-    subcommandScript = toScriptSubcommands outputFormat name subs
-    subcommandOptionScripts = [toScriptSubcommandOptions outputFormat name subcmd | subcmd <- subs]
+    rootOptScript = toScriptRootOptions rootOptions
+    subcommandScript = toScriptSubcommands subs
+    subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
@@ -242,9 +231,6 @@ toCommandSimple name content =
     else Postprocess.fixCommand $ Command name name rootOptions []
   where
     rootOptions = parseBlockwise content
-
-toJSONSimple :: String -> String -> Text
-toJSONSimple name content = toJSONText (toCommandSimple name content)
 
 listSubcommandsIO :: String -> IO [String]
 listSubcommandsIO name = getSubnames <$> toCommandIO name
