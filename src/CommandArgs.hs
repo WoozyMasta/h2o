@@ -80,10 +80,10 @@ config =
             <*> ( toOutputFormat
                     <$> strOption
                       ( long "format"
-                          <> metavar "{bash|zsh|fish|native}"
+                          <> metavar "{bash|zsh|fish|json|native}"
                           <> showDefault
                           <> value "native"
-                          <> help "Select output format of the completion script (bash|zsh|fish|native)"
+                          <> help "Select output format of the completion script (json|bash|zsh|fish|json|native)"
                       )
                 )
             <*> switch

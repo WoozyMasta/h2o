@@ -7,11 +7,11 @@ Extract CLI options form the text file.
 -s --subcommand  ::  <string-string>
 Extract CLI options from the subcommand-specific help text or man page. Enter a command-subcommand pair, like git-log, as the argument.
 
---format  ::  {bash|zsh|fish|native}
-Select output format of the completion script (bash|zsh|fish|native) (default: "native")
+--format  ::  {bash|zsh|fish|json|native}
+Select output format of the completion script (json|bash|zsh|fish|json|native) (default: "native")
 
 --json  ::  
-Show parsed results in JSON
+[Deprecated] Show parsed results in JSON. Use --format json instead.
 
 --convert-tabs-to-spaces  ::  
 Convert tabs to spaces
