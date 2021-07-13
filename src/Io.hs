@@ -224,7 +224,7 @@ toCommandIOHelper name content isSandboxing = do
 
 isManAvailableIO :: String -> IO Bool
 isManAvailableIO name = do
-  (exitCode, stdout, _) <- Process.readProcess cp
+  (exitCode, _, _) <- Process.readProcess cp
   -- The exit code is actually thrown when piped to others...
   return $ exitCode == System.Exit.ExitFailure 0
   where
