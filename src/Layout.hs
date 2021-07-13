@@ -251,11 +251,13 @@ getOptionDescriptionPairsFromLayout s
       | otherwise =
         (not (isOptionLine (idx + 1)) && not (isDescriptionOnly (idx + 1)))
           || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descriptionLineWidthTop10Percent))
-          || isOptionLine (idx + 1)
-          || (not . null . parseLine $ (xs !! idx)) && (length (xs !! idx) + 25 > descriptionLineWidthTop10Percent)
+          || isOptionLine (idx + 1) && offset >= 2 && last optSegment == ' ' && length (words descSegment) >= 2      -- [FIXME] too heuristic
+          || isParsedAsOptDescLine && (length (xs !! idx) + 25 > descriptionLineWidthTop10Percent)
       where
         isOptionLine i = i `Set.member` optLineNumsSet
         isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
+        (optSegment, descSegment) = splitAt offset (xs !! idx)
+        isParsedAsOptDescLine = not . null . parseLine $ (xs !! idx)
 
     descLineNumsWithOption =
       infoMsg

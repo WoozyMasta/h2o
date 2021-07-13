@@ -191,8 +191,8 @@ outdatedTests =
         (["--tmux"], "(Long beta testing)", "Use tmux for output."),
       ----------------
       test_parseMany
-        "    --help                      baba\n    -i <file>, --input=<file>   keke"
-        [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
+        "    --help                      baba is here\n    -i <file>, --input=<file>   keke is there"
+        [(["--help"], "", "baba is here"), (["-i", "--input"], "<file>", "keke is there")],
       test_parseMany
         "--help   baba\n      !!!JUNK LINE!!!\n    -i <file>, --input=<file>   keke"
         [(["--help"], "", "baba"), (["-i", "--input"], "<file>", "keke")],
