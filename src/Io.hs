@@ -218,9 +218,17 @@ toCommandIOHelper name content isSandboxing = do
       let criteria = not (T.null page) && page /= T.pack content
       return ((sub, parseBlockwise (T.unpack page)), criteria)
     pairsIO = do
-      !isManAvailable <- not . T.null <$> getMan name
+      !isManAvailable <- isManAvailableIO name
       mapM (toSubcmdOptPair isManAvailable) subcmdCandidates
     subcmdOptsPairsM = map fst . filter snd <$> pairsIO
+
+isManAvailableIO :: String -> IO Bool
+isManAvailableIO name = do
+  (exitCode, stdout, _) <- Process.readProcess cp
+  -- The exit code is actually thrown when piped to others...
+  return $ exitCode == System.Exit.ExitFailure 0
+  where
+    cp = Process.shell $ printf "man -w %s" name
 
 -- Convert to Command given command name and text
 pageToCommandSimple :: String -> String -> Command
