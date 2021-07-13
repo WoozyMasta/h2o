@@ -138,8 +138,9 @@ shortOptName = do
 oldOptName :: ReadP OptName
 oldOptName = do
   _ <- dash
-  xs <- optWord
-  let res = OptName ('-' : xs) OldType
+  x <- alphanum
+  xs <- munch1 isAllowedOptChar
+  let res = OptName ('-' : x : xs) OldType
   return res
 
 optName :: ReadP OptName
