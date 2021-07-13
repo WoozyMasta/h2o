@@ -138,9 +138,8 @@ shortOptName = do
 oldOptName :: ReadP OptName
 oldOptName = do
   _ <- dash
-  x <- alphanum
   xs <- optWord
-  let res = OptName ('-' : x : xs) OldType
+  let res = OptName ('-' : xs) OldType
   return res
 
 optName :: ReadP OptName
