@@ -128,8 +128,8 @@ getHelpSandboxed name = getHelpTemplate "bwrap" [options, altOptions]
 getHelpSubSandboxed :: String -> String -> IO Text
 getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, altOptions]
   where
-    options = bwrapArgsBase ++ [name, subname, "--help"]
-    altOptions = bwrapArgsBase ++ [name, "help", subname]
+    options = bwrapArgsBase ++ [name, "help", subname]
+    altOptions = bwrapArgsBase ++ [name, subname, "--help"]
 
 getMan :: String -> IO Text
 getMan name = do
