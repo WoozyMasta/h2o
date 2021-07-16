@@ -51,7 +51,6 @@ library
     , formatting
     , optparse-applicative
     , ordered-containers
-    , parallel-io
     , text
     , typed-process
   default-language: Haskell2010
@@ -74,7 +73,6 @@ executable h2o
     , h2o
     , optparse-applicative
     , ordered-containers
-    , parallel-io
     , text
     , typed-process
   default-language: Haskell2010
@@ -99,7 +97,6 @@ test-suite h2o-test
     , hedgehog
     , optparse-applicative
     , ordered-containers
-    , parallel-io
     , tasty
     , tasty-expected-failure
     , tasty-golden

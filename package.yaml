@@ -30,7 +30,6 @@ dependencies:
   - filepath
   - typed-process
   - ordered-containers
-  - parallel-io
 
 library:
   source-dirs: src

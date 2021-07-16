@@ -7,11 +7,8 @@ module Io where
 
 import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Constants
-import Control.Concurrent.ParallelIO.Global (parallelFirst)
 import Control.Exception (SomeException, try)
-import qualified Data.Either as Either
 import qualified Data.Map.Ordered as OMap
-import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
@@ -85,14 +82,12 @@ getManAndHelpSub isSandboxing name subname = do
 getHelpTemplate :: String -> [[String]] -> IO Text
 getHelpTemplate _ [] = return ""
 getHelpTemplate name (args : argsBag) = do
-  mx <- try (fetchHelpInfo name args) :: IO (Either SomeException (Maybe Text))
-  if Either.isLeft mx
-    then return ""
-    else
-      maybe
-        (fmap (Maybe.fromMaybe "") $ parallelFirst $ map (fetchHelpInfo name) argsBag)
-        return
-        (Either.fromRight Nothing mx)
+  emx <- try (fetchHelpInfo name args) :: IO (Either SomeException (Maybe Text))
+  case emx of
+    Left _ -> return ""
+    Right mx -> case mx of
+      Just x -> return x
+      Nothing -> getHelpTemplate name argsBag
 
 fetchHelpInfo :: String -> [String] -> IO (Maybe Text)
 fetchHelpInfo name args = do
@@ -101,8 +96,8 @@ fetchHelpInfo name args = do
   let stderrText = TL.toStrict . TLE.decodeUtf8 $ stderr
   let res
         | isCommandNotFound name exitCode stderrText = error "CommandNotFound"
-        | mayContainUseful stdoutText = Utils.debugTrace ("Using stdout: " ++ unwords (name:args)) $ Just stdoutText
-        | mayContainUseful stderrText = Utils.debugTrace ("Using stderr: " ++ unwords (name:args)) $ Just stderrText
+        | mayContainUseful stdoutText = Utils.debugTrace ("Using stdout: " ++ unwords (name : args)) $ Just stdoutText
+        | mayContainUseful stderrText = Utils.debugTrace ("Using stderr: " ++ unwords (name : args)) $ Just stderrText
         | otherwise = Nothing
   return res
 
@@ -135,7 +130,6 @@ getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, alt1, alt2,
     alt1 = bwrapArgsBase ++ [name, subname, "--help"]
     alt2 = bwrapArgsBase ++ [name, subname, "-help"]
     alt3 = bwrapArgsBase ++ [name, subname, "-h"]
-
 
 getMan :: String -> IO Text
 getMan name = do
@@ -193,7 +187,7 @@ toScript Native (Command name _ rootOptions subs)
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
-isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcess (Process.shell "exit 16")
+isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcess (Process.shell "exit 1")
 
 toCommandIO :: String -> IO Command
 toCommandIO name = do
