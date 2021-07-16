@@ -60,14 +60,25 @@ subcommand :: ReadP Subcommand
 subcommand = do
   skipSpaces
   cmd <- subcommandWord
-  skipSpaces
-  _ <- char ':' <++ pure 'x'
-  skipSpaces
+  _ <- subcommandSep
   ss <- sepBy1 word singleSpace
-  skip (munch (`elem` " \t"))
+  _ <- munch (== ' ')
   skip newline <++ eof
   let desc = unwords ss
   return (Subcommand cmd desc)
+
+subcommandSep :: ReadP String
+subcommandSep = colonBased <++ spaceBased
+  where
+    colonBased = do
+      skipSpaces
+      s <- string ":"
+      skipSpaces
+      return s
+    spaceBased = do
+      s <- string "   "
+      skipSpaces
+      return s
 
 removeOptionLine :: String -> Bool
 removeOptionLine s =
