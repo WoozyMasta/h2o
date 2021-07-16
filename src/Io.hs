@@ -226,7 +226,7 @@ isManAvailableIO :: String -> IO Bool
 isManAvailableIO name = do
   (exitCode, _, _) <- Process.readProcess cp
   -- The exit code is actually thrown when piped to others...
-  return $ exitCode == System.Exit.ExitFailure 0
+  return $ exitCode == System.Exit.ExitSuccess
   where
     cp = Process.shell $ printf "man -w %s" name
 
