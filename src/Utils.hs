@@ -175,7 +175,7 @@ mayContainOptions = (>= 2) . length . filter (T.isPrefixOf "-" . T.stripStart)
 
 -- | Another speculative criteria for non-critical purposes
 mayContainSubcommands :: [Text] -> Bool
-mayContainSubcommands = (>= 4) . length . filter ((>= 2) . length . T.words) . filter (T.isPrefixOf " ") . filter (not . T.null)
+mayContainSubcommands = (>= 4) . length . filter ((>= 2) . length . T.words) . filter (\t -> " " `T.isPrefixOf` t || "\t" `T.isPrefixOf` t) . filter (not . T.null)
 
 getTopLevelHeadingIndices :: [Text] -> [Int]
 getTopLevelHeadingIndices xs
