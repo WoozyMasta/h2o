@@ -26,7 +26,14 @@ h2o --file ls.txt --format fish > ls.fish
 ```
 
 
-## [Linux only] Sandboxing
+## TODOs
+
+- [ ] Improve parsing to support bioinformatics tools as many as possible
+- [ ] Improve extraction of subcommand descriptions
+- [ ] Fix occasional error in sandboxing
+
+
+## [Linux only] Sandboxing (!!TEMPORARY DISABLED!!)
 
 H2O may call arbitrary programs in your system to get help information so running them in a sandboxed environment is the way to go. Since v0.1.8 H2O internally calls commands using [bubblewrap](https://github.com/containers/bubblewrap) with following:
 
@@ -35,12 +42,6 @@ bwrap --ro-bind / / --dev /dev --tmpfs --unshare-all <command-name> --help
 ```
 
 Then `<command-name>` can neither connect to the network or write to your filesystem. So please consider installing bubblewrap to your system. H2O automatically uses it if avaialble.
-
-
-## TODOs
-
-- [ ] Improve parsing to support bioinformatics tools as many as possible
-- [ ] Improve extraction of subcommand descriptions
 
 
 ## Related projects
