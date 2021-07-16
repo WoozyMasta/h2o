@@ -170,12 +170,47 @@ startsWithShortOrOldOption s = startsWithDash s && length ss >= 2 && ss !! 1 /= 
     ss = dropWhile (== ' ') s
 
 -- | A speculative criteria for non-critical purposes
-mayContainsOptions :: Text -> Bool
-mayContainsOptions = (>= 2) . List.foldr (max . length) 0 . List.group . map (startsWithDash . T.unpack) . T.lines
+mayContainOptions :: [Text] -> Bool
+mayContainOptions = (>= 2) . length . filter (T.isPrefixOf "-" . T.stripStart)
 
 -- | Another speculative criteria for non-critical purposes
-mayContainsSubcommands :: Text -> Bool
-mayContainsSubcommands = (>= 4) . List.foldr (max . length) 0 . List.group . map (startsWithChar ' ' . T.unpack) . T.lines
+mayContainSubcommands :: [Text] -> Bool
+mayContainSubcommands = (>= 4) . length . filter ((>= 2) . length . T.words) . filter (T.isPrefixOf " ") . filter (not . T.null)
+
+getTopLevelHeadingIndices :: [Text] -> [Int]
+getTopLevelHeadingIndices xs
+  | null xs = []
+  | otherwise = [idx | (idx, indentation) <- zip [0 ..] indentations, indentation == minval]
+  where
+    indentations = map (\x -> if T.null x then 80 else (T.length . T.takeWhile (== ' ')) x) xs
+    minval = List.minimum indentations
+
+splitByTopHeaders :: Text -> [Text]
+splitByTopHeaders text
+  | T.null text = []
+  | any startsWithLongOption headingsStr || any startsWithShortOrOldOption headingsStr = [text]
+  | otherwise = map T.unlines $ splitsAt xs headingIndices
+  where
+    xs = T.lines text
+    headingIndices = getTopLevelHeadingIndices xs
+    headings = map (xs !!) headingIndices
+    headingsStr = map T.unpack headings
+
+takeAfterUsage :: Text -> Text
+takeAfterUsage text
+  | null rest = text
+  | otherwise = T.concat (tail rest)
+  where
+    xs = splitByTopHeaders text
+    isUsageBlock = ("usage" `T.isPrefixOf`) . T.toLower . T.stripStart
+    rest = dropWhile (not . isUsageBlock) xs
+
+
+-- | A speculative criteria for non-critical purposes
+mayContainUseful :: Text -> Bool
+mayContainUseful text = length xs >= 4 && (mayContainOptions xs || mayContainSubcommands xs)
+  where
+    xs = filter (not . ("error" `T.isPrefixOf`) . T.toLower . T.stripStart) . T.lines $ takeAfterUsage text
 
 -- | splitsAt ... like Data.List.splitAt but multiple indices
 splitsAt :: [a] -> [Int] -> [[a]]

@@ -28,7 +28,8 @@ import System.FilePath (takeBaseName)
 import qualified System.Process.Typed as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..), asSubcommand, toCommand)
-import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainsOptions, mayContainsSubcommands, warnTrace)
+import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainUseful, warnTrace)
+import qualified Utils
 
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
@@ -93,15 +94,15 @@ getHelpTemplate name (args : argsBag) = do
         return
         (Either.fromRight Nothing mx)
 
-fetchHelpInfo :: FilePath -> [String] -> IO (Maybe Text)
+fetchHelpInfo :: String -> [String] -> IO (Maybe Text)
 fetchHelpInfo name args = do
   (exitCode, stdout, stderr) <- Process.readProcess (Process.proc name args)
   let stdoutText = TL.toStrict . TLE.decodeUtf8 $ stdout
   let stderrText = TL.toStrict . TLE.decodeUtf8 $ stderr
   let res
         | isCommandNotFound name exitCode stderrText = error "CommandNotFound"
-        | not (T.null stdoutText) = Just stdoutText
-        | mayContainsOptions stderrText || mayContainsSubcommands stderrText = Just stderrText
+        | mayContainUseful stdoutText = Utils.debugTrace ("Using stdout: " ++ unwords (name:args)) $ Just stdoutText
+        | mayContainUseful stderrText = Utils.debugTrace ("Using stderr: " ++ unwords (name:args)) $ Just stderrText
         | otherwise = Nothing
   return res
 
@@ -111,25 +112,30 @@ isCommandNotFound name exitCode stderr =
     || ("bwrap: execvp " `T.append` T.pack name) `T.isPrefixOf` stderr
 
 getHelpBare :: String -> IO Text
-getHelpBare name = getHelpTemplate name [["--help"], ["help"]]
+getHelpBare name = getHelpTemplate name [["--help"], ["help"], ["-help"], ["-h"]]
 
 getHelpSubBare :: String -> String -> IO Text
-getHelpSubBare name subname = getHelpTemplate name [[subname, "--help"], ["help", subname]]
+getHelpSubBare name subname = getHelpTemplate name [[subname, "--help"], ["help", subname], [subname, "-help"], [subname, "-h"]]
 
 bwrapArgsBase :: [String]
 bwrapArgsBase = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all"]
 
 getHelpSandboxed :: String -> IO Text
-getHelpSandboxed name = getHelpTemplate "bwrap" [options, altOptions]
+getHelpSandboxed name = getHelpTemplate "bwrap" [options, alt1, alt2, alt3]
   where
     options = bwrapArgsBase ++ [name, "--help"]
-    altOptions = bwrapArgsBase ++ [name, "help"]
+    alt1 = bwrapArgsBase ++ [name, "help"]
+    alt2 = bwrapArgsBase ++ [name, "-help"]
+    alt3 = bwrapArgsBase ++ [name, "-h"]
 
 getHelpSubSandboxed :: String -> String -> IO Text
-getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, altOptions]
+getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, alt1, alt2, alt3]
   where
     options = bwrapArgsBase ++ [name, "help", subname]
-    altOptions = bwrapArgsBase ++ [name, subname, "--help"]
+    alt1 = bwrapArgsBase ++ [name, subname, "--help"]
+    alt2 = bwrapArgsBase ++ [name, subname, "-help"]
+    alt3 = bwrapArgsBase ++ [name, subname, "-h"]
+
 
 getMan :: String -> IO Text
 getMan name = do
@@ -166,11 +172,11 @@ toScriptSubcommandOptions name (Command subname _ opts _) =
 
 getInputContent :: Input -> Bool -> IO String
 getInputContent (SubcommandInput name subname) isSandboxing =
-  T.unpack . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub isSandboxing name subname
+  T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub isSandboxing name subname
 getInputContent (CommandInput name) isSandboxing =
-  T.unpack . Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
+  T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
 getInputContent (FileInput f) _ =
-  T.unpack . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
+  T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
 
 toScript :: OutputFormat -> Command -> Text
 toScript Fish cmd = toFishScript cmd
@@ -187,7 +193,7 @@ toScript Native (Command name _ rootOptions subs)
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
-isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcess (Process.proc "bash" ["-c", "command -v bwrap"])
+isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcess (Process.shell "bash -c 'command -v bwrap'")
 
 toCommandIO :: String -> IO Command
 toCommandIO name = do
@@ -214,7 +220,9 @@ toCommandIOHelper name content isSandboxing = do
     subcmdCandidates =
       infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
     toSubcmdOptPair useMan sub = do
-      page <- if useMan then getManSub name (_cmd sub) else getHelpSub isSandboxing name (_cmd sub)
+      page <-
+        Utils.takeAfterUsage . Utils.convertTabsToSpaces 8
+          <$> if useMan then getManSub name (_cmd sub) else getHelpSub isSandboxing name (_cmd sub)
       let criteria = not (T.null page) && page /= T.pack content
       return ((sub, parseBlockwise (T.unpack page)), criteria)
     pairsIO = do

@@ -413,7 +413,7 @@ preprocessBlockwise :: String -> [(String, String)]
 preprocessBlockwise content = trace decoratedMsg $ concatMap preprocessAll contents
   where
     xs = lines content
-    contents = debugMsg "contents" $ map unlines $ splitByHeaders xs
+    contents = map unlines $ splitByHeaders xs
     msg
       | null contents = "[warn] Found no block containing options!"
       | length contents == 1 = "[info] Found a single block with options"
