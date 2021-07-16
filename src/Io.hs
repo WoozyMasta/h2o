@@ -193,7 +193,7 @@ toScript Native (Command name _ rootOptions subs)
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
 isBwrapAvailableIO :: IO Bool
-isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcess (Process.shell "bash -c 'command -v bwrap'")
+isBwrapAvailableIO = (\(e, _, _) -> e == System.Exit.ExitSuccess) <$> Process.readProcess (Process.shell "exit 16")
 
 toCommandIO :: String -> IO Command
 toCommandIO name = do
