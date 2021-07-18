@@ -479,7 +479,7 @@ miscTests =
       testCase "truncateAfterPeriod 4" $
         truncateAfterPeriod "baba .. keke" @?= "baba ..",
       testCase "fixOpt 1" $
-        Postprocess.fixOpt (Opt [OptName "-Ttagsfile" OldType, OptName "--tag-file" LongType] "tagsfile" "Specifies a tags file...")
+        Postprocess.fixShortOptWithArgWithoutSpace (Opt [OptName "-Ttagsfile" OldType, OptName "--tag-file" LongType] "tagsfile" "Specifies a tags file...")
           @?= Opt [OptName "-T" ShortType, OptName "--tag-file" LongType] "tagsfile" "Specifies a tags file..."
     ]
 

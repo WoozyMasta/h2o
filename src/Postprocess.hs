@@ -3,7 +3,7 @@
 
 module Postprocess
   ( fixCommand,
-    fixOpt,
+    fixShortOptWithArgWithoutSpace,
   )
 where
 
@@ -17,17 +17,44 @@ fixOptName arg_ (OptName raw t) =
     then Utils.debugMsg "altOptName" $ OptName (take 2 raw) ShortType
     else OptName raw t
 
-fixOpt :: Opt -> Opt
-fixOpt (Opt names arg desc) = optFixed
+-- | Fix short option followed by argument without space as disguised as an old option
+--     example) For option names ["-Ttagsfile", "--tag-file"] with arg "tagsfile",
+--              it's highly likely that the correct names are ["-T", "--tag-file"].
+fixShortOptWithArgWithoutSpace :: Opt -> Opt
+fixShortOptWithArgWithoutSpace (Opt names arg desc) = optFixed
   where
     namesFixed = map (fixOptName arg) names
     optFixed = Opt namesFixed arg desc
 
--- | Convert old option into short option with argument if likely
---     example) For option names ["-Ttagsfile", "--tag-file"] with arg "tagsfile",
---              it's highly likely that the correct names are ["-T", "--tag-file"].
+tallyDuplicates :: [Opt] -> [(OptName, Int)]
+tallyDuplicates opts = Utils.count optnames
+  where
+    optnames = concatMap _names opts
+
+fixDuplicateOpts :: [Opt] -> [Opt]
+fixDuplicateOpts opts
+  | null optNamesOfConcern = opts
+  | otherwise = warnTrace optsFixed
+  where
+    optNamesOfConcern = [optname | (optname, count) <- tallyDuplicates opts, count > 1]
+    msg =
+      unlines
+          [ "======================",
+            "Duplicates of option names!",
+            "============================="
+          ]
+    warnTrace = Utils.warnShow msg optNamesOfConcern
+
+    isJustGood :: [OptName] -> Bool
+    isJustGood nx = all (`notElem` optNamesOfConcern) nx
+    hasShortAndLong :: [OptNameType] -> Bool
+    hasShortAndLong ts = ShortType `elem` ts && LongType `elem` ts && OldType `notElem` ts
+    optsFixed =
+      [ opt | opt@(Opt names _ _) <- opts, let types = map _type names, isJustGood names || hasShortAndLong types
+      ]
+
 fixCommand :: Command -> Command
 fixCommand (Command name desc opts subcmds) = Command name desc optsFixed subcmdsFixed
   where
-    optsFixed = map fixOpt opts
+    optsFixed = fixDuplicateOpts $ map fixShortOptWithArgWithoutSpace opts
     subcmdsFixed = map fixCommand subcmds

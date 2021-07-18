@@ -20,11 +20,14 @@ import Debug.Trace (trace)
 getMostFrequent :: (Ord a) => [a] -> Maybe a
 getMostFrequent = fmap fst . getMostFrequentWithCount
 
+count :: (Ord a) => [a] -> [(a, Int)]
+count xs =  Map.toList $ Map.fromListWith (+) (map (,1) xs)
+
 getMostFrequentWithCount :: (Ord a) => [a] -> Maybe (a, Int)
 getMostFrequentWithCount [] = Nothing
 getMostFrequentWithCount xs = Just (x, maxCount)
   where
-    counter = Map.toList $ Map.fromListWith (+) (map (,1) xs)
+    counter = count xs
     (x, maxCount) = Foldable.maximumBy (compare `on` snd) counter
 
 convertTabsToSpaces :: Int -> Text -> Text
