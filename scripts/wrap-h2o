@@ -4,7 +4,8 @@
 
 readonly h2opath="$1"
 readonly cmd="$2"
-BASEDIR="$(dirname "$(readlink -f "$0")")"
+# https://stackoverflow.com/a/246128/524526
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 readonly BASEDIR
 
 if [[ -x "$(command -v $h2opath)" ]] && [[ -x "$(command -v $cmd)" ]]; then
