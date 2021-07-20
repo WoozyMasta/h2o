@@ -36,14 +36,16 @@ fixDuplicateOpts opts
   | null optNamesOfConcern = opts
   | otherwise = warnTrace optsFixed
   where
-    optNamesOfConcern = [optname | (optname, count) <- tallyDuplicates opts, count > 1]
+    pairs = [(optname, count) | (optname, count) <- tallyDuplicates opts, count > 1]
+    (optNamesOfConcern, _) = unzip pairs
     msg =
       unlines
           [ "======================",
             "Duplicates of option names!",
             "============================="
           ]
-    warnTrace = Utils.warnShow msg optNamesOfConcern
+    pairsSorted = List.sortOn (\(name, cnt) -> (-cnt, name)) pairs
+    warnTrace = Utils.warnShow msg pairsSorted
 
     isJustGood :: [OptName] -> Bool
     isJustGood nx = all (`notElem` optNamesOfConcern) nx
