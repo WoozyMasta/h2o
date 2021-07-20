@@ -36,16 +36,28 @@ fixDuplicateOpts opts
   | null optNamesOfConcern = opts
   | otherwise = warnTrace optsFixed
   where
+    -- [NOTE] inefficient for now
     pairs = [(optname, count) | (optname, count) <- tallyDuplicates opts, count > 1]
     (optNamesOfConcern, _) = unzip pairs
-    msg =
-      unlines
-          [ "======================",
-            "Duplicates of option names!",
-            "============================="
-          ]
-    pairsSorted = List.sortOn (\(name, cnt) -> (-cnt, name)) pairs
-    warnTrace = Utils.warnShow msg pairsSorted
+    relevantOptsList =
+      map
+        (\opname -> [opt | opt@(Opt names _ _) <- opts, opname `elem` names])
+        optNamesOfConcern
+    msgHeader =
+      [ "======================",
+        "Duplicates of option names!",
+        "============================="
+      ]
+    opnameOptsPairs = zip optNamesOfConcern relevantOptsList
+    pairsSorted = List.sortOn (\(name, xs) -> (- length xs, name)) opnameOptsPairs
+    pairsStrList =
+      concatMap
+        (\(OptName raw _, xs) -> delim raw : ("  " ++ raw) : delim raw: (map show xs :: [String]))
+        pairsSorted
+      where
+        delim s = replicate (4 + length s) '='
+    msg = unlines (msgHeader ++ pairsStrList)
+    warnTrace = Utils.warnShow msg ""
 
     isJustGood :: [OptName] -> Bool
     isJustGood nx = all (`notElem` optNamesOfConcern) nx
