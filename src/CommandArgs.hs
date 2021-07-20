@@ -14,6 +14,7 @@ data Input
   = CommandInput String
   | FileInput FilePath
   | SubcommandInput String String
+  | JsonInput FilePath
 
 data Config = Config
   { _input :: Input,
@@ -69,8 +70,17 @@ fileInput =
           <> help "Extract CLI options form the text file."
       )
 
+jsonInput :: Parser Input
+jsonInput =
+  JsonInput
+    <$> strOption
+      ( long "loadjson"
+          <> metavar "<file>"
+          <> help "Load JSON file in Command schema."
+      )
+
 inputP :: Parser Input
-inputP = commandInput <|> fileInput <|> subcommandInput
+inputP = commandInput <|> fileInput <|> subcommandInput <|> jsonInput
 
 config :: Parser ConfigOrVersion
 config =

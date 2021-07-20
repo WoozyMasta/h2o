@@ -8,6 +8,7 @@ module Io where
 import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat (..))
 import qualified Constants
 import Control.Exception (SomeException, try)
+import qualified Data.Aeson as Aeson
 import qualified Data.Map.Ordered as OMap
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -41,6 +42,7 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
       CommandInput n -> n
       SubcommandInput n _ -> n
       FileInput f -> takeBaseName f
+      JsonInput f -> takeBaseName f
 run (C_ (Config input@(FileInput f) format _ _ _ _ isShallowOnly))
   | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . pageToCommandSimple name <$> contentIO
   | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name =<< contentIO)
@@ -54,6 +56,14 @@ run (C_ (Config input@(SubcommandInput name subname) format _ _ _ _ _)) =
   toScript format . pageToCommandSimple nameSubname <$> (getInputContent input =<< isBwrapAvailableIO)
   where
     nameSubname = name ++ "-" ++ subname
+run (C_ (Config input@(JsonInput _) format _ _ _ _ _)) = do
+  content <- TLE.encodeUtf8 . TL.pack <$> (getInputContent input =<< isBwrapAvailableIO)
+  let cmdMay = Aeson.decode content :: Maybe Command
+  let commandIO =
+        case cmdMay of
+          Nothing -> error "Cannot decode JSON!"
+          Just c -> return c
+  toScript format <$> commandIO
 
 getHelp :: Bool -> String -> IO Text
 getHelp True = infoTrace ("sandboxed" :: String) getHelpSandboxed
@@ -171,6 +181,8 @@ getInputContent (CommandInput name) isSandboxing =
   T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
 getInputContent (FileInput f) _ =
   T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
+getInputContent (JsonInput f) _ =
+  readFile f
 
 toScript :: OutputFormat -> Command -> Text
 toScript Fish cmd = toFishScript cmd

@@ -5,11 +5,18 @@
 module Type where
 
 import Data.Aeson
-  ( KeyValue ((.=)),
+  ( FromJSON (parseJSON),
+    KeyValue ((.=)),
     ToJSON (toEncoding, toJSON),
     object,
     pairs,
+    withObject,
+    (.:),
+    (.:?),
   )
+import qualified Data.Maybe as Maybe
+import Data.Text (Text)
+import qualified Data.Text as T
 import Text.Printf (printf)
 
 data Command = Command
@@ -61,6 +68,23 @@ instance ToJSON OptName where
   toJSON (OptName raw _) = toJSON raw
   toEncoding (OptName raw _) = toEncoding raw
 
+instance FromJSON Opt where
+  parseJSON = withObject "Opt" $ \v ->
+    Opt
+      <$> (map toOptName <$> v .: "names")
+      <*> (T.unpack <$> v .: "argument")
+      <*> (T.unpack <$> v .: "description")
+    where
+      toOptName :: Text -> OptName
+      toOptName n = OptName (T.unpack n) (toOptionNameType n)
+
+instance FromJSON Command where
+  parseJSON = withObject "Command" $ \v ->
+    Command <$> (T.unpack <$> v .: "name")
+      <*> (T.unpack <$> v .: "description")
+      <*> v .: "options"
+      <*> (Maybe.fromMaybe [] <$> v .:? "subcommands")
+
 instance ToJSON Opt where
   toJSON (Opt names arg desc) =
     object ["names" .= names, "argument" .= arg, "description" .= desc]
@@ -78,6 +102,15 @@ instance ToJSON Command where
     pairs ("name" .= name <> "description" .= desc <> "options" .= opts)
   toEncoding (Command name desc opts subcommands) =
     pairs ("name" .= name <> "description" .= desc <> "options" .= opts <> "subcommands" .= subcommands)
+
+toOptionNameType :: Text -> OptNameType
+toOptionNameType "-" = SingleDashAlone
+toOptionNameType "--" = DoubleDashAlone
+toOptionNameType s
+  | "--" `T.isPrefixOf` s = LongType
+  | "-" `T.isPrefixOf` s && T.length s == 2 = ShortType
+  | "-" `T.isPrefixOf` s = OldType
+  | otherwise = error "Invalid option name!"
 
 asSubcommand :: Command -> Subcommand
 asSubcommand (Command n desc _ _) = Subcommand n desc
