@@ -7,7 +7,11 @@ module Postprocess
   )
 where
 
+import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified Data.Set as Set
+import Data.Text (Text)
+import qualified Data.Text as T
 import Type (Command (..), Opt (..), OptName (..), OptNameType (..))
 import qualified Utils
 
@@ -43,19 +47,23 @@ fixDuplicateOpts opts
       map
         (\opname -> [opt | opt@(Opt names _ _) <- opts, opname `elem` names])
         optNamesOfConcern
+    scoresList = map (map score) relevantOptsList
+    relevantOptsScoreList = [zip opts scores | (opts, scores) <- zip relevantOptsList scoresList]
     msgHeader =
       [ "======================",
         "Duplicates of option names!",
         "============================="
       ]
-    opnameOptsPairs = zip optNamesOfConcern relevantOptsList
+    opnameOptsPairs = zip optNamesOfConcern relevantOptsScoreList
     pairsSorted = List.sortOn (\(name, xs) -> (- length xs, name)) opnameOptsPairs
     pairsStrList =
       concatMap
-        (\(OptName raw _, xs) -> delim raw : ("  " ++ raw) : delim raw: (map show xs :: [String]))
+        (\(OptName raw _, xs) -> delim raw : ("  " ++ raw) : delim raw : (map showPair xs))
         pairsSorted
       where
         delim s = replicate (4 + length s) '='
+    showPair :: (Opt, Int) -> String
+    showPair (opt, score) = show score ++ "\n" ++ show opt
     msg = unlines (msgHeader ++ pairsStrList)
     warnTrace = Utils.warnShow msg ""
 
@@ -66,6 +74,41 @@ fixDuplicateOpts opts
     optsFixed =
       [ opt | opt@(Opt names _ _) <- opts, let types = map _type names, isJustGood names || hasShortAndLong types
       ]
+
+score :: Opt -> Int
+score (Opt names arg desc) =
+  sum
+    [ descScore (T.pack desc),
+      argScore (T.pack arg),
+      nameScore names
+    ]
+  where
+    descScore :: Text -> Int
+    descScore t
+      | T.null t = -10
+      | length (T.words t) == 1 = -3
+      | Char.isLower (T.head t) = -1
+      | (T.length . head . T.split (== '.')) t > 80 = -1
+      | otherwise = 1
+
+    argScore :: Text -> Int
+    argScore text
+      | T.null text = 1
+      | Utils.isBracketed text = 2
+      | Utils.hasMatchingBrackets text = 2
+      | length (T.words text) == 1 && T.all Char.isUpper text = 2
+      | length (T.words text) == 1 = 1
+      | otherwise = -1
+
+    nameScore :: [OptName] -> Int
+    nameScore optnames
+      | null optnames = error "Something is wrong with option names"
+      | length optnames == 1 && topElem `elem` [ShortType, LongType, OldType] = 1
+      | Set.fromList [LongType, ShortType] == types = 2
+      | otherwise = 0
+      where
+        types = Set.fromList $ map _type optnames
+        topElem = Set.elemAt 0 types
 
 fixCommand :: Command -> Command
 fixCommand (Command name desc opts subcmds) = Command name desc optsFixed subcmdsFixed

@@ -21,7 +21,7 @@ getMostFrequent :: (Ord a) => [a] -> Maybe a
 getMostFrequent = fmap fst . getMostFrequentWithCount
 
 count :: (Ord a) => [a] -> [(a, Int)]
-count xs =  Map.toList $ Map.fromListWith (+) (map (,1) xs)
+count xs = Map.toList $ Map.fromListWith (+) (map (,1) xs)
 
 getMostFrequentWithCount :: (Ord a) => [a] -> Maybe (a, Int)
 getMostFrequentWithCount [] = Nothing
@@ -208,7 +208,6 @@ takeAfterUsage text
     isUsageBlock = ("usage" `T.isPrefixOf`) . T.toLower . T.stripStart
     rest = dropWhile (not . isUsageBlock) xs
 
-
 -- | A speculative criteria for non-critical purposes
 mayContainUseful :: Text -> Bool
 mayContainUseful text = length xs >= 4 && (mayContainOptions xs || mayContainSubcommands xs)
@@ -233,3 +232,39 @@ topTenPercentile xs = sortedXs !! idx
     n = length xs
     idx = fromInteger $ floor (fromIntegral (n - 1) * 0.9 :: Rational) :: Int
     sortedXs = List.sort xs
+
+isBracketed :: Text -> Bool
+isBracketed text
+  | T.length text <= 1 = False
+  | otherwise = (T.head text, T.last text) `elem` bracketPairs
+
+hasClosedBrackets :: Char -> Char -> Text -> Bool
+hasClosedBrackets bra ket = helper 0
+  where
+    helper :: Int -> Text -> Bool
+    helper acc txt
+      | T.null txt = acc == 0
+      | acc < 0 = False
+      | otherwise = helper (acc + diff) rest
+      where
+        c = T.head txt
+        rest = T.tail txt
+        diff
+          | c == bra = 1
+          | c == ket = -1
+          | otherwise = 0
+
+hasMatchingBrackets :: Text -> Bool
+hasMatchingBrackets text = hasBra && allCleared
+  where
+    (bras, _) = unzip bracketPairs
+    hasBra = any (\b -> T.singleton b `T.isInfixOf` text) bras
+    allCleared = and [hasClosedBrackets bra ket text | (bra, ket) <- bracketPairs]
+
+bracketPairs :: [(Char, Char)]
+bracketPairs =
+  [ ('{', '}'),
+    ('<', '>'),
+    ('[', ']'),
+    ('(', ')')
+  ]
