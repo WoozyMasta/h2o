@@ -93,7 +93,7 @@ config =
                           <> metavar "{bash|zsh|fish|json|native}"
                           <> showDefault
                           <> value "native"
-                          <> help "Select output format of the completion script (json|bash|zsh|fish|json|native)"
+                          <> help "Select output format of the completion script (bash|zsh|fish|json|native)"
                       )
                 )
             <*> switch
@@ -102,7 +102,7 @@ config =
               )
             <*> switch
               ( long "convert-tabs-to-spaces"
-                  <> help "Convert tabs to spaces"
+                  <> help "[Test only] Convert tabs to spaces"
               )
             <*> switch
               ( long "list-subcommands"
@@ -110,7 +110,7 @@ config =
               )
             <*> switch
               ( long "debug"
-                  <> help "Run preprocessing only (for debugging)"
+                  <> help "[Test only] Run preprocessing only (for debugging)"
               )
             <*> switch
               ( long "shallow"
