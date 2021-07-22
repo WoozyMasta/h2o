@@ -9,6 +9,7 @@ where
 
 import qualified Data.Char as Char
 import qualified Data.List as List
+import Data.List.Extra (concatUnzip)
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -48,7 +49,7 @@ fixDuplicateOpts opts
         (\opname -> [opt | opt@(Opt names _ _) <- opts, opname `elem` names])
         optNamesOfConcern
     scoresList = map (map score) relevantOptsList
-    relevantOptsScoreList = [zip opts scores | (opts, scores) <- zip relevantOptsList scoresList]
+    relevantOptsScoreList = [zip opts_ scores_ | (opts_, scores_) <- zip relevantOptsList scoresList]
     msgHeader =
       [ "======================",
         "Duplicates of option names!",
@@ -58,22 +59,29 @@ fixDuplicateOpts opts
     pairsSorted = List.sortOn (\(name, xs) -> (- length xs, name)) opnameOptsPairs
     pairsStrList =
       concatMap
-        (\(OptName raw _, xs) -> delim raw : ("  " ++ raw) : delim raw : (map showPair xs))
+        (\(OptName raw _, xs) -> delim raw : ("  " ++ raw) : delim raw : map showPair xs)
         pairsSorted
       where
         delim s = replicate (4 + length s) '='
+
+    (kept, discardedPairs) = concatUnzip (map keepOrDiscard relevantOptsScoreList)
+    discarded = [opt_ | (opt_, score_) <- discardedPairs, score_ < 1, opt_ `notElem` kept]
+    optsFixed =
+      Utils.warnShow "Discarded opts due to duplicates: " discarded $
+        filter (`notElem` discarded) opts
+
+    keepOrDiscard :: [(a, Int)] -> ([a], [(a, Int)])
+    keepOrDiscard itemsWithScore = (kept_, discardedPairs_)
+      where
+        (_, scores) = unzip itemsWithScore
+        maxval = List.maximum scores
+        (keptPairs, discardedPairs_) = List.partition (\(_, score_) -> score_ == maxval) itemsWithScore
+        kept_ = map fst keptPairs
+
     showPair :: (Opt, Int) -> String
-    showPair (opt, score) = show score ++ "\n" ++ show opt
+    showPair (opt_, score_) = show score_ ++ "\n" ++ show opt_
     msg = unlines (msgHeader ++ pairsStrList)
     warnTrace = Utils.warnShow msg ""
-
-    isJustGood :: [OptName] -> Bool
-    isJustGood nx = all (`notElem` optNamesOfConcern) nx
-    hasShortAndLong :: [OptNameType] -> Bool
-    hasShortAndLong ts = ShortType `elem` ts && LongType `elem` ts && OldType `notElem` ts
-    optsFixed =
-      [ opt | opt@(Opt names _ _) <- opts, let types = map _type names, isJustGood names || hasShortAndLong types
-      ]
 
 score :: Opt -> Int
 score (Opt names arg desc) =
@@ -86,16 +94,17 @@ score (Opt names arg desc) =
     descScore :: Text -> Int
     descScore t
       | T.null t = -10
-      | length (T.words t) == 1 = -3
+      | length (T.words t) == 1 = -4
       | Char.isLower (T.head t) = -1
       | (T.length . head . T.split (== '.')) t > 80 = -1
-      | otherwise = 1
+      | T.last t == '.' = 1
+      | otherwise = 0
 
     argScore :: Text -> Int
     argScore text
-      | T.null text = 1
-      | Utils.isBracketed text = 2
-      | Utils.hasMatchingBrackets text = 2
+      | T.null text = 0
+      | Utils.isBracketed text && Utils.hasMatchingBrackets text = 2
+      | Utils.isBracketed text || Utils.hasMatchingBrackets text = 1
       | length (T.words text) == 1 && T.all Char.isUpper text = 2
       | length (T.words text) == 1 = 1
       | otherwise = -1
