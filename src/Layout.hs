@@ -95,15 +95,18 @@ getDescriptionOffsetFromOptionLocs s optLocs =
     (Nothing, optLocsRemoved) ->
       case descOffsetWithCountInOptionLines s (filter (`notElem` optLocsRemoved) optLocs) of
         Nothing -> trace "[info] Retrieved absolutely zero information" (Nothing, optLocsRemoved)
-        q -> trace "[info] Descriptions always appear in the lines with options" (fmap fst q, optLocsRemoved)
+        Just (x2, c2) ->
+          if isAlignedMoreThan80Percent c2
+            then Utils.infoTrace "Descriptions always appear in the lines with options" (Just x2, optLocsRemoved)
+            else Utils.infoTrace "Retrieved nothing from layout" (Nothing, optLocsRemoved)
     (Just (x1, c1), optLocsRemoved) ->
       case descOffsetWithCountInOptionLines s (filter (`notElem` optLocsRemoved) optLocs) of
         Nothing -> trace "[info] Descriptions never appear in the lines with options" (Just x1, optLocsRemoved)
         Just (x2, c2)
           | x1 == x2 -> (Just x1, optLocsRemoved)
-          | c1 <= 3 && 3 < c2 -> (debug Just x2, optLocsRemoved)
+          | c1 <= 3 && 3 < c2 && isAlignedMoreThan80Percent c2 -> (debug Just x2, optLocsRemoved)
           | c2 <= 3 && 3 < c1 -> (debug Just x1, optLocsRemoved)
-          | 0 < x1 - x2 && x1 - x2 < 5 -> (debug (Just x2), optLocsRemoved) -- sometimes continued lines are indented.
+          | 0 < x1 - x2 && x1 - x2 < 5 && isAlignedMoreThan80Percent c2 -> (debug (Just x2), optLocsRemoved) -- sometimes continued lines are indented.
           | otherwise -> (debug Nothing, optLocsRemoved)
           where
             msg =
@@ -111,6 +114,8 @@ getDescriptionOffsetFromOptionLocs s optLocs =
               \   description-only-line offset   %d (with count %d)\n\
               \   option+description-line offset %d (with count %d)\n"
             debug = trace (printf msg x1 c1 x2 c2 :: String)
+  where
+    isAlignedMoreThan80Percent c = c * 10 >= 8 * length optLocs
 
 -- | Estimate offset of description part from non-option lines.
 -- | Returns Just (offset size, match count) if matches
@@ -251,7 +256,7 @@ getOptionDescriptionPairsFromLayout s
       | otherwise =
         (not (isOptionLine (idx + 1)) && not (isDescriptionOnly (idx + 1)))
           || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descriptionLineWidthTop10Percent))
-          || isOptionLine (idx + 1) && offset >= 2 && last optSegment == ' ' && length (words descSegment) >= 2      -- [FIXME] too heuristic
+          || isOptionLine (idx + 1) && offset >= 2 && last optSegment == ' ' && length (words descSegment) >= 2 -- [FIXME] too heuristic
           || isParsedAsOptDescLine && (length (xs !! idx) + 25 > descriptionLineWidthTop10Percent)
       where
         isOptionLine i = i `Set.member` optLineNumsSet
