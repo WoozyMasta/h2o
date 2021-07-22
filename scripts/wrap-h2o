@@ -12,7 +12,7 @@ if [[ -x "$(command -v $h2opath)" ]] && [[ -x "$(command -v $cmd)" ]]; then
     if [[ "$(uname -s)" == "Linux" ]] && [[ -x "$(command -v bwrap)" ]]; then
 	echo "[info] bwrap!" 1>&2
         bwrap --ro-bind / / --dev /dev --tmpfs /tmp --unshare-all -- "$h2opath" --command "$cmd" --format json
-    elif [[ "$(uname -s)" == "Darwin" ]]; then
+    elif [[ "$(uname -s)" == "Darwin" ]] && [[ -x "$(command -v sandbox-exec)" ]]; then
 	echo "[info] sandbox-exec!" 1>&2
         sandbox-exec -f "$BASEDIR"/profile.sb -- "$h2opath" --command "$cmd" --format json
     else
