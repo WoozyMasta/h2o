@@ -2014,6 +2014,9 @@ Additional options passed to GHC
 (stack-script) --extra-dep  ::  PACKAGE-VERSION
 Extra dependencies to be added to the snapshot
 
+(stack-script) --no-run  ::  
+Don't run, just compile.
+
 (stack-script) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
