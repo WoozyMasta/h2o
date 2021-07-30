@@ -32,7 +32,7 @@ import qualified Utils
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
-  | isExportingJSON = infoTrace "io: [deprecated warning] Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
+  | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
   | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> (getInputContent input =<< isBwrapAvailableIO)
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
   | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> (getInputContent input =<< isBwrapAvailableIO)
