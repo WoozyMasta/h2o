@@ -23,25 +23,20 @@ h2o --command ls --format json
 # Parse manpage text file
 man ls | col -bx > ls.txt
 h2o --file ls.txt --format fish > ls.fish
+
+# ... and more
+h2o --help
 ```
+
+
+## Just want some shell completion scripts?
+Try our [curated data repository](https://github.com/yamaton/h2o-curated-data) containing generated bash|zsh|fish completion scripts. They were created with H2O plus manual edits.
 
 
 ## TODOs
 
-- [ ] Improve parsing to support bioinformatics tools as many as possible
-- [ ] Improve extraction of subcommand descriptions
-- [ ] Fix occasional error in sandboxing
-
-
-## [Linux only] Sandboxing (!!TEMPORARY DISABLED!!)
-
-H2O may call arbitrary programs in your system to get help information so running them in a sandboxed environment is the way to go. Since v0.1.8 H2O internally calls commands using [bubblewrap](https://github.com/containers/bubblewrap) with following:
-
-```shell
-bwrap --ro-bind / / --dev /dev --tmpfs --unshare-all <command-name> --help
-```
-
-Then `<command-name>` can neither connect to the network or write to your filesystem. So please consider installing bubblewrap to your system. H2O automatically uses it if avaialble.
+- [ ] Improve parsing of subcommands with descriptions
+- [ ] Support more bioinformatics tools
 
 
 ## Related projects
