@@ -107,14 +107,23 @@ Write to the active conda environment .condarc file (/home/vierbein/miniconda3).
 (conda-config) --file  ::  FILE
 Write to the given file.
 
+(conda-config) --show  ::  [SHOW ...]
+Display configuration values as calculated and compiled. If no arguments given, show information for all configuration values.
+
 (conda-config) --show-sources  ::  
 Display all identified configuration sources.
 
 (conda-config) --validate  ::  
 Validate all configuration sources.
 
+(conda-config) --describe  ::  [DESCRIBE ...]
+Describe given configuration parameters. If no arguments given, show information for all configuration parameters.
+
 (conda-config) --write-default  ::  
 Write the default configuration to a file. Equivalent to `conda config --describe > ~/.condarc`.
+
+(conda-config) --get  ::  [KEY ...]
+Get a configuration value.
 
 (conda-config) --append  ::  KEY VALUE
 Add one configuration value to the end of a list key.
