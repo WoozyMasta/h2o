@@ -5,6 +5,7 @@
 
 module GenFishCompletions where
 
+import qualified Constants
 import Data.List.Extra (nubOrd)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -110,8 +111,8 @@ genFishScriptSubcommandOptions name (Command subname _ opts _) = T.unlines . nub
 
 toFishScript :: Command -> Text
 toFishScript (Command name _ opts subcmds)
-  | null subcmds = genFishScriptSimple name opts
-  | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) scriptsAll)
+  | null subcmds = addMeta $ genFishScriptSimple name opts
+  | otherwise = addMeta $ T.intercalate "\n\n\n" (filter (not . T.null) scriptsAll)
   where
     subnames = map _name subcmds
     subcommands = map asSubcommand subcmds
@@ -119,3 +120,4 @@ toFishScript (Command name _ opts subcmds)
     scriptSubcommands = genFishScriptSubcommands name subcommands
     scriptSubcommandOptions = [genFishScriptSubcommandOptions name subcmd | subcmd <- subcmds]
     scriptsAll = [scriptRootOptions, scriptSubcommands] ++ scriptSubcommandOptions
+    addMeta txt = T.concat ["# Generated with h2o ", Constants.versionStr, "\n\n"] `T.append` txt

@@ -5,6 +5,7 @@
 
 module GenZshCompletions where
 
+import qualified Constants
 import qualified Data.List as List
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -150,15 +151,18 @@ genZshBodySubcommandOptions cmd subcommands =
           ""
         ]
 
+meta :: Text
+meta = T.concat ["# Generated with h2o ", Constants.versionStr, "\n\n"]
+
 genZshScript :: String -> [Opt] -> Text
-genZshScript cmd opts = header `T.append` body
+genZshScript cmd opts = T.concat [header, meta, body]
   where
     header = zshHeaderOld cmd
     body = genZshBodyOptions cmd opts
 
 toZshScript :: Command -> Text
 toZshScript (Command name _ opts subcmds) =
-  T.concat [textHeader, textSubcmdFuncs, textFunctionOpening, textSubcommands, textRootOptions, textSubcommandOptionCalls, textFunctionClosing]
+  T.concat [textHeader, meta, textSubcmdFuncs, textFunctionOpening, textSubcommands, textRootOptions, textSubcommandOptionCalls, textFunctionClosing]
   where
     subcommands = map asSubcommand subcmds
 
