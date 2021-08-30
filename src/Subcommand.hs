@@ -45,13 +45,13 @@ getAlignedLines s = case layoutMay of
 lowercase :: String
 lowercase = "abcdefghijklmnopqrstuvwxyz"
 
-isAlphanumOrDash :: Char -> Bool
-isAlphanumOrDash c = c `elem` ('-' : alphanumChars)
+isAlphanumOrDashOrUnderscore :: Char -> Bool
+isAlphanumOrDashOrUnderscore c = c `elem` ('-' : '_' : alphanumChars)
 
 subcommandWord :: ReadP String
 subcommandWord = do
   x <- satisfy $ \c -> c `elem` lowercase
-  xs <- munch isAlphanumOrDash
+  xs <- munch isAlphanumOrDashOrUnderscore
   -- For example docker run --help has "--docker*"
   _ <- char '*' <++ pure '*'
   return (x : xs)
