@@ -137,4 +137,4 @@ toBashScript (Command name _ opts subcmds)
         [ "## -o bashdefault and -o default are fallback",
           sformat ("complete -o bashdefault -o default -F _" % string % " " % string) name name
         ]
-    meta = T.concat ["# Generated with h2o ", Constants.versionStr]
+    meta = "# Auto-generated with h2o"

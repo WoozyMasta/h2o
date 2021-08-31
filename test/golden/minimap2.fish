@@ -1,3 +1,5 @@
+# Auto-generated with h2o
+
 complete -c minimap2 -s k -d 'Minimizer k-mer length [15]' -x
 complete -c minimap2 -s w -d 'Minimizer window size [2/3 of k-mer length].' -x
 complete -c minimap2 -s H -d 'Use homopolymer-compressed (HPC) minimizers.'

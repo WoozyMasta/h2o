@@ -120,4 +120,4 @@ toFishScript (Command name _ opts subcmds)
     scriptSubcommands = genFishScriptSubcommands name subcommands
     scriptSubcommandOptions = [genFishScriptSubcommandOptions name subcmd | subcmd <- subcmds]
     scriptsAll = [scriptRootOptions, scriptSubcommands] ++ scriptSubcommandOptions
-    addMeta txt = T.concat ["# Generated with h2o ", Constants.versionStr, "\n\n"] `T.append` txt
+    addMeta txt = "# Auto-generated with h2o\n\n" `T.append` txt

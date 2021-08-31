@@ -152,7 +152,7 @@ genZshBodySubcommandOptions cmd subcommands =
         ]
 
 meta :: Text
-meta = T.concat ["# Generated with h2o ", Constants.versionStr, "\n\n"]
+meta = "# Auto-generated with h2o\n\n"
 
 genZshScript :: String -> [Opt] -> Text
 genZshScript cmd opts = T.concat [header, meta, body]
