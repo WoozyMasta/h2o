@@ -5,7 +5,6 @@
 
 module GenZshCompletions where
 
-import qualified Constants
 import qualified Data.List as List
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -31,9 +30,11 @@ quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
 getOptAsText :: Opt -> Text
 getOptAsText (Opt optnames arg desc)
-  | "file" `List.isInfixOf` arg || "path" `List.isInfixOf` arg = T.concat ["'", formatted, ":file:_files", "'"]
+  | isArgAboutFile = T.concat ["'", formatted, ":file:_files", "'"]
   | otherwise = T.concat ["'", formatted, "'"]
   where
+    argUppercase = T.toUpper (T.pack arg)
+    isArgAboutFile = any (`T.isInfixOf` argUppercase) ["FILE", "PATH", "DIR"]
     raws = map _raw optnames
     exclusionList = unwords raws
     optionNames = List.intercalate "," raws

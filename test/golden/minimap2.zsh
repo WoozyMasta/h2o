@@ -20,8 +20,8 @@ function _minimap2 {
         '-H[Use homopolymer-compressed (HPC) minimizers. An HPC sequence is constructed by contracting homopolymer runs to a single base. An HPC minimizer is a minimizer on the HPC sequence.]' \
         '-I[Load at most NUM target bases into RAM for indexing \[4G\]. If there are more than NUM bases in target.fa, minimap2 needs to read query.fa multiple times to map it against each batch of target sequences. NUM may be ending with k/K/m/M/g/G. NB: mapping quality is incorrect given a multi-part index.]' \
         '--idx-no-seq[Don'\''t store target sequences in the index. It saves disk space and memory but the index generated with this option will not work with -a or -c. When base-level alignment is not requested, this option is automatically applied.]' \
-        '-d[Save the minimizer index of target.fa to FILE \[no dump\]. Minimap2 indexing is fast. It can index the human genome in a couple of minutes. If even shorter startup time is desired, use this option to save the index. Indexing options are fixed in the index file. When an index file is provided as the target sequences, options -H, -k, -w, -I will be effectively overridden by the options stored in the index file.]' \
-        '--alt[List of ALT contigs \[null\]]' \
+        '-d[Save the minimizer index of target.fa to FILE \[no dump\]. Minimap2 indexing is fast. It can index the human genome in a couple of minutes. If even shorter startup time is desired, use this option to save the index. Indexing options are fixed in the index file. When an index file is provided as the target sequences, options -H, -k, -w, -I will be effectively overridden by the options stored in the index file.]:file:_files' \
+        '--alt[List of ALT contigs \[null\]]:file:_files' \
         '--alt-drop[Drop ALT hits by FLOAT fraction when ranking and computing mapping quality \[0.15\]]' \
         '-f[If fraction, ignore top FLOAT fraction of most frequent minimizers \[0.0002\]. If integer, ignore minimizers occuring more than INT1 times. INT2 is only effective in the --sr or -xsr mode, which sets the threshold for a second round of seeding.]' \
         '--min-occ-floor[Force minimap2 to always use k-mers occurring INT times or less \[0\]. In effect, the max occurrence threshold is set to the max{INT, -f}.]' \
@@ -64,13 +64,13 @@ function _minimap2 {
         '--end-bonus[Score bonus when alignment extends to the end of the query sequence \[0\].]' \
         '--score-N[Score of a mismatch involving ambiguous bases \[1\].]' \
         '--splice-flank[Assume the next base to a GT donor site tends to be A/G (91% in human and 92% in mouse) and the preceding base to a AG acceptor tends to be C/T \[no\]. This trend is evolutionarily conservative, all the way to S. cerevisiae (PMID:18688272). Specifying this option generally leads to higher junction accuracy by several percents, so it is applied by default with --splice. However, the SIRV control does not honor this trend (only ~60%). This option reduces accuracy. If you are benchmarking minimap2 on SIRV data, please add --splice-flank=no to the command line.]' \
-        '--junc-bed[Gene annotations in the BED12 format (aka 12-column BED), or intron positions in 5-column BED. With this option, minimap2 prefers splicing in annotations. BED12 file can be converted from GTF/GFF3 with `paftools.js gff2bed anno.gtf'\'' \[\].]' \
+        '--junc-bed[Gene annotations in the BED12 format (aka 12-column BED), or intron positions in 5-column BED. With this option, minimap2 prefers splicing in annotations. BED12 file can be converted from GTF/GFF3 with `paftools.js gff2bed anno.gtf'\'' \[\].]:file:_files' \
         '--junc-bonus[Score bonus for a splice donor or acceptor found in annotation (effective with --junc-bed) \[0\].]' \
         '--end-seed-pen[Drop a terminal anchor if s<log(g)+INT, where s is the local alignment score around the anchor and g the length of the terminal gap in the chain. This option is only effective with --splice. It helps to avoid tiny terminal exons. \[6\]]' \
         '--no-end-flt[Don'\''t filter seeds towards the ends of chains before performing base-level alignment.]' \
         '--cap-sw-mem[Skip alignment if the DP matrix size is above NUM. Set 0 to disable \[0\].]' \
         '-a[Generate CIGAR and output alignments in the SAM format. Minimap2 outputs in PAF by default.]' \
-        '-o[Output alignments to FILE \[stdout\].]' \
+        '-o[Output alignments to FILE \[stdout\].]:file:_files' \
         '-Q[Ignore base quality in the input file.]' \
         '-L[Write CIGAR with >65535 operators at the CG tag. Older tools are unable to convert alignments with >65535 CIGAR ops to BAM. This option makes minimap2 SAM compatible with older tools. Newer tools recognizes this tag and reconstruct the real CIGAR in memory.]' \
         '-R[SAM read group line in a format like @RG\tID:foo\tSM:bar \[\].]' \

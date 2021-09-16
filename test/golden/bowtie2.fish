@@ -57,12 +57,12 @@ complete -c bowtie2 -l no-overlap -d 'not concordant when mates overlap at all'
 complete -c bowtie2 -l align-paired-reads -d 'Bowtie2 will, by default, attempt to align unpaired BAM reads.'
 complete -c bowtie2 -l preserve-tags -d 'Preserve tags from the original BAM record by appending them to the end of the corresponding SAM output.'
 complete -c bowtie2 -s t -l time -d 'print wall-clock time taken by search phases'
-complete -c bowtie2 -l un -d 'write unpaired reads that didn\'t align to <path>' -x
-complete -c bowtie2 -l al -d 'write unpaired reads that aligned at least once to <path>' -x
-complete -c bowtie2 -l un-conc -d 'write pairs that didn\'t align concordantly to <path>' -x
-complete -c bowtie2 -l al-conc -d 'write pairs that aligned concordantly at least once to <path>' -x
+complete -c bowtie2 -l un -d 'write unpaired reads that didn\'t align to <path>' -r
+complete -c bowtie2 -l al -d 'write unpaired reads that aligned at least once to <path>' -r
+complete -c bowtie2 -l un-conc -d 'write pairs that didn\'t align concordantly to <path>' -r
+complete -c bowtie2 -l al-conc -d 'write pairs that aligned concordantly at least once to <path>' -r
 complete -c bowtie2 -l quiet -d 'print nothing to stderr except serious errors'
-complete -c bowtie2 -l met-file -d 'send metrics to file at <path> (off)' -x
+complete -c bowtie2 -l met-file -d 'send metrics to file at <path> (off)' -r
 complete -c bowtie2 -l met-stderr -d 'send metrics to stderr (off)'
 complete -c bowtie2 -l met -d 'report internal counters & metrics every <int> secs (1)' -x
 complete -c bowtie2 -l no-unal -d 'suppress SAM records for unaligned reads'

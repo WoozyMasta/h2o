@@ -5,7 +5,6 @@
 
 module GenFishCompletions where
 
-import qualified Constants
 import Data.List.Extra (nubOrd)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -24,6 +23,7 @@ argToFlg "" = ""
 argToFlg t
   | "FILE" `T.isInfixOf` upper = " -r"
   | "DIR" `T.isInfixOf` upper = " -r"
+  | "PATH" `T.isInfixOf` upper = " -r"
   | otherwise = " -x"
   where
     upper = T.toUpper (T.pack t)
