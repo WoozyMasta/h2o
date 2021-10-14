@@ -12,7 +12,7 @@ import Hedgehog (Property, forAll, property, (===))
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import HelpParser (optName, optPart)
-import Io (run, getInputContent, pageToCommandSimple, toScript)
+import Io (getInputContent, pageToCommandSimple, run, toScript)
 import Layout (makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import qualified Postprocess
 import Subcommand (firstTwoWordsLoc)
@@ -298,6 +298,10 @@ optPartTests =
       test_optPart
         "    -4, --force-ipv4"
         (["-4", "--force-ipv4"], ""),
+      ---- 7z --help ----
+      test_optPart
+        " -i[r[-|0]]{@listfile|!wildcard}"
+        (["-i"], "[r[-|0]]{@listfile|!wildcard}"),
       ---- stack ----
       test_optPart
         "--docker*"
@@ -384,10 +388,6 @@ unsupportedCases =
         -- unsupported examples starts here
         -- ================================
 
-        ---- 7z --help ----
-        test_optPart
-          " -i[r[-|0]]{@listfile|!wildcard}"
-          (["-i"], "[r[-|0]]{@listfile|!wildcard}"),
         ---- bcftools ----
         test_optPartMany "-h/H, --header-only/--no-header" [(["-h", "--header-only"], ""), (["-H", "--no-header"], "")],
         ---- blastn ----
@@ -573,7 +573,6 @@ shellCompGoldenTests =
     actionFish = action Fish
     actionZsh = action Zsh
     actionBash = action Bash
-
 
 integratedGoldenTestsCommandInput :: TestTree
 integratedGoldenTestsCommandInput =
