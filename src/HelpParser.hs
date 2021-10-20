@@ -3,7 +3,7 @@
 module HelpParser where
 
 import qualified Data.List as List
-import Data.List.Extra (dropPrefix, nubOrd, splitOn)
+import Data.List.Extra (dropPrefix, nubOrd)
 import Data.String.Utils (strip)
 import Debug.Trace (trace)
 import Text.ParserCombinators.ReadP

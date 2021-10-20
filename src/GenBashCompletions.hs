@@ -5,7 +5,6 @@
 
 module GenBashCompletions where
 
-import qualified Constants
 import Data.Text (Text)
 import qualified Data.Text as T
 import Formatting
