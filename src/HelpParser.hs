@@ -12,6 +12,7 @@ import Type
     OptName (..),
     OptNameType (..),
   )
+import Data.Char (isNumber)
 
 type OptArg = String
 
@@ -50,6 +51,14 @@ argWordBare = do
   x <- satisfy (\c -> c `elem` alphanumChars ++ "\"`'_^(#.[")
   xs <- munch (\c -> c `elem` (alphanumChars ++ "\"`'_:<>()+-*/|#.=[]"))
   return (x : xs)
+
+argWordNumber :: ReadP String
+argWordNumber = do
+  sign <- string "-" <++ pure ""
+  digits <- munch isNumber
+  dot <- string "." <++ pure ""
+  extradigits <- munch isNumber <++ pure ""
+  return $ concat [sign, digits, dot, extradigits]
 
 argWordBracketedHelper :: Char -> Char -> ReadP String
 argWordBracketedHelper bra ket = do
@@ -147,6 +156,12 @@ optArgInBraket = do
   _ <- munch (== ' ')
   argWordBracketed
 
+optArgAsNumber :: ReadP String
+optArgAsNumber = do
+  _ <- char '='
+  _ <- munch (== ' ')
+  argWordNumber
+
 skip :: ReadP a -> ReadP ()
 skip a = a *> pure ()
 
@@ -167,7 +182,7 @@ heuristicSep args =
 optNameArgPair :: ReadP (OptName, String)
 optNameArgPair = do
   name <- optName
-  (s, args) <- gather $ sepBy (optArgInBraket <++ optArg) argSep
+  (s, args) <- gather $ sepBy (optArgInBraket <++ optArg <++ optArgAsNumber) argSep
   extra <- twoOrMoreDots <++ pure ""
   let s' = strip $ dropPrefix "=" s
   if (length args == 1 && strip (head args) == "or") || length args >= 5
