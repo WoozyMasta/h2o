@@ -199,20 +199,20 @@ splitByTopHeaders text
     headings = map (xs !!) headingIndices
     headingsStr = map T.unpack headings
 
-takeAfterUsage :: Text -> Text
-takeAfterUsage text
+dropUsage :: Text -> Text
+dropUsage text
   | null rest = text
-  | otherwise = T.concat (tail rest)
+  | otherwise = T.concat rest
   where
     xs = splitByTopHeaders text
     isUsageBlock = ("usage" `T.isPrefixOf`) . T.toLower . T.stripStart
-    rest = dropWhile (not . isUsageBlock) xs
+    rest = filter (not . isUsageBlock) xs
 
 -- | A speculative criteria for non-critical purposes
 mayContainUseful :: Text -> Bool
 mayContainUseful text = length xs >= 4 && (mayContainOptions xs || mayContainSubcommands xs)
   where
-    xs = filter (not . ("error" `T.isPrefixOf`) . T.toLower . T.stripStart) . T.lines $ takeAfterUsage text
+    xs = filter (not . ("error" `T.isPrefixOf`) . T.toLower . T.stripStart) . T.lines $ dropUsage text
 
 -- | splitsAt ... like Data.List.splitAt but multiple indices
 splitsAt :: [a] -> [Int] -> [[a]]

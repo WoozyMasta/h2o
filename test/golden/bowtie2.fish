@@ -16,14 +16,6 @@ complete -c bowtie2 -l trim-to -d 'trim reads exceeding <int> bases from either 
 complete -c bowtie2 -l phred33 -d 'qualities are Phred+33 (default)'
 complete -c bowtie2 -l phred64 -d 'qualities are Phred+64'
 complete -c bowtie2 -l int-quals -d 'qualities encoded as space-delimited integers'
-complete -c bowtie2 -l very-fast -d '-D 5 -R 1 -N 0 -L 22 -i S,0,2.50'
-complete -c bowtie2 -l fast -d '-D 10 -R 2 -N 0 -L 22 -i S,0,2.50'
-complete -c bowtie2 -l sensitive -d '-D 15 -R 2 -N 0 -L 22 -i S,1,1.15 (default)'
-complete -c bowtie2 -l very-sensitive -d '-D 20 -R 3 -N 0 -L 20 -i S,1,0.50'
-complete -c bowtie2 -l very-fast-local -d '-D 5 -R 1 -N 0 -L 25 -i S,1,2.00'
-complete -c bowtie2 -l fast-local -d '-D 10 -R 2 -N 0 -L 22 -i S,1,1.75'
-complete -c bowtie2 -l sensitive-local -d '-D 15 -R 2 -N 0 -L 20 -i S,1,0.75 (default)'
-complete -c bowtie2 -l very-sensitive-local -d '-D 20 -R 3 -N 0 -L 20 -i S,1,0.50'
 complete -c bowtie2 -s N -d 'max # mismatches in seed alignment; can be 0 or 1 (0)' -x
 complete -c bowtie2 -s L -d 'length of seed substrings; must be >3, <32 (22)' -x
 complete -c bowtie2 -s i -d 'interval between seed substrings w/r/t read len (S,1,1.15)' -x
@@ -76,7 +68,6 @@ complete -c bowtie2 -l xeq -d 'Use \'=\'/\'X\', instead of \'M,\' to specify mat
 complete -c bowtie2 -l soft-clipped-unmapped-tlen -d 'Exclude soft-clipped bases when reporting TLEN'
 complete -c bowtie2 -l sam-append-comment -d 'Append FASTA/FASTQ comment to SAM record'
 complete -c bowtie2 -s p -l threads -d 'number of alignment threads to launch (1)' -x
-complete -c bowtie2 -s p -l threads -d 'number of alignment threads to launch (1)   --reorder force SAM output order to match order of input reads' -x
 complete -c bowtie2 -l reorder -d 'force SAM output order to match order of input reads'
 complete -c bowtie2 -l mm -d 'use memory-mapped I/O for index; many \'bowtie\'s can share'
 complete -c bowtie2 -l qc-filter -d 'filter out reads that are bad according to QSEQ filter'

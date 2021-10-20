@@ -176,11 +176,11 @@ toScriptSubcommandOptions name (Command subname _ opts _) =
 
 getInputContent :: Input -> Bool -> IO String
 getInputContent (SubcommandInput name subname) isSandboxing =
-  T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub isSandboxing name subname
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub isSandboxing name subname
 getInputContent (CommandInput name) isSandboxing =
-  T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
 getInputContent (FileInput f) _ =
-  T.unpack . Utils.takeAfterUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
 getInputContent (JsonInput f) _ =
   readFile f
 
@@ -227,7 +227,7 @@ toCommandIOHelper name content isSandboxing = do
       infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
     toSubcmdOptPair useMan sub = do
       page <-
-        Utils.takeAfterUsage . Utils.convertTabsToSpaces 8
+        Utils.dropUsage . Utils.convertTabsToSpaces 8
           <$> if useMan then getManSub name (_cmd sub) else getHelpSub isSandboxing name (_cmd sub)
       let criteria = not (T.null page) && page /= T.pack content
       return ((sub, parseBlockwise (T.unpack page)), criteria)
