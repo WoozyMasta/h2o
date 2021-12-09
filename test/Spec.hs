@@ -582,7 +582,7 @@ integratedGoldenTestsCommandInput =
   where
     commands = ["h2o", "conda", "stack"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf name = C_ (Config (CommandInput name) Native False False False False False)
+    conf name = C_ (Config (CommandInput name True) Native False False False False False)
     runWithCommand name = toLazyByteString <$> run (conf name)
     toTestTree name =
       goldenVsString

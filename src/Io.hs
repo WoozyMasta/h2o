@@ -34,25 +34,30 @@ run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
   | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> getInputContent input
-  | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
+  | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name skipMan
   | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> getInputContent input
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     name = case input of
-      CommandInput n -> n
-      SubcommandInput n _ -> n
+      CommandInput n _ -> n
+      SubcommandInput n _ _ -> n
       FileInput f -> takeBaseName f
       JsonInput f -> takeBaseName f
+    skipMan = case input of
+      CommandInput _ b -> b
+      SubcommandInput _ _ b -> b
+      _ -> False
+
 run (C_ (Config input@(FileInput f) format _ _ _ _ isShallowOnly))
   | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . pageToCommandSimple name <$> contentIO
   | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
     contentIO = getInputContent input
-run (C_ (Config input@(CommandInput name) format _ _ _ _ isShallowOnly))
+run (C_ (Config input@(CommandInput name skipMan) format _ _ _ _ isShallowOnly))
   | isShallowOnly = toScript format . pageToCommandSimple name <$> getInputContent input
-  | otherwise = toScript format <$> toCommandIO name
-run (C_ (Config input@(SubcommandInput name subname) format _ _ _ _ _)) =
+  | otherwise = toScript format <$> toCommandIO name skipMan
+run (C_ (Config input@(SubcommandInput name subname _) format _ _ _ _ _)) =
   toScript format . pageToCommandSimple nameSubname <$> getInputContent input
   where
     nameSubname = name ++ "-" ++ subname
@@ -147,10 +152,15 @@ toScriptSubcommandOptions name (Command subname _ opts _) =
     prefix = T.pack $ printf "(%s-%s) " name subname
 
 getInputContent :: Input -> IO String
-getInputContent (SubcommandInput name subname) =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub name subname
-getInputContent (CommandInput name) =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp name
+getInputContent (SubcommandInput name subname skipMan) =
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader name subname
+  where
+    reader = if skipMan then getHelpSub else getManAndHelpSub
+
+getInputContent (CommandInput name skipMan) =
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader name
+  where
+    reader = if skipMan then getHelp else getManAndHelp
 getInputContent (FileInput f) =
   T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
 getInputContent (JsonInput f) = readFile f
@@ -169,9 +179,9 @@ toScript Native (Command name _ rootOptions subs)
     subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
-toCommandIO :: String -> IO Command
-toCommandIO name = do
-  content <- getInputContent (CommandInput name)
+toCommandIO :: String -> Bool -> IO Command
+toCommandIO name skipMan = do
+  content <- getInputContent (CommandInput name skipMan)
   pageToCommandIO name content
 
 pageToCommandIO :: String -> String -> IO Command
@@ -215,8 +225,8 @@ pageToCommandSimple name content =
   where
     rootOptions = parseBlockwise content
 
-listSubcommandsIO :: String -> IO [String]
-listSubcommandsIO name = getSubnames <$> toCommandIO name
+listSubcommandsIO :: String -> Bool -> IO [String]
+listSubcommandsIO name skipMan = getSubnames <$> toCommandIO name skipMan
 
 getSubnames :: Command -> [String]
 getSubnames = map _name . _subcommands

@@ -11,9 +11,9 @@ import qualified Data.Text as T
 import Options.Applicative
 
 data Input
-  = CommandInput String
+  = CommandInput String Bool
   | FileInput FilePath
-  | SubcommandInput String String
+  | SubcommandInput String String Bool
   | JsonInput FilePath
 
 data Config = Config
@@ -49,6 +49,10 @@ subcommandInput =
           <> metavar "<string-string>"
           <> help "Extract CLI options from the subcommand-specific help text or man page. Enter a command-subcommand pair, like git-log, as the argument."
       )
+    <*> switch
+      ( long "skip-man"
+          <> help "Skip scanning manpage and focus on help text. Does not apply if input source is a file."
+      )
 
 commandInput :: Parser Input
 commandInput =
@@ -58,6 +62,10 @@ commandInput =
           <> short 'c'
           <> metavar "<string>"
           <> help "Extract CLI options from the help texts or man pages associated with the command. Subcommand pages are also scanned automatically."
+      )
+    <*> switch
+      ( long "skip-man"
+          <> help "Skip scanning manpage and focus on help text. Does not apply if input source is a file."
       )
 
 fileInput :: Parser Input

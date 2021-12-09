@@ -1,6 +1,9 @@
 -c --command  ::  <string>
 Extract CLI options from the help texts or man pages associated with the command. Subcommand pages are also scanned automatically.
 
+--skip-man  ::  
+Skip scanning manpage and focus on help text. Does not apply if input source is a file.
+
 -f --file  ::  <file>
 Extract CLI options form the text file.
 
