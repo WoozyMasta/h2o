@@ -569,7 +569,7 @@ shellCompGoldenTests =
     ]
   where
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    action shell x = toLazyByteString . toScript shell . pageToCommandSimple (takeBaseName x) <$> getInputContent (FileInput x)
+    action shell x = toLazyByteString . toScript shell . pageToCommandSimple (takeBaseName x) <$> getInputContent (FileInput x True)
     actionFish = action Fish
     actionZsh = action Zsh
     actionBash = action Bash
@@ -602,7 +602,7 @@ integratedGoldenTestsFileInput =
     triples = zip3 commandNames inputFiles outputFiles
 
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf filepath = C_ (Config (FileInput filepath) Native False False False False False)
+    conf filepath = C_ (Config (FileInput filepath True) Native False False False False False)
     runWithCommand filepath = toLazyByteString <$> run (conf filepath)
     toTestTree (_, inputFile, outputFile) =
       goldenVsString

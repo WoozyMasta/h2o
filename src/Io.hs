@@ -28,6 +28,7 @@ import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..), asSubcommand, toCommand)
 import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainUseful, warnTrace)
 import qualified Utils
+import qualified Data.List as List
 
 run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
@@ -41,16 +42,16 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
     name = case input of
       CommandInput n _ -> n
       SubcommandInput n _ _ -> n
-      FileInput f -> takeBaseName f
+      FileInput f _ -> takeBaseName f
       JsonInput f -> takeBaseName f
     skipMan = case input of
       CommandInput _ b -> b
       SubcommandInput _ _ b -> b
       _ -> False
 
-run (C_ (Config input@(FileInput f) format _ _ _ _ isShallowOnly))
+run (C_ (Config input@(FileInput f skipMan) format _ _ _ _ isShallowOnly))
   | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . pageToCommandSimple name <$> contentIO
-  | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name =<< contentIO)
+  | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name skipMan =<< contentIO)
   where
     name = takeBaseName f
     contentIO = getInputContent input
@@ -70,17 +71,17 @@ run (C_ (Config input@(JsonInput _) format _ _ _ _ _)) = do
           Just c -> return c
   toScript format <$> commandIO
 
-getManSub :: String -> String -> IO Text
-getManSub name subname = getMan (name ++ "-" ++ subname)
+getManSub :: [String] -> IO Text
+getManSub names = getMan $ List.intercalate "-" names
 
-getManAndHelpSub :: String -> String -> IO Text
-getManAndHelpSub name subname = do
-  content <- getManSub name subname
+getManAndHelpSub :: [String] -> IO Text
+getManAndHelpSub names = do
+  content <- getManSub names
   if T.null content
     then do
-      content2 <- getHelpSub name subname
+      content2 <- getHelpSub names
       if T.null content2
-        then error ("io: Neither help or man pages available: " ++ name ++ "-" ++ subname)
+        then error ("io: Neither help or man pages available: " ++ List.intercalate "-" names)
         else infoTrace "io: Using help for subcommand" $ return content2
     else infoTrace "io: Using manpage for subcommand" $ return content
 
@@ -115,8 +116,11 @@ isCommandNotFound _ exitCode _ =
 getHelp :: String -> IO Text
 getHelp name = getHelpTemplate name [["--help"], ["help"], ["-help"], ["-h"]]
 
-getHelpSub :: String -> String -> IO Text
-getHelpSub name subname = getHelpTemplate name [[subname, "--help"], ["help", subname], [subname, "-help"], [subname, "-h"]]
+getHelpSub :: [String] -> IO Text
+getHelpSub names = getHelpTemplate name [[subname, "--help"], ["help", subname], [subname, "-help"], [subname, "-h"]]
+  where
+    name = unwords (init names)
+    subname = last names
 
 getMan :: String -> IO Text
 getMan name = do
@@ -153,7 +157,7 @@ toScriptSubcommandOptions name (Command subname _ opts _) =
 
 getInputContent :: Input -> IO String
 getInputContent (SubcommandInput name subname skipMan) =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader name subname
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader [name, subname]
   where
     reader = if skipMan then getHelpSub else getManAndHelpSub
 
@@ -161,7 +165,7 @@ getInputContent (CommandInput name skipMan) =
   T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader name
   where
     reader = if skipMan then getHelp else getManAndHelp
-getInputContent (FileInput f) =
+getInputContent (FileInput f _) =
   T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
 getInputContent (JsonInput f) = readFile f
 
@@ -182,10 +186,10 @@ toScript Native (Command name _ rootOptions subs)
 toCommandIO :: String -> Bool -> IO Command
 toCommandIO name skipMan = do
   content <- getInputContent (CommandInput name skipMan)
-  pageToCommandIO name content
+  pageToCommandIO name skipMan content
 
-pageToCommandIO :: String -> String -> IO Command
-pageToCommandIO name content = do
+pageToCommandIO :: String -> Bool -> String -> IO Command
+pageToCommandIO name skipMan content = do
   subcmdOptsPairs <- subcmdOptsPairsM
   if null rootOptions && null subcmdOptsPairs
     then error ("Failed to extract information for a Command: " ++ name)
@@ -200,9 +204,11 @@ pageToCommandIO name content = do
     toSubcmdOptPair useMan sub = do
       page <-
         Utils.dropUsage . Utils.convertTabsToSpaces 8
-          <$> if useMan then getManSub name (_cmd sub) else getHelpSub name (_cmd sub)
+          <$> if useMan then getManSub cmdNames else getHelpSub cmdNames
       let criteria = not (T.null page) && page /= T.pack content
       return ((sub, parseBlockwise (T.unpack page)), criteria)
+      where
+        cmdNames = [name, _cmd sub]
     pairsIO = do
       !isManAvailable <- isManAvailableIO name
       mapM (toSubcmdOptPair isManAvailable) subcmdCandidates

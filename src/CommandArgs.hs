@@ -12,7 +12,7 @@ import Options.Applicative
 
 data Input
   = CommandInput String Bool
-  | FileInput FilePath
+  | FileInput FilePath Bool
   | SubcommandInput String String Bool
   | JsonInput FilePath
 
@@ -77,6 +77,11 @@ fileInput =
           <> metavar "<file>"
           <> help "Extract CLI options form the text file."
       )
+    <*> switch
+      ( long "skip-man"
+          <> help "Skip scanning manpage and focus on help text. Does not apply if input source is a file."
+      )
+
 
 jsonInput :: Parser Input
 jsonInput =
