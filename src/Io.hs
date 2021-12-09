@@ -33,9 +33,9 @@ run :: ConfigOrVersion -> IO Text
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
-  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> getInputContent input
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name
-  | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> getInputContent input
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
     name = case input of
@@ -48,16 +48,16 @@ run (C_ (Config input@(FileInput f) format _ _ _ _ isShallowOnly))
   | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name =<< contentIO)
   where
     name = takeBaseName f
-    contentIO = getInputContent input False
+    contentIO = getInputContent input
 run (C_ (Config input@(CommandInput name) format _ _ _ _ isShallowOnly))
-  | isShallowOnly = toScript format . pageToCommandSimple name <$> (getInputContent input =<< isBwrapAvailableIO)
+  | isShallowOnly = toScript format . pageToCommandSimple name <$> getInputContent input
   | otherwise = toScript format <$> toCommandIO name
 run (C_ (Config input@(SubcommandInput name subname) format _ _ _ _ _)) =
-  toScript format . pageToCommandSimple nameSubname <$> (getInputContent input =<< isBwrapAvailableIO)
+  toScript format . pageToCommandSimple nameSubname <$> getInputContent input
   where
     nameSubname = name ++ "-" ++ subname
 run (C_ (Config input@(JsonInput _) format _ _ _ _ _)) = do
-  content <- TLE.encodeUtf8 . TL.pack <$> (getInputContent input =<< isBwrapAvailableIO)
+  content <- TLE.encodeUtf8 . TL.pack <$> getInputContent input
   let cmdMay = Aeson.decode content :: Maybe Command
   let commandIO =
         case cmdMay of
@@ -65,23 +65,15 @@ run (C_ (Config input@(JsonInput _) format _ _ _ _ _)) = do
           Just c -> return c
   toScript format <$> commandIO
 
-getHelp :: Bool -> String -> IO Text
-getHelp True = infoTrace ("sandboxed" :: String) getHelpSandboxed
-getHelp False = warnTrace ("No sandboxing!" :: String) getHelpBare
-
-getHelpSub :: Bool -> String -> String -> IO Text
-getHelpSub True = getHelpSubSandboxed
-getHelpSub False = getHelpSubBare
-
 getManSub :: String -> String -> IO Text
 getManSub name subname = getMan (name ++ "-" ++ subname)
 
-getManAndHelpSub :: Bool -> String -> String -> IO Text
-getManAndHelpSub isSandboxing name subname = do
+getManAndHelpSub :: String -> String -> IO Text
+getManAndHelpSub name subname = do
   content <- getManSub name subname
   if T.null content
     then do
-      content2 <- getHelpSub isSandboxing name subname
+      content2 <- getHelpSub name subname
       if T.null content2
         then error ("io: Neither help or man pages available: " ++ name ++ "-" ++ subname)
         else infoTrace "io: Using help for subcommand" $ return content2
@@ -112,34 +104,14 @@ fetchHelpInfo name args = do
   return res
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> Text -> Bool
-isCommandNotFound name exitCode stderr =
+isCommandNotFound _ exitCode _ =
   exitCode == System.Exit.ExitFailure 127
-    || ("bwrap: execvp " `T.append` T.pack name) `T.isPrefixOf` stderr
 
-getHelpBare :: String -> IO Text
-getHelpBare name = getHelpTemplate name [["--help"], ["help"], ["-help"], ["-h"]]
+getHelp :: String -> IO Text
+getHelp name = getHelpTemplate name [["--help"], ["help"], ["-help"], ["-h"]]
 
-getHelpSubBare :: String -> String -> IO Text
-getHelpSubBare name subname = getHelpTemplate name [[subname, "--help"], ["help", subname], [subname, "-help"], [subname, "-h"]]
-
-bwrapArgsBase :: [String]
-bwrapArgsBase = ["--ro-bind", "/", "/", "--dev", "/dev", "--tmpfs", "/tmp", "--unshare-all"]
-
-getHelpSandboxed :: String -> IO Text
-getHelpSandboxed name = getHelpTemplate "bwrap" [options, alt1, alt2, alt3]
-  where
-    options = bwrapArgsBase ++ [name, "--help"]
-    alt1 = bwrapArgsBase ++ [name, "help"]
-    alt2 = bwrapArgsBase ++ [name, "-help"]
-    alt3 = bwrapArgsBase ++ [name, "-h"]
-
-getHelpSubSandboxed :: String -> String -> IO Text
-getHelpSubSandboxed name subname = getHelpTemplate "bwrap" [options, alt1, alt2, alt3]
-  where
-    options = bwrapArgsBase ++ [name, "help", subname]
-    alt1 = bwrapArgsBase ++ [name, subname, "--help"]
-    alt2 = bwrapArgsBase ++ [name, subname, "-help"]
-    alt3 = bwrapArgsBase ++ [name, subname, "-h"]
+getHelpSub :: String -> String -> IO Text
+getHelpSub name subname = getHelpTemplate name [[subname, "--help"], ["help", subname], [subname, "-help"], [subname, "-h"]]
 
 getMan :: String -> IO Text
 getMan name = do
@@ -151,12 +123,12 @@ getMan name = do
   where
     cp = Process.shell $ printf "man %s | col -bx" name
 
-getManAndHelp :: Bool -> String -> IO Text
-getManAndHelp isSandboxing name = do
+getManAndHelp :: String -> IO Text
+getManAndHelp name = do
   content <- getMan name
   if T.null content
     then do
-      content2 <- getHelp isSandboxing name
+      content2 <- getHelp name
       if T.null content2
         then error ("io: Neither help or man pages available: " ++ name)
         else infoTrace "io: Using help" $ return content2
@@ -174,15 +146,14 @@ toScriptSubcommandOptions name (Command subname _ opts _) =
   where
     prefix = T.pack $ printf "(%s-%s) " name subname
 
-getInputContent :: Input -> Bool -> IO String
-getInputContent (SubcommandInput name subname) isSandboxing =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub isSandboxing name subname
-getInputContent (CommandInput name) isSandboxing =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp isSandboxing name
-getInputContent (FileInput f) _ =
+getInputContent :: Input -> IO String
+getInputContent (SubcommandInput name subname) =
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelpSub name subname
+getInputContent (CommandInput name) =
+  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> getManAndHelp name
+getInputContent (FileInput f) =
   T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
-getInputContent (JsonInput f) _ =
-  readFile f
+getInputContent (JsonInput f) = readFile f
 
 toScript :: OutputFormat -> Command -> Text
 toScript Fish cmd = toFishScript cmd
@@ -198,22 +169,13 @@ toScript Native (Command name _ rootOptions subs)
     subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
-isBwrapAvailableIO :: IO Bool
-isBwrapAvailableIO = return False
-
 toCommandIO :: String -> IO Command
 toCommandIO name = do
-  !isSandboxing <- isBwrapAvailableIO
-  content <- getInputContent (CommandInput name) isSandboxing
-  toCommandIOHelper name content isSandboxing
+  content <- getInputContent (CommandInput name)
+  pageToCommandIO name content
 
 pageToCommandIO :: String -> String -> IO Command
 pageToCommandIO name content = do
-  !isSandboxing <- isBwrapAvailableIO
-  toCommandIOHelper name content isSandboxing
-
-toCommandIOHelper :: String -> String -> Bool -> IO Command
-toCommandIOHelper name content isSandboxing = do
   subcmdOptsPairs <- subcmdOptsPairsM
   if null rootOptions && null subcmdOptsPairs
     then error ("Failed to extract information for a Command: " ++ name)
@@ -228,7 +190,7 @@ toCommandIOHelper name content isSandboxing = do
     toSubcmdOptPair useMan sub = do
       page <-
         Utils.dropUsage . Utils.convertTabsToSpaces 8
-          <$> if useMan then getManSub name (_cmd sub) else getHelpSub isSandboxing name (_cmd sub)
+          <$> if useMan then getManSub name (_cmd sub) else getHelpSub name (_cmd sub)
       let criteria = not (T.null page) && page /= T.pack content
       return ((sub, parseBlockwise (T.unpack page)), criteria)
     pairsIO = do

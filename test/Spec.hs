@@ -569,7 +569,7 @@ shellCompGoldenTests =
     ]
   where
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    action shell x = toLazyByteString . toScript shell . pageToCommandSimple (takeBaseName x) <$> getInputContent (FileInput x) False
+    action shell x = toLazyByteString . toScript shell . pageToCommandSimple (takeBaseName x) <$> getInputContent (FileInput x)
     actionFish = action Fish
     actionZsh = action Zsh
     actionBash = action Bash
