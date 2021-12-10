@@ -127,7 +127,7 @@ config =
               )
             <*> switch
               ( long "shallow"
-                  <> help "Don't scan subcommands. Applies only for file input."
+                  <> help "Don't scan subcommands. Applies for either command-name or file input."
               )
         )
 

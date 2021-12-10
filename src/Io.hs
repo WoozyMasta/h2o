@@ -30,38 +30,43 @@ import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainUseful, warnTra
 import qualified Utils
 import qualified Data.List as List
 
+
+-- | Main function processing ConfigOrVersion
 run :: ConfigOrVersion -> IO Text
+-- Just return version
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
+
+-- Or, do some utility work
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
-  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" $ T.pack <$> getInputContent input
-  | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines . map T.pack <$> listSubcommandsIO name skipMan
+  | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" T.pack <$> getInputContent input
+  | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines <$> listSubcommandsIO input
   | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> getInputContent input
   where
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
-    name = case input of
-      CommandInput n _ -> n
-      SubcommandInput n _ _ -> n
-      FileInput f _ -> takeBaseName f
-      JsonInput f -> takeBaseName f
-    skipMan = case input of
-      CommandInput _ b -> b
-      SubcommandInput _ _ b -> b
-      _ -> False
 
+-- Or, process the input file in text
 run (C_ (Config input@(FileInput f skipMan) format _ _ _ _ isShallowOnly))
   | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . pageToCommandSimple name <$> contentIO
   | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name skipMan =<< contentIO)
   where
     name = takeBaseName f
     contentIO = getInputContent input
+
+-- Or, process with command name
 run (C_ (Config input@(CommandInput name skipMan) format _ _ _ _ isShallowOnly))
-  | isShallowOnly = toScript format . pageToCommandSimple name <$> getInputContent input
-  | otherwise = toScript format <$> toCommandIO name skipMan
+  | isShallowOnly = toScript format . pageToCommandSimple name <$> contentIO
+  | otherwise = toScript format <$> (pageToCommandIO name skipMan =<< contentIO)
+  where
+    contentIO = getInputContent input
+
+-- Or, process with command name AND subcommand name
 run (C_ (Config input@(SubcommandInput name subname _) format _ _ _ _ _)) =
   toScript format . pageToCommandSimple nameSubname <$> getInputContent input
   where
     nameSubname = name ++ "-" ++ subname
+
+-- Or, load Command from JSON
 run (C_ (Config input@(JsonInput _) format _ _ _ _ _)) = do
   content <- TLE.encodeUtf8 . TL.pack <$> getInputContent input
   let cmdMay = Aeson.decode content :: Maybe Command
@@ -85,7 +90,6 @@ getManAndHelpSub names = do
         else infoTrace "io: Using help for subcommand" $ return content2
     else infoTrace "io: Using manpage for subcommand" $ return content
 
--- | Following implementation takes more than 2x longer than the above... WHY??
 -- |
 getHelpTemplate :: String -> [[String]] -> IO Text
 getHelpTemplate _ [] = return ""
@@ -183,11 +187,6 @@ toScript Native (Command name _ rootOptions subs)
     subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
-toCommandIO :: String -> Bool -> IO Command
-toCommandIO name skipMan = do
-  content <- getInputContent (CommandInput name skipMan)
-  pageToCommandIO name skipMan content
-
 pageToCommandIO :: String -> Bool -> String -> IO Command
 pageToCommandIO name skipMan content = do
   subcmdOptsPairs <- subcmdOptsPairsM
@@ -211,7 +210,7 @@ pageToCommandIO name skipMan content = do
         cmdNames = [name, _cmd sub]
     pairsIO = do
       !isManAvailable <- isManAvailableIO name
-      mapM (toSubcmdOptPair isManAvailable) subcmdCandidates
+      mapM (toSubcmdOptPair (not skipMan && isManAvailable)) subcmdCandidates
     subcmdOptsPairsM = map fst . filter snd <$> pairsIO
 
 isManAvailableIO :: String -> IO Bool
@@ -231,8 +230,21 @@ pageToCommandSimple name content =
   where
     rootOptions = parseBlockwise content
 
-listSubcommandsIO :: String -> Bool -> IO [String]
-listSubcommandsIO name skipMan = getSubnames <$> toCommandIO name skipMan
+listSubcommandsIO :: Input -> IO [Text]
+listSubcommandsIO input = getSubnames <$> (pageToCommandIO name skipMan =<< getInputContent input)
+  where
+    name = getName input
+    skipMan = getSkipMan input
+    getSubnames = map (T.pack . _name) . _subcommands
 
-getSubnames :: Command -> [String]
-getSubnames = map _name . _subcommands
+getName :: Input -> String
+getName (CommandInput n _) = n
+getName (SubcommandInput n _ _) = n
+getName (FileInput f _) = takeBaseName f
+getName (JsonInput f) = takeBaseName f
+
+getSkipMan :: Input -> Bool
+getSkipMan (CommandInput _ b) = b
+getSkipMan (SubcommandInput _ _ b) = b
+getSkipMan (FileInput _ b) = b
+getSkipMan (JsonInput _) = True
