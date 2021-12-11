@@ -29,7 +29,7 @@ List subcommands
 [Test only] Run preprocessing only (for debugging)
 
 --shallow  ::  
-Don't scan subcommands. Applies only for file input.
+Don't scan subcommands. Applies for either command-name or file input.
 
 --version  ::  
 Show version
