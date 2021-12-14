@@ -1,7 +1,7 @@
--h --help  ::  
+(conda) -h --help  ::  
 Show this help message and exit.
 
--V --version  ::  
+(conda) -V --version  ::  
 Show the conda version number and exit.
 
 

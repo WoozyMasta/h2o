@@ -178,14 +178,16 @@ toScript Json = toJSONText
 toScript Native = toNativeText
 
 toNativeText :: Command -> Text
-toNativeText (Command name _ rootOptions subs)
-  | null subs = warnTrace "Ignore subcommands" $ T.unlines $ map (T.pack . show) rootOptions
-  | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
+toNativeText (Command _ _ opts []) = warnTrace "No subcommands" $ T.unlines $ map (T.pack .show) opts
+toNativeText cmd = T.intercalate "\n\n\n" . filter (not . T.null) $ toNativeTextRec [] cmd
+
+toNativeTextRec :: [String] -> Command -> [Text]
+toNativeTextRec path cmd@(Command name _ _ subCmds) =
+  [optsText, subcommandsText] ++ rest
   where
-    optsText = toOptsText rootOptions
-    subcommandsText = toSubcommandsText subs
-    subcommandOptionsText = map (toSubcommandOptionsText [name]) subs
-    entries = [optsText, subcommandsText] ++ subcommandOptionsText
+    optsText = toSubcommandOptionsText path cmd
+    subcommandsText = toSubcommandsText subCmds
+    rest = concatMap (toNativeTextRec (path ++ [name])) subCmds
 
 -- | Scans over command and subcommands
 -- `name` is the name of the command.

@@ -1,148 +1,148 @@
---help  ::  
+(stack) --help  ::  
 Show this help text
 
---version  ::  
+(stack) --version  ::  
 Show version
 
---numeric-version  ::  
+(stack) --numeric-version  ::  
 Show only version number
 
---hpack-numeric-version  ::  
+(stack) --hpack-numeric-version  ::  
 Show only hpack's version number
 
---docker  ::  
+(stack) --docker  ::  
 Run 'stack --docker-help' for details
 
---nix  ::  
+(stack) --nix  ::  
 Run 'stack --nix-help' for details
 
---verbosity  ::  VERBOSITY
+(stack) --verbosity  ::  VERBOSITY
 Verbosity: silent, error, warn, info, debug
 
--v --verbose  ::  
+(stack) -v --verbose  ::  
 Enable verbose mode: verbosity level "debug"
 
---silent  ::  
+(stack) --silent  ::  
 Enable silent mode: verbosity level "silent"
 
---time-in-log  ::  
+(stack) --time-in-log  ::  
 Enable/disable inclusion of timings in logs, for the purposes of using diff with logs (default: enabled)
 
---no-time-in-log  ::  
+(stack) --no-time-in-log  ::  
 Enable/disable inclusion of timings in logs, for the purposes of using diff with logs (default: enabled)
 
---stack-root  ::  STACK-ROOT
+(stack) --stack-root  ::  STACK-ROOT
 Absolute path to the global stack root directory (Overrides any STACK_ROOT environment variable)
 
---work-dir  ::  WORK-DIR
+(stack) --work-dir  ::  WORK-DIR
 Relative path of work directory (Overrides any STACK_WORK environment variable, default is '.stack-work')
 
---system-ghc  ::  
+(stack) --system-ghc  ::  
 Enable/disable using the system installed GHC (on the PATH) if it is available and its version matches. Disabled by default.
 
---no-system-ghc  ::  
+(stack) --no-system-ghc  ::  
 Enable/disable using the system installed GHC (on the PATH) if it is available and its version matches. Disabled by default.
 
---install-ghc  ::  
+(stack) --install-ghc  ::  
 Enable/disable downloading and installing GHC if necessary (can be done manually with stack setup) (default: enabled)
 
---no-install-ghc  ::  
+(stack) --no-install-ghc  ::  
 Enable/disable downloading and installing GHC if necessary (can be done manually with stack setup) (default: enabled)
 
---arch  ::  ARCH
+(stack) --arch  ::  ARCH
 System architecture, e.g. i386, x86_64
 
---ghc-variant  ::  VARIANT
+(stack) --ghc-variant  ::  VARIANT
 Specialized GHC variant, e.g. integersimple (incompatible with --system-ghc)
 
---ghc-build  ::  BUILD
+(stack) --ghc-build  ::  BUILD
 Specialized GHC build, e.g. 'gmp4' or 'standard' (usually auto-detected)
 
--j --jobs  ::  JOBS
+(stack) -j --jobs  ::  JOBS
 Number of concurrent jobs to run
 
---extra-include-dirs  ::  DIR
+(stack) --extra-include-dirs  ::  DIR
 Extra directories to check for C header files
 
---extra-lib-dirs  ::  DIR
+(stack) --extra-lib-dirs  ::  DIR
 Extra directories to check for libraries
 
---custom-preprocessor-extensions  ::  EXT
+(stack) --custom-preprocessor-extensions  ::  EXT
 Extensions used for custom preprocessors
 
---with-gcc  ::  PATH-TO-GCC
+(stack) --with-gcc  ::  PATH-TO-GCC
 Use gcc found at PATH-TO-GCC
 
---with-hpack  ::  HPACK
+(stack) --with-hpack  ::  HPACK
 Use HPACK executable (overrides bundled Hpack)
 
---skip-ghc-check  ::  
+(stack) --skip-ghc-check  ::  
 Enable/disable skipping the GHC version and architecture check (default: disabled)
 
---no-skip-ghc-check  ::  
+(stack) --no-skip-ghc-check  ::  
 Enable/disable skipping the GHC version and architecture check (default: disabled)
 
---skip-msys  ::  
+(stack) --skip-msys  ::  
 Enable/disable skipping the local MSYS installation (Windows only) (default: disabled)
 
---no-skip-msys  ::  
+(stack) --no-skip-msys  ::  
 Enable/disable skipping the local MSYS installation (Windows only) (default: disabled)
 
---local-bin-path  ::  DIR
+(stack) --local-bin-path  ::  DIR
 Install binaries to DIR
 
---setup-info-yaml  ::  URL
+(stack) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
---modify-code-page  ::  
+(stack) --modify-code-page  ::  
 Enable/disable setting the codepage to support UTF-8 (Windows only) (default: enabled)
 
---no-modify-code-page  ::  
+(stack) --no-modify-code-page  ::  
 Enable/disable setting the codepage to support UTF-8 (Windows only) (default: enabled)
 
---allow-different-user  ::  
+(stack) --allow-different-user  ::  
 Enable/disable permission for users other than the owner of the stack root directory to use a stack installation (POSIX only) (default: true inside Docker, otherwise false)
 
---no-allow-different-user  ::  
+(stack) --no-allow-different-user  ::  
 Enable/disable permission for users other than the owner of the stack root directory to use a stack installation (POSIX only) (default: true inside Docker, otherwise false)
 
---dump-logs  ::  
+(stack) --dump-logs  ::  
 Enable/disable dump the build output logs for local packages to the console (default: dump warning logs)
 
---no-dump-logs  ::  
+(stack) --no-dump-logs  ::  
 Enable/disable dump the build output logs for local packages to the console (default: dump warning logs)
 
---color --colour  ::  WHEN
+(stack) --color --colour  ::  WHEN
 Specify when to use color in output; WHEN is 'always', 'never', or 'auto'. On Windows versions before Windows 10, for terminals that do not support color codes, the default is 'never'; color may work on terminals that support color codes
 
---snapshot-location-base  ::  URL
+(stack) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
---resolver  ::  RESOLVER
+(stack) --resolver  ::  RESOLVER
 Override resolver in project file
 
---compiler  ::  COMPILER
+(stack) --compiler  ::  COMPILER
 Use the specified compiler
 
---terminal  ::  
+(stack) --terminal  ::  
 Enable/disable overriding terminal detection in the case of running in a false terminal
 
---no-terminal  ::  
+(stack) --no-terminal  ::  
 Enable/disable overriding terminal detection in the case of running in a false terminal
 
---stack-colors --stack-colours  ::  STYLES
+(stack) --stack-colors --stack-colours  ::  STYLES
 Specify stack's output styles; STYLES is a colon-delimited sequence of key=value, where 'key' is a style name and 'value' is a semicolon-delimited list of 'ANSI' SGR (Select Graphic Rendition) control codes (in decimal). Use 'stack ls stack-colors --basic' to see the current sequence. In shells where a semicolon is a command separator, enclose STYLES in quotes.
 
---terminal-width  ::  INT
+(stack) --terminal-width  ::  INT
 Specify the width of the terminal, used for pretty-print messages
 
---stack-yaml  ::  STACK-YAML
+(stack) --stack-yaml  ::  STACK-YAML
 Override project stack.yaml file (overrides any STACK_YAML environment variable)
 
---lock-file  ::  ARG
+(stack) --lock-file  ::  ARG
 Specify how to interact with lock files. Default: read/write. If resolver is overridden: read-only
 
---full  ::  '
+(stack) --full  ::  '
 query Query general build information (experimental)
 
 
