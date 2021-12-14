@@ -145,17 +145,17 @@ getManAndHelp name = do
         else infoTrace "io: Using help" $ return content2
     else infoTrace "io: Using manpage" $ return content
 
-toScriptRootOptions :: [Opt] -> Text
-toScriptRootOptions = T.unlines . map (T.pack . show)
+toOptsText :: [Opt] -> Text
+toOptsText = T.unlines . map (T.pack . show)
 
-toScriptSubcommands :: [Command] -> Text
-toScriptSubcommands = T.unlines . map (T.pack . show . asSubcommand)
+toSubcommandsText :: [Command] -> Text
+toSubcommandsText = T.unlines . map (T.pack . show . asSubcommand)
 
-toScriptSubcommandOptions :: String -> Command -> Text
-toScriptSubcommandOptions name (Command subname _ opts _) =
+toSubcommandOptionsText :: [String] -> Command -> Text
+toSubcommandOptionsText nameSeq (Command subname _ opts _) =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
-    prefix = T.pack $ printf "(%s-%s) " name subname
+    prefix = T.pack . printf "(%s) " . T.intercalate "-" . map T.pack $ nameSeq ++ [subname]
 
 getInputContent :: Input -> IO String
 getInputContent (SubcommandInput name subname skipMan) =
@@ -171,18 +171,21 @@ getInputContent (FileInput f _) =
 getInputContent (JsonInput f) = readFile f
 
 toScript :: OutputFormat -> Command -> Text
-toScript Fish cmd = toFishScript cmd
-toScript Zsh cmd = toZshScript cmd
-toScript Bash cmd = toBashScript cmd
-toScript Json cmd = toJSONText cmd
-toScript Native (Command name _ rootOptions subs)
+toScript Fish = toFishScript
+toScript Zsh = toZshScript
+toScript Bash = toBashScript
+toScript Json = toJSONText
+toScript Native = toNativeText
+
+toNativeText :: Command -> Text
+toNativeText (Command name _ rootOptions subs)
   | null subs = warnTrace "Ignore subcommands" $ T.unlines $ map (T.pack . show) rootOptions
   | otherwise = T.intercalate "\n\n\n" (filter (not . T.null) entries)
   where
-    rootOptScript = toScriptRootOptions rootOptions
-    subcommandScript = toScriptSubcommands subs
-    subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
-    entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
+    optsText = toOptsText rootOptions
+    subcommandsText = toSubcommandsText subs
+    subcommandOptionsText = map (toSubcommandOptionsText [name]) subs
+    entries = [optsText, subcommandsText] ++ subcommandOptionsText
 
 -- | Scans over command and subcommands
 -- `name` is the name of the command.
@@ -199,11 +202,12 @@ pageToCommandIO name skipMan content = do
     rootOptions = parseBlockwise content
     candidates = getSubcmdCandidates content
     -- scan over subcommand candidates
-    subcommandsM = map fst . filter snd <$> do
-      !isManAvailable <- isManAvailableIO name
-      let useMan = not skipMan && isManAvailable
-      -- [FIXME] Currently hardcoding to limit scan to sub-sub command level.
-      mapM (\(Subcommand subname subdesc) -> getSubcommand 1 useMan [name, subname] subdesc (T.pack content)) candidates
+    subcommandsM =
+      map fst . filter snd <$> do
+        !isManAvailable <- isManAvailableIO name
+        let useMan = not skipMan && isManAvailable
+        -- [FIXME] Currently hardcoding to limit scan to sub-sub command level.
+        mapM (\(Subcommand subname subdesc) -> getSubcommand 1 useMan [name, subname] subdesc (T.pack content)) candidates
 
 -- | Scan subcommand recursively for its options and sub-sub commands
 -- Arguments:
