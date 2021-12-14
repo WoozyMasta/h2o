@@ -113,18 +113,3 @@ toOptionNameType s
 
 asSubcommand :: Command -> Subcommand
 asSubcommand (Command n desc _ _) = Subcommand n desc
-
-subcommandToCommand :: Subcommand -> [Opt] -> Command
-subcommandToCommand (Subcommand subcmd desc) opts = Command subcmd desc opts []
-
-toCommand :: String -> String -> [Opt] -> [(Subcommand, [Opt])] -> Command
-toCommand name desc opts subcmdOptsPairs =
-  Command name desc opts subcommands
-  where
-    subcommands = [subcommandToCommand subcmd opts' | (subcmd, opts') <- subcmdOptsPairs]
-
-merge :: Command -> Command -> Command
-merge upper lower = upper{ _subcommands = _subcommands upper ++ [lower] }
-
-setDescription :: Command -> Subcommand -> Command
-setDescription cmd subcmd = cmd{ _description = _desc (subcmd :: Subcommand) }

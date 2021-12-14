@@ -9,6 +9,7 @@ import CommandArgs (Config (..), ConfigOrVersion (..), Input (..), OutputFormat 
 import qualified Constants
 import Control.Exception (SomeException, try)
 import qualified Data.Aeson as Aeson
+import qualified Data.List as List
 import qualified Data.Map.Ordered as OMap
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -25,17 +26,14 @@ import qualified System.Exit
 import System.FilePath (takeBaseName)
 import qualified System.Process.Typed as Process
 import Text.Printf (printf)
-import Type (Command (..), Opt, Subcommand (..), asSubcommand, toCommand)
+import Type (Command (..), Opt, Subcommand (..), asSubcommand)
 import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainUseful, warnTrace)
 import qualified Utils
-import qualified Data.List as List
-
 
 -- | Main function processing ConfigOrVersion
 run :: ConfigOrVersion -> IO Text
 -- Just return version
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
-
 -- Or, do some utility work
 run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
   | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
@@ -164,7 +162,6 @@ getInputContent (SubcommandInput name subname skipMan) =
   T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader [name, subname]
   where
     reader = if skipMan then getHelpSub else getManAndHelpSub
-
 getInputContent (CommandInput name skipMan) =
   T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader name
   where
@@ -187,46 +184,58 @@ toScript Native (Command name _ rootOptions subs)
     subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
-
 -- | Scans over command and subcommands
 -- `name` is the name of the command.
 -- `skipMan` sets weather to read man pages in subsequent scans.
 -- `content` is the top-level text to be scanned.
---
 pageToCommandIO :: String -> Bool -> String -> IO Command
 pageToCommandIO name skipMan content = do
-  subcmdOptsPairs <- subcmdOptsPairsM
-  if null rootOptions && null subcmdOptsPairs
+  subcommands <- subcommandsM
+  if null rootOptions && null subcommands
     then error ("Failed to extract information for a Command: " ++ name)
-    else return $ Postprocess.fixCommand $ toCommand name name rootOptions subcmdOptsPairs
+    else return $ Postprocess.fixCommand $ Command name name rootOptions subcommands
   where
     -- get command options from `content`
     rootOptions = parseBlockwise content
-
-    -- get subcommand candidates from `content`
-    subcmdCandidates =
-      infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
-      where
-        sub2pair (Subcommand s1 s2) = (s1, s2)
-        pair2sub = uncurry Subcommand
-        uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
-
-    -- scan options specific to the subcommand `sub`
-    toSubcmdOptPair useMan sub = do
-      page <-
-        Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> readFunc [name, _cmd sub]
-      let isSuccess = not (T.null page) && page /= T.pack content
-      return ((sub, parseBlockwise (T.unpack page)), isSuccess)
-      where
-        readFunc = if useMan then getManSub else getHelpSub
-
+    candidates = getSubcmdCandidates content
     -- scan over subcommand candidates
-    subcmdOptsPairsM = map fst . filter snd <$> pairsIO
-      where
-        pairsIO = do
-          !isManAvailable <- isManAvailableIO name
-          mapM (toSubcmdOptPair (not skipMan && isManAvailable)) subcmdCandidates
+    subcommandsM = map fst . filter snd <$> do
+      !isManAvailable <- isManAvailableIO name
+      let useMan = not skipMan && isManAvailable
+      -- [FIXME] Currently hardcoding to limit scan to sub-sub command level.
+      mapM (\(Subcommand subname subdesc) -> getSubcommand 1 useMan [name, subname] subdesc (T.pack content)) candidates
 
+-- | Scan subcommand recursively for its options and sub-sub commands
+-- Arguments:
+--   extraDepth is the number of extra depths to scan sub-sub..commands. Set 0 to avoid scanning sub-sub commands.
+--   useMan carries information weather man page is used as the information source.
+--   cmdSeq is a list composed of command name, subcommand name, for example ["docker", "container", "run"].
+--   desc is description of the subcommand obtained from the upper-level source.
+--   upperContent is the text scanned in the upper level. This information is needed because
+--     "foo bar --help" sometimes returns the identical result as "foo --help".
+getSubcommand :: Int -> Bool -> [String] -> String -> Text -> IO (Command, Bool)
+getSubcommand extraDepth useMan cmdSeq desc upperContent = do
+  page <- Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> readFunc cmdSeq
+  let isSuccess = not (T.null page) && page /= upperContent
+  let content = T.unpack page
+  let subSubCandidates = if extraDepth == 0 then [] else getSubcmdCandidates content
+  let subSubCommandCandidsM = mapM (\(Subcommand subsubName subsubDesc) -> getSubcommand (extraDepth - 1) useMan (cmdSeq ++ [subsubDesc]) subsubName page) subSubCandidates
+  let subSubCommandsM = map fst . filter snd <$> subSubCommandCandidsM
+  let opts = parseBlockwise content
+  subSubCommands <- subSubCommandsM
+  let result = Command (last cmdSeq) desc opts subSubCommands
+  return (result, isSuccess)
+  where
+    readFunc = if useMan then getManSub else getHelpSub
+
+-- | scan `content` for a list of possible subcommand
+getSubcmdCandidates :: String -> [Subcommand]
+getSubcmdCandidates content =
+  infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
+  where
+    sub2pair (Subcommand s1 s2) = (s1, s2)
+    pair2sub = uncurry Subcommand
+    uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
 
 -- | Checks if man page is available
 isManAvailableIO :: String -> IO Bool
