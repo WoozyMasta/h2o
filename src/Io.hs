@@ -187,6 +187,12 @@ toScript Native (Command name _ rootOptions subs)
     subcommandOptionScripts = [toScriptSubcommandOptions name subcmd | subcmd <- subs]
     entries = [rootOptScript, subcommandScript] ++ subcommandOptionScripts
 
+
+-- | Scans over command and subcommands
+-- `name` is the name of the command.
+-- `skipMan` sets weather to read man pages in subsequent scans.
+-- `content` is the top-level text to be scanned.
+--
 pageToCommandIO :: String -> Bool -> String -> IO Command
 pageToCommandIO name skipMan content = do
   subcmdOptsPairs <- subcmdOptsPairsM
@@ -194,25 +200,35 @@ pageToCommandIO name skipMan content = do
     then error ("Failed to extract information for a Command: " ++ name)
     else return $ Postprocess.fixCommand $ toCommand name name rootOptions subcmdOptsPairs
   where
-    sub2pair (Subcommand s1 s2) = (s1, s2)
-    pair2sub = uncurry Subcommand
-    uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
+    -- get command options from `content`
     rootOptions = parseBlockwise content
+
+    -- get subcommand candidates from `content`
     subcmdCandidates =
       infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
+      where
+        sub2pair (Subcommand s1 s2) = (s1, s2)
+        pair2sub = uncurry Subcommand
+        uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
+
+    -- scan options specific to the subcommand `sub`
     toSubcmdOptPair useMan sub = do
       page <-
-        Utils.dropUsage . Utils.convertTabsToSpaces 8
-          <$> if useMan then getManSub cmdNames else getHelpSub cmdNames
-      let criteria = not (T.null page) && page /= T.pack content
-      return ((sub, parseBlockwise (T.unpack page)), criteria)
+        Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> readFunc [name, _cmd sub]
+      let isSuccess = not (T.null page) && page /= T.pack content
+      return ((sub, parseBlockwise (T.unpack page)), isSuccess)
       where
-        cmdNames = [name, _cmd sub]
-    pairsIO = do
-      !isManAvailable <- isManAvailableIO name
-      mapM (toSubcmdOptPair (not skipMan && isManAvailable)) subcmdCandidates
-    subcmdOptsPairsM = map fst . filter snd <$> pairsIO
+        readFunc = if useMan then getManSub else getHelpSub
 
+    -- scan over subcommand candidates
+    subcmdOptsPairsM = map fst . filter snd <$> pairsIO
+      where
+        pairsIO = do
+          !isManAvailable <- isManAvailableIO name
+          mapM (toSubcmdOptPair (not skipMan && isManAvailable)) subcmdCandidates
+
+
+-- | Checks if man page is available
 isManAvailableIO :: String -> IO Bool
 isManAvailableIO name = do
   (exitCode, _, _) <- Process.readProcess cp
@@ -221,7 +237,7 @@ isManAvailableIO name = do
   where
     cp = Process.shell $ printf "man -w %s" name
 
--- Convert to Command given command name and text
+-- | Converts to Command given command name and text
 pageToCommandSimple :: String -> String -> Command
 pageToCommandSimple name content =
   if null rootOptions
