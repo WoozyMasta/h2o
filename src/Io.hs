@@ -27,7 +27,7 @@ import System.FilePath (takeBaseName)
 import qualified System.Process.Typed as Process
 import Text.Printf (printf)
 import Type (Command (..), Opt, Subcommand (..), asSubcommand)
-import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainUseful, warnTrace)
+import Utils (convertTabsToSpaces, infoMsg, infoTrace, mayContainUseful, warnMsg, warnTrace)
 import qualified Utils
 
 -- | Main function processing ConfigOrVersion
@@ -101,11 +101,11 @@ getHelpTemplate name (args : argsBag) = do
 
 fetchHelpInfo :: String -> [String] -> IO (Maybe Text)
 fetchHelpInfo name args = do
-  (exitCode, stdout, stderr) <- Process.readProcess (Process.proc name args)
+  (exitCode, stdout, stderr) <- Process.readProcess (Process.shell $ unwords (name : args))
   let stdoutText = TL.toStrict . TLE.decodeUtf8 $ stdout
   let stderrText = TL.toStrict . TLE.decodeUtf8 $ stderr
   let res
-        | isCommandNotFound name exitCode stderrText = error "CommandNotFound"
+        | isCommandNotFound name exitCode stderrText = warnMsg "CommandNotFound" Nothing
         | mayContainUseful stdoutText = Utils.debugTrace ("Using stdout: " ++ unwords (name : args)) $ Just stdoutText
         | mayContainUseful stderrText = Utils.debugTrace ("Using stderr: " ++ unwords (name : args)) $ Just stderrText
         | otherwise = Nothing
@@ -148,14 +148,20 @@ getManAndHelp name = do
 toOptsText :: [Opt] -> Text
 toOptsText = T.unlines . map (T.pack . show)
 
-toSubcommandsText :: [Command] -> Text
-toSubcommandsText = T.unlines . map (T.pack . show . asSubcommand)
+toSubcommandsText :: [String] -> [Command] -> Text
+toSubcommandsText path cmds =
+  if T.null main then T.empty else prefix `T.append` main
+  where
+    prefix = if null path
+      then T.empty
+      else T.pack . printf "(%s)\n" . T.unwords . map T.pack $ path
+    main = T.unlines . map (T.pack . show . asSubcommand) $ cmds
 
 toSubcommandOptionsText :: [String] -> Command -> Text
 toSubcommandOptionsText nameSeq (Command subname _ opts _) =
   T.unlines $ map (\opt -> prefix `T.append` T.pack (show opt)) opts
   where
-    prefix = T.pack . printf "(%s) " . T.intercalate "-" . map T.pack $ nameSeq ++ [subname]
+    prefix = T.pack . printf "(%s) " . T.unwords . map T.pack $ nameSeq ++ [subname]
 
 getInputContent :: Input -> IO String
 getInputContent (SubcommandInput name subname skipMan) =
@@ -186,7 +192,7 @@ toNativeTextRec path cmd@(Command name _ _ subCmds) =
   [optsText, subcommandsText] ++ rest
   where
     optsText = toSubcommandOptionsText path cmd
-    subcommandsText = toSubcommandsText subCmds
+    subcommandsText = toSubcommandsText (path ++ [name]) subCmds
     rest = concatMap (toNativeTextRec (path ++ [name])) subCmds
 
 -- | Scans over command and subcommands
@@ -209,7 +215,7 @@ pageToCommandIO name skipMan content = do
         !isManAvailable <- isManAvailableIO name
         let useMan = not skipMan && isManAvailable
         -- [FIXME] Currently hardcoding to limit scan to sub-sub command level.
-        mapM (\(Subcommand subname subdesc) -> getSubcommand 1 useMan [name, subname] subdesc (T.pack content)) candidates
+        mapM (\(Subcommand subname subdesc) -> getCommandRec 1 useMan [name, subname] subdesc (T.pack content)) candidates
 
 -- | Scan subcommand recursively for its options and sub-sub commands
 -- Arguments:
@@ -219,18 +225,22 @@ pageToCommandIO name skipMan content = do
 --   desc is description of the subcommand obtained from the upper-level source.
 --   upperContent is the text scanned in the upper level. This information is needed because
 --     "foo bar --help" sometimes returns the identical result as "foo --help".
-getSubcommand :: Int -> Bool -> [String] -> String -> Text -> IO (Command, Bool)
-getSubcommand extraDepth useMan cmdSeq desc upperContent = do
+getCommandRec :: Int -> Bool -> [String] -> String -> Text -> IO (Command, Bool)
+getCommandRec extraDepth useMan cmdSeq desc upperContent = do
   page <- Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> readFunc cmdSeq
   let isSuccess = not (T.null page) && page /= upperContent
   let content = T.unpack page
-  let subSubCandidates = if extraDepth == 0 then [] else getSubcmdCandidates content
-  let subSubCommandCandidsM = mapM (\(Subcommand subsubName subsubDesc) -> getSubcommand (extraDepth - 1) useMan (cmdSeq ++ [subsubDesc]) subsubName page) subSubCandidates
-  let subSubCommandsM = map fst . filter snd <$> subSubCommandCandidsM
+  let subCandidates = if extraDepth <= 0 then [] else getSubcmdCandidates content
+  let subCommandCandidsM =
+        mapM
+        (\(Subcommand subName subDesc) ->
+          getCommandRec (extraDepth - 1) useMan (cmdSeq ++ [subName]) subDesc page)
+        subCandidates
+  let subCommandsM = map fst . filter snd <$> subCommandCandidsM
   let opts = parseBlockwise content
-  subSubCommands <- subSubCommandsM
-  let result = Command (last cmdSeq) desc opts subSubCommands
-  return (result, isSuccess)
+  subCommands <- subCommandsM
+  let result = Command (last cmdSeq) desc opts subCommands
+  return (result, infoMsg ("getCommandRec isSuccess: " ++ unwords cmdSeq) isSuccess)
   where
     readFunc = if useMan then getManSub else getHelpSub
 

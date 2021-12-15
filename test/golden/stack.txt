@@ -148,6 +148,7 @@ query Query general build information (experimental)
 
 
 
+(stack)
 build                     (Build the package(s) in this directory/configuration)
 install                   (Shortcut for 'build --copy-bins')
 uninstall                 (DEPRECATED: This command performs no actions, and is)
@@ -187,1974 +188,2245 @@ hpc                       (Subcommands specific to Haskell Program Coverage)
 
 
 
-(stack-build) --dry-run  ::  
+(stack build) --dry-run  ::  
 Don't build anything, just prepare to
 
-(stack-build) --pedantic  ::  
+(stack build) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-build) --fast  ::  
+(stack build) --fast  ::  
 Turn off optimizations (-O0)
 
-(stack-build) --ghc-options  ::  OPTIONS
+(stack build) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
-(stack-build) --flag  ::  PACKAGE:[-]FLAG
+(stack build) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-build) --dependencies-only  ::  
+(stack build) --dependencies-only  ::  
 A synonym for --only-dependencies
 
-(stack-build) --only-snapshot  ::  
+(stack build) --only-snapshot  ::  
 Only build packages for the snapshot database, not the local database
 
-(stack-build) --only-dependencies  ::  
+(stack build) --only-dependencies  ::  
 Only build packages that are dependencies of targets on the command line
 
-(stack-build) --only-locals  ::  
+(stack build) --only-locals  ::  
 Only build packages in the local database, fail if the build plan includes the snapshot database
 
-(stack-build) --file-watch  ::  
+(stack build) --file-watch  ::  
 Watch for changes in local files and automatically rebuild. Ignores files in VCS boring/ignore file
 
-(stack-build) --file-watch-poll  ::  
+(stack build) --file-watch-poll  ::  
 Like --file-watch, but polling the filesystem instead of using events
 
-(stack-build) --watch-all  ::  
+(stack build) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-build) --exec  ::  COMMAND [ARGUMENT(S)]
+(stack build) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
-(stack-build) --only-configure  ::  
+(stack build) --only-configure  ::  
 Only perform the configure step, not any builds. Intended for tool usage, may break when used on multiple packages at once!
 
-(stack-build) --trace  ::  
+(stack build) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-build) --profile  ::  
+(stack build) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-build) --no-strip  ::  
+(stack build) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-build) --library-profiling  ::  
+(stack build) --library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-build) --no-library-profiling  ::  
+(stack build) --no-library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-build) --executable-profiling  ::  
+(stack build) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-build) --no-executable-profiling  ::  
+(stack build) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-build) --library-stripping  ::  
+(stack build) --library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-build) --no-library-stripping  ::  
+(stack build) --no-library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-build) --executable-stripping  ::  
+(stack build) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-build) --no-executable-stripping  ::  
+(stack build) --no-executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-build) --haddock  ::  
+(stack build) --haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-build) --no-haddock  ::  
+(stack build) --no-haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-build) --haddock-arguments  ::  HADDOCK_ARGS
+(stack build) --haddock-arguments  ::  HADDOCK_ARGS
 Arguments passed to the haddock program
 
-(stack-build) --open  ::  
+(stack build) --open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-build) --no-open  ::  
+(stack build) --no-open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-build) --haddock-deps  ::  
+(stack build) --haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-build) --no-haddock-deps  ::  
+(stack build) --no-haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-build) --haddock-internal  ::  
+(stack build) --haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-build) --no-haddock-internal  ::  
+(stack build) --no-haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-build) --haddock-hyperlink-source  ::  
+(stack build) --haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-build) --no-haddock-hyperlink-source  ::  
+(stack build) --no-haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-build) --copy-bins  ::  
+(stack build) --copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-build) --no-copy-bins  ::  
+(stack build) --no-copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-build) --copy-compiler-tool  ::  
+(stack build) --copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-build) --no-copy-compiler-tool  ::  
+(stack build) --no-copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-build) --prefetch  ::  
+(stack build) --prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-build) --no-prefetch  ::  
+(stack build) --no-prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-build) --keep-going  ::  
+(stack build) --keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-build) --no-keep-going  ::  
+(stack build) --no-keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-build) --keep-tmp-files  ::  
+(stack build) --keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-build) --no-keep-tmp-files  ::  
+(stack build) --no-keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-build) --force-dirty  ::  
+(stack build) --force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-build) --no-force-dirty  ::  
+(stack build) --no-force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-build) --test  ::  
+(stack build) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-build) --no-test  ::  
+(stack build) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-build) --rerun-tests  ::  
+(stack build) --rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-build) --no-rerun-tests  ::  
+(stack build) --no-rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-build) --ta --test-arguments  ::  TEST_ARGS
+(stack build) --ta --test-arguments  ::  TEST_ARGS
 Arguments passed in to the test suite program
 
-(stack-build) --coverage  ::  
+(stack build) --coverage  ::  
 Generate a code coverage report
 
-(stack-build) --no-run-tests  ::  
+(stack build) --no-run-tests  ::  
 Disable running of tests. (Tests will still be built.)
 
-(stack-build) --test-suite-timeout  ::  ARG
+(stack build) --test-suite-timeout  ::  ARG
 Maximum test suite run time in seconds.
 
-(stack-build) --bench  ::  
+(stack build) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-build) --no-bench  ::  
+(stack build) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-build) --ba --benchmark-arguments  ::  BENCH_ARGS
+(stack build) --ba --benchmark-arguments  ::  BENCH_ARGS
 Forward BENCH_ARGS to the benchmark suite. Supports templates from `cabal bench`
 
-(stack-build) --no-run-benchmarks  ::  
+(stack build) --no-run-benchmarks  ::  
 Disable running of benchmarks. (Benchmarks will still be built.)
 
-(stack-build) --reconfigure  ::  
+(stack build) --reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-build) --no-reconfigure  ::  
+(stack build) --no-reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-build) --cabal-verbose  ::  
+(stack build) --cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-build) --no-cabal-verbose  ::  
+(stack build) --no-cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-build) --split-objs  ::  
+(stack build) --split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-build) --no-split-objs  ::  
+(stack build) --no-split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-build) --skip  ::  ARG
+(stack build) --skip  ::  ARG
 Skip given component, can be specified multiple times
 
-(stack-build) --interleaved-output  ::  
+(stack build) --interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-build) --no-interleaved-output  ::  
+(stack build) --no-interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-build) --ddump-dir  ::  ARG
+(stack build) --ddump-dir  ::  ARG
 Specify output ddump-files
 
-(stack-build) --setup-info-yaml  ::  URL
+(stack build) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-build) --snapshot-location-base  ::  URL
+(stack build) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-build) --help  ::  
+(stack build) --help  ::  
 Show this help text
 
 
 
 
-(stack-install) --dry-run  ::  
+(stack install) --dry-run  ::  
 Don't build anything, just prepare to
 
-(stack-install) --pedantic  ::  
+(stack install) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-install) --fast  ::  
+(stack install) --fast  ::  
 Turn off optimizations (-O0)
 
-(stack-install) --ghc-options  ::  OPTIONS
+(stack install) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
-(stack-install) --flag  ::  PACKAGE:[-]FLAG
+(stack install) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-install) --dependencies-only  ::  
+(stack install) --dependencies-only  ::  
 A synonym for --only-dependencies
 
-(stack-install) --only-snapshot  ::  
+(stack install) --only-snapshot  ::  
 Only build packages for the snapshot database, not the local database
 
-(stack-install) --only-dependencies  ::  
+(stack install) --only-dependencies  ::  
 Only build packages that are dependencies of targets on the command line
 
-(stack-install) --only-locals  ::  
+(stack install) --only-locals  ::  
 Only build packages in the local database, fail if the build plan includes the snapshot database
 
-(stack-install) --file-watch  ::  
+(stack install) --file-watch  ::  
 Watch for changes in local files and automatically rebuild. Ignores files in VCS boring/ignore file
 
-(stack-install) --file-watch-poll  ::  
+(stack install) --file-watch-poll  ::  
 Like --file-watch, but polling the filesystem instead of using events
 
-(stack-install) --watch-all  ::  
+(stack install) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-install) --exec  ::  COMMAND [ARGUMENT(S)]
+(stack install) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
-(stack-install) --only-configure  ::  
+(stack install) --only-configure  ::  
 Only perform the configure step, not any builds. Intended for tool usage, may break when used on multiple packages at once!
 
-(stack-install) --trace  ::  
+(stack install) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-install) --profile  ::  
+(stack install) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-install) --no-strip  ::  
+(stack install) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-install) --library-profiling  ::  
+(stack install) --library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-install) --no-library-profiling  ::  
+(stack install) --no-library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-install) --executable-profiling  ::  
+(stack install) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-install) --no-executable-profiling  ::  
+(stack install) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-install) --library-stripping  ::  
+(stack install) --library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-install) --no-library-stripping  ::  
+(stack install) --no-library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-install) --executable-stripping  ::  
+(stack install) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-install) --no-executable-stripping  ::  
+(stack install) --no-executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-install) --haddock  ::  
+(stack install) --haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-install) --no-haddock  ::  
+(stack install) --no-haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-install) --haddock-arguments  ::  HADDOCK_ARGS
+(stack install) --haddock-arguments  ::  HADDOCK_ARGS
 Arguments passed to the haddock program
 
-(stack-install) --open  ::  
+(stack install) --open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-install) --no-open  ::  
+(stack install) --no-open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-install) --haddock-deps  ::  
+(stack install) --haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-install) --no-haddock-deps  ::  
+(stack install) --no-haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-install) --haddock-internal  ::  
+(stack install) --haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-install) --no-haddock-internal  ::  
+(stack install) --no-haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-install) --haddock-hyperlink-source  ::  
+(stack install) --haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-install) --no-haddock-hyperlink-source  ::  
+(stack install) --no-haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-install) --copy-bins  ::  
+(stack install) --copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-install) --no-copy-bins  ::  
+(stack install) --no-copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-install) --copy-compiler-tool  ::  
+(stack install) --copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-install) --no-copy-compiler-tool  ::  
+(stack install) --no-copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-install) --prefetch  ::  
+(stack install) --prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-install) --no-prefetch  ::  
+(stack install) --no-prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-install) --keep-going  ::  
+(stack install) --keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-install) --no-keep-going  ::  
+(stack install) --no-keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-install) --keep-tmp-files  ::  
+(stack install) --keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-install) --no-keep-tmp-files  ::  
+(stack install) --no-keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-install) --force-dirty  ::  
+(stack install) --force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-install) --no-force-dirty  ::  
+(stack install) --no-force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-install) --test  ::  
+(stack install) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-install) --no-test  ::  
+(stack install) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-install) --rerun-tests  ::  
+(stack install) --rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-install) --no-rerun-tests  ::  
+(stack install) --no-rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-install) --ta --test-arguments  ::  TEST_ARGS
+(stack install) --ta --test-arguments  ::  TEST_ARGS
 Arguments passed in to the test suite program
 
-(stack-install) --coverage  ::  
+(stack install) --coverage  ::  
 Generate a code coverage report
 
-(stack-install) --no-run-tests  ::  
+(stack install) --no-run-tests  ::  
 Disable running of tests. (Tests will still be built.)
 
-(stack-install) --test-suite-timeout  ::  ARG
+(stack install) --test-suite-timeout  ::  ARG
 Maximum test suite run time in seconds.
 
-(stack-install) --bench  ::  
+(stack install) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-install) --no-bench  ::  
+(stack install) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-install) --ba --benchmark-arguments  ::  BENCH_ARGS
+(stack install) --ba --benchmark-arguments  ::  BENCH_ARGS
 Forward BENCH_ARGS to the benchmark suite. Supports templates from `cabal bench`
 
-(stack-install) --no-run-benchmarks  ::  
+(stack install) --no-run-benchmarks  ::  
 Disable running of benchmarks. (Benchmarks will still be built.)
 
-(stack-install) --reconfigure  ::  
+(stack install) --reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-install) --no-reconfigure  ::  
+(stack install) --no-reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-install) --cabal-verbose  ::  
+(stack install) --cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-install) --no-cabal-verbose  ::  
+(stack install) --no-cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-install) --split-objs  ::  
+(stack install) --split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-install) --no-split-objs  ::  
+(stack install) --no-split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-install) --skip  ::  ARG
+(stack install) --skip  ::  ARG
 Skip given component, can be specified multiple times
 
-(stack-install) --interleaved-output  ::  
+(stack install) --interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-install) --no-interleaved-output  ::  
+(stack install) --no-interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-install) --ddump-dir  ::  ARG
+(stack install) --ddump-dir  ::  ARG
 Specify output ddump-files
 
-(stack-install) --setup-info-yaml  ::  URL
+(stack install) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-install) --snapshot-location-base  ::  URL
+(stack install) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-install) --help  ::  
+(stack install) --help  ::  
 Show this help text
 
 
 
 
-(stack-uninstall) --setup-info-yaml  ::  URL
+(stack uninstall) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-uninstall) --snapshot-location-base  ::  URL
+(stack uninstall) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-uninstall) --help  ::  
+(stack uninstall) --help  ::  
 Show this help text
 
 
 
 
-(stack-test) --dry-run  ::  
+(stack test) --dry-run  ::  
 Don't build anything, just prepare to
 
-(stack-test) --pedantic  ::  
+(stack test) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-test) --fast  ::  
+(stack test) --fast  ::  
 Turn off optimizations (-O0)
 
-(stack-test) --ghc-options  ::  OPTIONS
+(stack test) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
-(stack-test) --flag  ::  PACKAGE:[-]FLAG
+(stack test) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-test) --dependencies-only  ::  
+(stack test) --dependencies-only  ::  
 A synonym for --only-dependencies
 
-(stack-test) --only-snapshot  ::  
+(stack test) --only-snapshot  ::  
 Only build packages for the snapshot database, not the local database
 
-(stack-test) --only-dependencies  ::  
+(stack test) --only-dependencies  ::  
 Only build packages that are dependencies of targets on the command line
 
-(stack-test) --only-locals  ::  
+(stack test) --only-locals  ::  
 Only build packages in the local database, fail if the build plan includes the snapshot database
 
-(stack-test) --file-watch  ::  
+(stack test) --file-watch  ::  
 Watch for changes in local files and automatically rebuild. Ignores files in VCS boring/ignore file
 
-(stack-test) --file-watch-poll  ::  
+(stack test) --file-watch-poll  ::  
 Like --file-watch, but polling the filesystem instead of using events
 
-(stack-test) --watch-all  ::  
+(stack test) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-test) --exec  ::  COMMAND [ARGUMENT(S)]
+(stack test) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
-(stack-test) --only-configure  ::  
+(stack test) --only-configure  ::  
 Only perform the configure step, not any builds. Intended for tool usage, may break when used on multiple packages at once!
 
-(stack-test) --trace  ::  
+(stack test) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-test) --profile  ::  
+(stack test) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-test) --no-strip  ::  
+(stack test) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-test) --library-profiling  ::  
+(stack test) --library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-test) --no-library-profiling  ::  
+(stack test) --no-library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-test) --executable-profiling  ::  
+(stack test) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-test) --no-executable-profiling  ::  
+(stack test) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-test) --library-stripping  ::  
+(stack test) --library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-test) --no-library-stripping  ::  
+(stack test) --no-library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-test) --executable-stripping  ::  
+(stack test) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-test) --no-executable-stripping  ::  
+(stack test) --no-executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-test) --haddock  ::  
+(stack test) --haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-test) --no-haddock  ::  
+(stack test) --no-haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-test) --haddock-arguments  ::  HADDOCK_ARGS
+(stack test) --haddock-arguments  ::  HADDOCK_ARGS
 Arguments passed to the haddock program
 
-(stack-test) --open  ::  
+(stack test) --open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-test) --no-open  ::  
+(stack test) --no-open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-test) --haddock-deps  ::  
+(stack test) --haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-test) --no-haddock-deps  ::  
+(stack test) --no-haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-test) --haddock-internal  ::  
+(stack test) --haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-test) --no-haddock-internal  ::  
+(stack test) --no-haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-test) --haddock-hyperlink-source  ::  
+(stack test) --haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-test) --no-haddock-hyperlink-source  ::  
+(stack test) --no-haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-test) --copy-bins  ::  
+(stack test) --copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-test) --no-copy-bins  ::  
+(stack test) --no-copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-test) --copy-compiler-tool  ::  
+(stack test) --copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-test) --no-copy-compiler-tool  ::  
+(stack test) --no-copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-test) --prefetch  ::  
+(stack test) --prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-test) --no-prefetch  ::  
+(stack test) --no-prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-test) --keep-going  ::  
+(stack test) --keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-test) --no-keep-going  ::  
+(stack test) --no-keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-test) --keep-tmp-files  ::  
+(stack test) --keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-test) --no-keep-tmp-files  ::  
+(stack test) --no-keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-test) --force-dirty  ::  
+(stack test) --force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-test) --no-force-dirty  ::  
+(stack test) --no-force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-test) --test  ::  
+(stack test) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-test) --no-test  ::  
+(stack test) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-test) --rerun-tests  ::  
+(stack test) --rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-test) --no-rerun-tests  ::  
+(stack test) --no-rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-test) --ta --test-arguments  ::  TEST_ARGS
+(stack test) --ta --test-arguments  ::  TEST_ARGS
 Arguments passed in to the test suite program
 
-(stack-test) --coverage  ::  
+(stack test) --coverage  ::  
 Generate a code coverage report
 
-(stack-test) --no-run-tests  ::  
+(stack test) --no-run-tests  ::  
 Disable running of tests. (Tests will still be built.)
 
-(stack-test) --test-suite-timeout  ::  ARG
+(stack test) --test-suite-timeout  ::  ARG
 Maximum test suite run time in seconds.
 
-(stack-test) --bench  ::  
+(stack test) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-test) --no-bench  ::  
+(stack test) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-test) --ba --benchmark-arguments  ::  BENCH_ARGS
+(stack test) --ba --benchmark-arguments  ::  BENCH_ARGS
 Forward BENCH_ARGS to the benchmark suite. Supports templates from `cabal bench`
 
-(stack-test) --no-run-benchmarks  ::  
+(stack test) --no-run-benchmarks  ::  
 Disable running of benchmarks. (Benchmarks will still be built.)
 
-(stack-test) --reconfigure  ::  
+(stack test) --reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-test) --no-reconfigure  ::  
+(stack test) --no-reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-test) --cabal-verbose  ::  
+(stack test) --cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-test) --no-cabal-verbose  ::  
+(stack test) --no-cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-test) --split-objs  ::  
+(stack test) --split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-test) --no-split-objs  ::  
+(stack test) --no-split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-test) --skip  ::  ARG
+(stack test) --skip  ::  ARG
 Skip given component, can be specified multiple times
 
-(stack-test) --interleaved-output  ::  
+(stack test) --interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-test) --no-interleaved-output  ::  
+(stack test) --no-interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-test) --ddump-dir  ::  ARG
+(stack test) --ddump-dir  ::  ARG
 Specify output ddump-files
 
-(stack-test) --setup-info-yaml  ::  URL
+(stack test) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-test) --snapshot-location-base  ::  URL
+(stack test) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-test) --help  ::  
+(stack test) --help  ::  
 Show this help text
 
 
 
 
-(stack-bench) --dry-run  ::  
+(stack bench) --dry-run  ::  
 Don't build anything, just prepare to
 
-(stack-bench) --pedantic  ::  
+(stack bench) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-bench) --fast  ::  
+(stack bench) --fast  ::  
 Turn off optimizations (-O0)
 
-(stack-bench) --ghc-options  ::  OPTIONS
+(stack bench) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
-(stack-bench) --flag  ::  PACKAGE:[-]FLAG
+(stack bench) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-bench) --dependencies-only  ::  
+(stack bench) --dependencies-only  ::  
 A synonym for --only-dependencies
 
-(stack-bench) --only-snapshot  ::  
+(stack bench) --only-snapshot  ::  
 Only build packages for the snapshot database, not the local database
 
-(stack-bench) --only-dependencies  ::  
+(stack bench) --only-dependencies  ::  
 Only build packages that are dependencies of targets on the command line
 
-(stack-bench) --only-locals  ::  
+(stack bench) --only-locals  ::  
 Only build packages in the local database, fail if the build plan includes the snapshot database
 
-(stack-bench) --file-watch  ::  
+(stack bench) --file-watch  ::  
 Watch for changes in local files and automatically rebuild. Ignores files in VCS boring/ignore file
 
-(stack-bench) --file-watch-poll  ::  
+(stack bench) --file-watch-poll  ::  
 Like --file-watch, but polling the filesystem instead of using events
 
-(stack-bench) --watch-all  ::  
+(stack bench) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-bench) --exec  ::  COMMAND [ARGUMENT(S)]
+(stack bench) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
-(stack-bench) --only-configure  ::  
+(stack bench) --only-configure  ::  
 Only perform the configure step, not any builds. Intended for tool usage, may break when used on multiple packages at once!
 
-(stack-bench) --trace  ::  
+(stack bench) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-bench) --profile  ::  
+(stack bench) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-bench) --no-strip  ::  
+(stack bench) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-bench) --library-profiling  ::  
+(stack bench) --library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-bench) --no-library-profiling  ::  
+(stack bench) --no-library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-bench) --executable-profiling  ::  
+(stack bench) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-bench) --no-executable-profiling  ::  
+(stack bench) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-bench) --library-stripping  ::  
+(stack bench) --library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-bench) --no-library-stripping  ::  
+(stack bench) --no-library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-bench) --executable-stripping  ::  
+(stack bench) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-bench) --no-executable-stripping  ::  
+(stack bench) --no-executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-bench) --haddock  ::  
+(stack bench) --haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-bench) --no-haddock  ::  
+(stack bench) --no-haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-bench) --haddock-arguments  ::  HADDOCK_ARGS
+(stack bench) --haddock-arguments  ::  HADDOCK_ARGS
 Arguments passed to the haddock program
 
-(stack-bench) --open  ::  
+(stack bench) --open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-bench) --no-open  ::  
+(stack bench) --no-open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-bench) --haddock-deps  ::  
+(stack bench) --haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-bench) --no-haddock-deps  ::  
+(stack bench) --no-haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-bench) --haddock-internal  ::  
+(stack bench) --haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-bench) --no-haddock-internal  ::  
+(stack bench) --no-haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-bench) --haddock-hyperlink-source  ::  
+(stack bench) --haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-bench) --no-haddock-hyperlink-source  ::  
+(stack bench) --no-haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-bench) --copy-bins  ::  
+(stack bench) --copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-bench) --no-copy-bins  ::  
+(stack bench) --no-copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-bench) --copy-compiler-tool  ::  
+(stack bench) --copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-bench) --no-copy-compiler-tool  ::  
+(stack bench) --no-copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-bench) --prefetch  ::  
+(stack bench) --prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-bench) --no-prefetch  ::  
+(stack bench) --no-prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-bench) --keep-going  ::  
+(stack bench) --keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-bench) --no-keep-going  ::  
+(stack bench) --no-keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-bench) --keep-tmp-files  ::  
+(stack bench) --keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-bench) --no-keep-tmp-files  ::  
+(stack bench) --no-keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-bench) --force-dirty  ::  
+(stack bench) --force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-bench) --no-force-dirty  ::  
+(stack bench) --no-force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-bench) --test  ::  
+(stack bench) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-bench) --no-test  ::  
+(stack bench) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-bench) --rerun-tests  ::  
+(stack bench) --rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-bench) --no-rerun-tests  ::  
+(stack bench) --no-rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-bench) --ta --test-arguments  ::  TEST_ARGS
+(stack bench) --ta --test-arguments  ::  TEST_ARGS
 Arguments passed in to the test suite program
 
-(stack-bench) --coverage  ::  
+(stack bench) --coverage  ::  
 Generate a code coverage report
 
-(stack-bench) --no-run-tests  ::  
+(stack bench) --no-run-tests  ::  
 Disable running of tests. (Tests will still be built.)
 
-(stack-bench) --test-suite-timeout  ::  ARG
+(stack bench) --test-suite-timeout  ::  ARG
 Maximum test suite run time in seconds.
 
-(stack-bench) --bench  ::  
+(stack bench) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-bench) --no-bench  ::  
+(stack bench) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-bench) --ba --benchmark-arguments  ::  BENCH_ARGS
+(stack bench) --ba --benchmark-arguments  ::  BENCH_ARGS
 Forward BENCH_ARGS to the benchmark suite. Supports templates from `cabal bench`
 
-(stack-bench) --no-run-benchmarks  ::  
+(stack bench) --no-run-benchmarks  ::  
 Disable running of benchmarks. (Benchmarks will still be built.)
 
-(stack-bench) --reconfigure  ::  
+(stack bench) --reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-bench) --no-reconfigure  ::  
+(stack bench) --no-reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-bench) --cabal-verbose  ::  
+(stack bench) --cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-bench) --no-cabal-verbose  ::  
+(stack bench) --no-cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-bench) --split-objs  ::  
+(stack bench) --split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-bench) --no-split-objs  ::  
+(stack bench) --no-split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-bench) --skip  ::  ARG
+(stack bench) --skip  ::  ARG
 Skip given component, can be specified multiple times
 
-(stack-bench) --interleaved-output  ::  
+(stack bench) --interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-bench) --no-interleaved-output  ::  
+(stack bench) --no-interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-bench) --ddump-dir  ::  ARG
+(stack bench) --ddump-dir  ::  ARG
 Specify output ddump-files
 
-(stack-bench) --setup-info-yaml  ::  URL
+(stack bench) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-bench) --snapshot-location-base  ::  URL
+(stack bench) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-bench) --help  ::  
+(stack bench) --help  ::  
 Show this help text
 
 
 
 
-(stack-haddock) --dry-run  ::  
+(stack haddock) --dry-run  ::  
 Don't build anything, just prepare to
 
-(stack-haddock) --pedantic  ::  
+(stack haddock) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-haddock) --fast  ::  
+(stack haddock) --fast  ::  
 Turn off optimizations (-O0)
 
-(stack-haddock) --ghc-options  ::  OPTIONS
+(stack haddock) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
-(stack-haddock) --flag  ::  PACKAGE:[-]FLAG
+(stack haddock) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-haddock) --dependencies-only  ::  
+(stack haddock) --dependencies-only  ::  
 A synonym for --only-dependencies
 
-(stack-haddock) --only-snapshot  ::  
+(stack haddock) --only-snapshot  ::  
 Only build packages for the snapshot database, not the local database
 
-(stack-haddock) --only-dependencies  ::  
+(stack haddock) --only-dependencies  ::  
 Only build packages that are dependencies of targets on the command line
 
-(stack-haddock) --only-locals  ::  
+(stack haddock) --only-locals  ::  
 Only build packages in the local database, fail if the build plan includes the snapshot database
 
-(stack-haddock) --file-watch  ::  
+(stack haddock) --file-watch  ::  
 Watch for changes in local files and automatically rebuild. Ignores files in VCS boring/ignore file
 
-(stack-haddock) --file-watch-poll  ::  
+(stack haddock) --file-watch-poll  ::  
 Like --file-watch, but polling the filesystem instead of using events
 
-(stack-haddock) --watch-all  ::  
+(stack haddock) --watch-all  ::  
 Watch all local files not taking targets into account
 
-(stack-haddock) --exec  ::  COMMAND [ARGUMENT(S)]
+(stack haddock) --exec  ::  COMMAND [ARGUMENT(S)]
 Command and argument(s) to run after a successful build
 
-(stack-haddock) --only-configure  ::  
+(stack haddock) --only-configure  ::  
 Only perform the configure step, not any builds. Intended for tool usage, may break when used on multiple packages at once!
 
-(stack-haddock) --trace  ::  
+(stack haddock) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-haddock) --profile  ::  
+(stack haddock) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-haddock) --no-strip  ::  
+(stack haddock) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-haddock) --library-profiling  ::  
+(stack haddock) --library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-haddock) --no-library-profiling  ::  
+(stack haddock) --no-library-profiling  ::  
 Enable/disable library profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-haddock) --executable-profiling  ::  
+(stack haddock) --executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-haddock) --no-executable-profiling  ::  
+(stack haddock) --no-executable-profiling  ::  
 Enable/disable executable profiling for TARGETs and all its dependencies (default: disabled)
 
-(stack-haddock) --library-stripping  ::  
+(stack haddock) --library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-haddock) --no-library-stripping  ::  
+(stack haddock) --no-library-stripping  ::  
 Enable/disable library stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-haddock) --executable-stripping  ::  
+(stack haddock) --executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-haddock) --no-executable-stripping  ::  
+(stack haddock) --no-executable-stripping  ::  
 Enable/disable executable stripping for TARGETs and all its dependencies (default: enabled)
 
-(stack-haddock) --haddock  ::  
+(stack haddock) --haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-haddock) --no-haddock  ::  
+(stack haddock) --no-haddock  ::  
 Enable/disable generating Haddocks the package(s) in this directory/configuration (default: disabled)
 
-(stack-haddock) --haddock-arguments  ::  HADDOCK_ARGS
+(stack haddock) --haddock-arguments  ::  HADDOCK_ARGS
 Arguments passed to the haddock program
 
-(stack-haddock) --open  ::  
+(stack haddock) --open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-haddock) --no-open  ::  
+(stack haddock) --no-open  ::  
 Enable/disable opening the local Haddock documentation in the browser (default: disabled)
 
-(stack-haddock) --haddock-deps  ::  
+(stack haddock) --haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-haddock) --no-haddock-deps  ::  
+(stack haddock) --no-haddock-deps  ::  
 Enable/disable building Haddocks for dependencies (default: true if building Haddocks, false otherwise)
 
-(stack-haddock) --haddock-internal  ::  
+(stack haddock) --haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-haddock) --no-haddock-internal  ::  
+(stack haddock) --no-haddock-internal  ::  
 Enable/disable building Haddocks for internal modules (like cabal haddock --internal) (default: disabled)
 
-(stack-haddock) --haddock-hyperlink-source  ::  
+(stack haddock) --haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-haddock) --no-haddock-hyperlink-source  ::  
+(stack haddock) --no-haddock-hyperlink-source  ::  
 Enable/disable building hyperlinked source for Haddock (like haddock --hyperlinked-source) (default: enabled)
 
-(stack-haddock) --copy-bins  ::  
+(stack haddock) --copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-haddock) --no-copy-bins  ::  
+(stack haddock) --no-copy-bins  ::  
 Enable/disable copying binaries to local-bin (see 'stack path') (default: disabled)
 
-(stack-haddock) --copy-compiler-tool  ::  
+(stack haddock) --copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-haddock) --no-copy-compiler-tool  ::  
+(stack haddock) --no-copy-compiler-tool  ::  
 Enable/disable copying binaries of targets to compiler-tools-bin (see 'stack path') (default: disabled)
 
-(stack-haddock) --prefetch  ::  
+(stack haddock) --prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-haddock) --no-prefetch  ::  
+(stack haddock) --no-prefetch  ::  
 Enable/disable Fetch packages necessary for the build immediately, useful with --dry-run (default: disabled)
 
-(stack-haddock) --keep-going  ::  
+(stack haddock) --keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-haddock) --no-keep-going  ::  
+(stack haddock) --no-keep-going  ::  
 Enable/disable continue running after a step fails (default: false for build, true for test/bench)
 
-(stack-haddock) --keep-tmp-files  ::  
+(stack haddock) --keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-haddock) --no-keep-tmp-files  ::  
+(stack haddock) --no-keep-tmp-files  ::  
 Enable/disable keep intermediate files and build directories (default: disabled)
 
-(stack-haddock) --force-dirty  ::  
+(stack haddock) --force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-haddock) --no-force-dirty  ::  
+(stack haddock) --no-force-dirty  ::  
 Enable/disable Force treating all local packages as having dirty files (useful for cases where stack can't detect a file change (default: disabled)
 
-(stack-haddock) --test  ::  
+(stack haddock) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-haddock) --no-test  ::  
+(stack haddock) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-haddock) --rerun-tests  ::  
+(stack haddock) --rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-haddock) --no-rerun-tests  ::  
+(stack haddock) --no-rerun-tests  ::  
 Enable/disable running already successful tests (default: enabled)
 
-(stack-haddock) --ta --test-arguments  ::  TEST_ARGS
+(stack haddock) --ta --test-arguments  ::  TEST_ARGS
 Arguments passed in to the test suite program
 
-(stack-haddock) --coverage  ::  
+(stack haddock) --coverage  ::  
 Generate a code coverage report
 
-(stack-haddock) --no-run-tests  ::  
+(stack haddock) --no-run-tests  ::  
 Disable running of tests. (Tests will still be built.)
 
-(stack-haddock) --test-suite-timeout  ::  ARG
+(stack haddock) --test-suite-timeout  ::  ARG
 Maximum test suite run time in seconds.
 
-(stack-haddock) --bench  ::  
+(stack haddock) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-haddock) --no-bench  ::  
+(stack haddock) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-haddock) --ba --benchmark-arguments  ::  BENCH_ARGS
+(stack haddock) --ba --benchmark-arguments  ::  BENCH_ARGS
 Forward BENCH_ARGS to the benchmark suite. Supports templates from `cabal bench`
 
-(stack-haddock) --no-run-benchmarks  ::  
+(stack haddock) --no-run-benchmarks  ::  
 Disable running of benchmarks. (Benchmarks will still be built.)
 
-(stack-haddock) --reconfigure  ::  
+(stack haddock) --reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-haddock) --no-reconfigure  ::  
+(stack haddock) --no-reconfigure  ::  
 Enable/disable Perform the configure step even if unnecessary. Useful in some corner cases with custom Setup.hs files (default: disabled)
 
-(stack-haddock) --cabal-verbose  ::  
+(stack haddock) --cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-haddock) --no-cabal-verbose  ::  
+(stack haddock) --no-cabal-verbose  ::  
 Enable/disable Ask Cabal to be verbose in its output (default: disabled)
 
-(stack-haddock) --split-objs  ::  
+(stack haddock) --split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-haddock) --no-split-objs  ::  
+(stack haddock) --no-split-objs  ::  
 Enable/disable Enable split-objs, to reduce output size (at the cost of build time). Note that this feature is EXPERIMENTAL, and its behavior may be changed and improved. You will need to clean your workdirs before use. If you want to compile all dependencies with split-objs, you will need to delete the snapshot (and all snapshots that could reference that snapshot). (default: disabled)
 
-(stack-haddock) --skip  ::  ARG
+(stack haddock) --skip  ::  ARG
 Skip given component, can be specified multiple times
 
-(stack-haddock) --interleaved-output  ::  
+(stack haddock) --interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-haddock) --no-interleaved-output  ::  
+(stack haddock) --no-interleaved-output  ::  
 Enable/disable Print concurrent GHC output to the console with a prefix for the package name (default: enabled)
 
-(stack-haddock) --ddump-dir  ::  ARG
+(stack haddock) --ddump-dir  ::  ARG
 Specify output ddump-files
 
-(stack-haddock) --setup-info-yaml  ::  URL
+(stack haddock) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-haddock) --snapshot-location-base  ::  URL
+(stack haddock) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-haddock) --help  ::  
+(stack haddock) --help  ::  
 Show this help text
 
 
 
 
-(stack-new) --bare  ::  
+(stack new) --bare  ::  
 Do not create a subdirectory for the project
 
-(stack-new) -p --param  ::  KEY:VALUE
+(stack new) -p --param  ::  KEY:VALUE
 Parameter for the template in the format key:value
 
-(stack-new) --omit-packages  ::  
+(stack new) --omit-packages  ::  
 Exclude conflicting or incompatible user packages
 
-(stack-new) --force  ::  
+(stack new) --force  ::  
 Force overwriting an existing stack.yaml
 
-(stack-new) --ignore-subdirs  ::  
+(stack new) --ignore-subdirs  ::  
 Do not search for .cabal files in sub directories
 
-(stack-new) --setup-info-yaml  ::  URL
+(stack new) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-new) --snapshot-location-base  ::  URL
+(stack new) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-new) --help  ::  
+(stack new) --help  ::  
 Show this help text
 
 
 
 
-(stack-templates) --setup-info-yaml  ::  URL
+(stack templates) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-templates) --snapshot-location-base  ::  URL
+(stack templates) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-templates) --help  ::  
+(stack templates) --help  ::  
 Show this help text
 
 
 
 
-(stack-init) --omit-packages  ::  
+(stack init) --omit-packages  ::  
 Exclude conflicting or incompatible user packages
 
-(stack-init) --force  ::  
+(stack init) --force  ::  
 Force overwriting an existing stack.yaml
 
-(stack-init) --ignore-subdirs  ::  
+(stack init) --ignore-subdirs  ::  
 Do not search for .cabal files in sub directories
 
-(stack-init) --setup-info-yaml  ::  URL
+(stack init) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-init) --snapshot-location-base  ::  URL
+(stack init) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-init) --help  ::  
+(stack init) --help  ::  
 Show this help text
 
 
 
 
-(stack-setup) --reinstall  ::  
+(stack setup) --reinstall  ::  
 Enable/disable reinstalling GHC, even if available (incompatible with --system-ghc) (default: disabled)
 
-(stack-setup) --no-reinstall  ::  
+(stack setup) --no-reinstall  ::  
 Enable/disable reinstalling GHC, even if available (incompatible with --system-ghc) (default: disabled)
 
-(stack-setup) --ghc-bindist  ::  URL
+(stack setup) --ghc-bindist  ::  URL
 Alternate GHC binary distribution (requires custom --ghc-variant)
 
-(stack-setup) --ghcjs-boot-options  ::  GHCJS_BOOT
+(stack setup) --ghcjs-boot-options  ::  GHCJS_BOOT
 Additional ghcjs-boot options
 
-(stack-setup) --ghcjs-boot-clean  ::  
+(stack setup) --ghcjs-boot-clean  ::  
 Enable/disable Control if ghcjs-boot should have --clean option present (default: enabled)
 
-(stack-setup) --no-ghcjs-boot-clean  ::  
+(stack setup) --no-ghcjs-boot-clean  ::  
 Enable/disable Control if ghcjs-boot should have --clean option present (default: enabled)
 
-(stack-setup) --setup-info-yaml  ::  URL
+(stack setup) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-setup) --snapshot-location-base  ::  URL
+(stack setup) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-setup) --help  ::  
+(stack setup) --help  ::  
 Show this help text
 
 
 
 
-(stack-path) --stack-root  ::  
+(stack path) --stack-root  ::  
 Global stack root directory
 
-(stack-path) --project-root  ::  
+(stack path) --project-root  ::  
 Project root (derived from stack.yaml file)
 
-(stack-path) --config-location  ::  
+(stack path) --config-location  ::  
 Configuration location (where the stack.yaml file is)
 
-(stack-path) --bin-path  ::  
+(stack path) --bin-path  ::  
 PATH environment variable
 
-(stack-path) --programs  ::  
+(stack path) --programs  ::  
 Install location for GHC and other core tools
 
-(stack-path) --compiler-exe  ::  
+(stack path) --compiler-exe  ::  
 Compiler binary (e.g. ghc)
 
-(stack-path) --compiler-bin  ::  
+(stack path) --compiler-bin  ::  
 Directory containing the compiler binary (e.g. ghc)
 
-(stack-path) --compiler-tools-bin  ::  
+(stack path) --compiler-tools-bin  ::  
 Directory containing binaries specific to a particular compiler (e.g. intero)
 
-(stack-path) --local-bin  ::  
+(stack path) --local-bin  ::  
 Local bin dir where stack installs executables (e.g. ~/.local/bin (Unix-like OSs) or %APPDATA%\local\bin (Windows))
 
-(stack-path) --extra-include-dirs  ::  
+(stack path) --extra-include-dirs  ::  
 Extra include directories
 
-(stack-path) --extra-library-dirs  ::  
+(stack path) --extra-library-dirs  ::  
 Extra library directories
 
-(stack-path) --snapshot-pkg-db  ::  
+(stack path) --snapshot-pkg-db  ::  
 Snapshot package database
 
-(stack-path) --local-pkg-db  ::  
+(stack path) --local-pkg-db  ::  
 Local project package database
 
-(stack-path) --global-pkg-db  ::  
+(stack path) --global-pkg-db  ::  
 Global package database
 
-(stack-path) --ghc-package-path  ::  
+(stack path) --ghc-package-path  ::  
 GHC_PACKAGE_PATH environment variable
 
-(stack-path) --snapshot-install-root  ::  
+(stack path) --snapshot-install-root  ::  
 Snapshot installation root
 
-(stack-path) --local-install-root  ::  
+(stack path) --local-install-root  ::  
 Local project installation root
 
-(stack-path) --snapshot-doc-root  ::  
+(stack path) --snapshot-doc-root  ::  
 Snapshot documentation root
 
-(stack-path) --local-doc-root  ::  
+(stack path) --local-doc-root  ::  
 Local project documentation root
 
-(stack-path) --local-hoogle-root  ::  
+(stack path) --local-hoogle-root  ::  
 Local project documentation root
 
-(stack-path) --dist-dir  ::  
+(stack path) --dist-dir  ::  
 Dist work directory, relative to package directory
 
-(stack-path) --local-hpc-root  ::  
+(stack path) --local-hpc-root  ::  
 Where HPC reports and tix files are stored
 
-(stack-path) --local-bin-path  ::  
+(stack path) --local-bin-path  ::  
 DEPRECATED: Use '--local-bin' instead
 
-(stack-path) --ghc-paths  ::  
+(stack path) --ghc-paths  ::  
 DEPRECATED: Use '--programs' instead
 
-(stack-path) --global-stack-root  ::  
+(stack path) --global-stack-root  ::  
 DEPRECATED: Use '--stack-root' instead
 
-(stack-path) --setup-info-yaml  ::  URL
+(stack path) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-path) --snapshot-location-base  ::  URL
+(stack path) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-path) --help  ::  
+(stack path) --help  ::  
 Show this help text
 
 
 
 
-(stack-ls) --setup-info-yaml  ::  URL
+(stack ls) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-ls) --snapshot-location-base  ::  URL
+(stack ls) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-ls) --help  ::  
+(stack ls) --help  ::  
 Show this help text
 
 
 
 
-(stack-unpack) --to  ::  ARG
-Optional path to unpack the package into (will unpack into subdirectory)
+(stack ls)
+snapshots                 (View local snapshot (default option))
+dependencies              (View the dependencies)
+stack-colors              (View stack's output styles)
+stack-colours             (View stack's output styles (alias for 'stack-colors'))
 
-(stack-unpack) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack dependencies
 
-(stack-unpack) --snapshot-location-base  ::  URL
-The base location of LTS/Nightly snapshots
 
-(stack-unpack) --help  ::  
+(stack ls snapshots) -l --lts  ::  
+Only show lts snapshots
+
+(stack ls snapshots) -n --nightly  ::  
+Only show nightly snapshots
+
+(stack ls snapshots) -h --help  ::  
 Show this help text
 
 
 
 
-(stack-update) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack dependencies
+(stack ls dependencies) --separator  ::  SEP
+Separator between package name and package version. (default: " ")
 
-(stack-update) --snapshot-location-base  ::  URL
-The base location of LTS/Nightly snapshots
+(stack ls dependencies) --license  ::  
+Enable/disable printing of dependency licenses instead of versions (default: disabled)
 
-(stack-update) --help  ::  
-Show this help text
+(stack ls dependencies) --no-license  ::  
+Enable/disable printing of dependency licenses instead of versions (default: disabled)
 
+(stack ls dependencies) --external  ::  
+Enable/disable inclusion of external dependencies (default: enabled)
 
+(stack ls dependencies) --no-external  ::  
+Enable/disable inclusion of external dependencies (default: enabled)
 
-
-(stack-upgrade) --source-only  ::  
-Do not use a binary upgrade path
-
-(stack-upgrade) --binary-platform  ::  ARG
-Platform type for archive to download
-
-(stack-upgrade) --force-download  ::  
-Download the latest available stack executable
-
-(stack-upgrade) --binary-version  ::  ARG
-Download a specific stack version
-
-(stack-upgrade) --github-org  ::  ARG
-Github organization name
-
-(stack-upgrade) --github-repo  ::  ARG
-Github repository name
-
-(stack-upgrade) --binary-only  ::  
-Do not use a source upgrade path
-
-(stack-upgrade) --git  ::  
-Clone from Git instead of downloading from Hackage (more dangerous)
-
-(stack-upgrade) --git-repo  ::  ARG
-Clone from specified git repository (default: "https://github.com/commercialhaskell/stack")
-
-(stack-upgrade) --git-branch  ::  ARG
-Clone from this git branch (default: "master")
-
-(stack-upgrade) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack dependencies
-
-(stack-upgrade) --snapshot-location-base  ::  URL
-The base location of LTS/Nightly snapshots
-
-(stack-upgrade) --help  ::  
-Show this help text
-
-
-
-
-(stack-upload) --pvp-bounds  ::  PVP-BOUNDS
-How PVP version bounds should be added to .cabal file: none, lower, upper, both
-
-(stack-upload) --ignore-check  ::  
-Do not check package for common mistakes
-
-(stack-upload) --test-tarball  ::  
-Enable/disable building of the resulting tarball (default: disabled)
-
-(stack-upload) --no-test-tarball  ::  
-Enable/disable building of the resulting tarball (default: disabled)
-
-(stack-upload) --tar-dir  ::  ARG
-If specified, copy all the tar to this dir
-
-(stack-upload) --candidate  ::  
-Upload as a package candidate
-
-(stack-upload) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack dependencies
-
-(stack-upload) --snapshot-location-base  ::  URL
-The base location of LTS/Nightly snapshots
-
-(stack-upload) --help  ::  
-Show this help text
-
-
-
-
-(stack-sdist) --pvp-bounds  ::  PVP-BOUNDS
-How PVP version bounds should be added to .cabal file: none, lower, upper, both
-
-(stack-sdist) --ignore-check  ::  
-Do not check package for common mistakes
-
-(stack-sdist) --test-tarball  ::  
-Enable/disable building of the resulting tarball (default: disabled)
-
-(stack-sdist) --no-test-tarball  ::  
-Enable/disable building of the resulting tarball (default: disabled)
-
-(stack-sdist) --tar-dir  ::  ARG
-If specified, copy all the tar to this dir
-
-(stack-sdist) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack dependencies
-
-(stack-sdist) --snapshot-location-base  ::  URL
-The base location of LTS/Nightly snapshots
-
-(stack-sdist) --help  ::  
-Show this help text
-
-
-
-
-(stack-dot) --external  ::  
-Enable/disable inclusion of external dependencies (default: disabled)
-
-(stack-dot) --no-external  ::  
-Enable/disable inclusion of external dependencies (default: disabled)
-
-(stack-dot) --include-base  ::  
+(stack ls dependencies) --include-base  ::  
 Enable/disable inclusion of dependencies on base (default: enabled)
 
-(stack-dot) --no-include-base  ::  
+(stack ls dependencies) --no-include-base  ::  
 Enable/disable inclusion of dependencies on base (default: enabled)
 
-(stack-dot) --depth  ::  DEPTH
+(stack ls dependencies) --depth  ::  DEPTH
 Limit the depth of dependency resolution (Default: No limit)
 
-(stack-dot) --prune  ::  PACKAGES
+(stack ls dependencies) --prune  ::  PACKAGES
 Prune each package name from the comma separated list of package names PACKAGES
 
-(stack-dot) --flag  ::  PACKAGE:[-]FLAG
+(stack ls dependencies) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-dot) --test  ::  
+(stack ls dependencies) --test  ::  
 Consider dependencies of test components
 
-(stack-dot) --bench  ::  
+(stack ls dependencies) --bench  ::  
 Consider dependencies of benchmark components
 
-(stack-dot) --global-hints  ::  
+(stack ls dependencies) --global-hints  ::  
 Do not require an install GHC; instead, use a hints file for global packages
 
-(stack-dot) --setup-info-yaml  ::  URL
-Alternate URL or relative / absolute path for stack dependencies
-
-(stack-dot) --snapshot-location-base  ::  URL
-The base location of LTS/Nightly snapshots
-
-(stack-dot) --help  ::  
+(stack ls dependencies) -h --help  ::  
 Show this help text
 
 
 
 
-(stack-ghc) --ghc-package-path  ::  
+(stack ls stack-colors) --basic  ::  
+Enable/disable a basic report of the styles used. The default is a fuller one (default: disabled)
+
+(stack ls stack-colors) --no-basic  ::  
+Enable/disable a basic report of the styles used. The default is a fuller one (default: disabled)
+
+(stack ls stack-colors) --sgr  ::  
+Enable/disable the provision of the equivalent SGR instructions (provided by default). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colors) --no-sgr  ::  
+Enable/disable the provision of the equivalent SGR instructions (provided by default). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colors) --example  ::  
+Enable/disable the provision of an example of the applied style (provided by default for colored output). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colors) --no-example  ::  
+Enable/disable the provision of an example of the applied style (provided by default for colored output). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colors) -h --help  ::  
+Show this help text
+
+
+
+
+(stack ls stack-colours) --basic  ::  
+Enable/disable a basic report of the styles used. The default is a fuller one (default: disabled)
+
+(stack ls stack-colours) --no-basic  ::  
+Enable/disable a basic report of the styles used. The default is a fuller one (default: disabled)
+
+(stack ls stack-colours) --sgr  ::  
+Enable/disable the provision of the equivalent SGR instructions (provided by default). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colours) --no-sgr  ::  
+Enable/disable the provision of the equivalent SGR instructions (provided by default). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colours) --example  ::  
+Enable/disable the provision of an example of the applied style (provided by default for colored output). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colours) --no-example  ::  
+Enable/disable the provision of an example of the applied style (provided by default for colored output). Flag ignored for a basic report (default: enabled)
+
+(stack ls stack-colours) -h --help  ::  
+Show this help text
+
+
+
+
+(stack unpack) --to  ::  ARG
+Optional path to unpack the package into (will unpack into subdirectory)
+
+(stack unpack) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack unpack) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack unpack) --help  ::  
+Show this help text
+
+
+
+
+(stack update) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack update) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack update) --help  ::  
+Show this help text
+
+
+
+
+(stack upgrade) --source-only  ::  
+Do not use a binary upgrade path
+
+(stack upgrade) --binary-platform  ::  ARG
+Platform type for archive to download
+
+(stack upgrade) --force-download  ::  
+Download the latest available stack executable
+
+(stack upgrade) --binary-version  ::  ARG
+Download a specific stack version
+
+(stack upgrade) --github-org  ::  ARG
+Github organization name
+
+(stack upgrade) --github-repo  ::  ARG
+Github repository name
+
+(stack upgrade) --binary-only  ::  
+Do not use a source upgrade path
+
+(stack upgrade) --git  ::  
+Clone from Git instead of downloading from Hackage (more dangerous)
+
+(stack upgrade) --git-repo  ::  ARG
+Clone from specified git repository (default: "https://github.com/commercialhaskell/stack")
+
+(stack upgrade) --git-branch  ::  ARG
+Clone from this git branch (default: "master")
+
+(stack upgrade) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack upgrade) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack upgrade) --help  ::  
+Show this help text
+
+
+
+
+(stack upload) --pvp-bounds  ::  PVP-BOUNDS
+How PVP version bounds should be added to .cabal file: none, lower, upper, both
+
+(stack upload) --ignore-check  ::  
+Do not check package for common mistakes
+
+(stack upload) --test-tarball  ::  
+Enable/disable building of the resulting tarball (default: disabled)
+
+(stack upload) --no-test-tarball  ::  
+Enable/disable building of the resulting tarball (default: disabled)
+
+(stack upload) --tar-dir  ::  ARG
+If specified, copy all the tar to this dir
+
+(stack upload) --candidate  ::  
+Upload as a package candidate
+
+(stack upload) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack upload) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack upload) --help  ::  
+Show this help text
+
+
+
+
+(stack sdist) --pvp-bounds  ::  PVP-BOUNDS
+How PVP version bounds should be added to .cabal file: none, lower, upper, both
+
+(stack sdist) --ignore-check  ::  
+Do not check package for common mistakes
+
+(stack sdist) --test-tarball  ::  
+Enable/disable building of the resulting tarball (default: disabled)
+
+(stack sdist) --no-test-tarball  ::  
+Enable/disable building of the resulting tarball (default: disabled)
+
+(stack sdist) --tar-dir  ::  ARG
+If specified, copy all the tar to this dir
+
+(stack sdist) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack sdist) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack sdist) --help  ::  
+Show this help text
+
+
+
+
+(stack dot) --external  ::  
+Enable/disable inclusion of external dependencies (default: disabled)
+
+(stack dot) --no-external  ::  
+Enable/disable inclusion of external dependencies (default: disabled)
+
+(stack dot) --include-base  ::  
+Enable/disable inclusion of dependencies on base (default: enabled)
+
+(stack dot) --no-include-base  ::  
+Enable/disable inclusion of dependencies on base (default: enabled)
+
+(stack dot) --depth  ::  DEPTH
+Limit the depth of dependency resolution (Default: No limit)
+
+(stack dot) --prune  ::  PACKAGES
+Prune each package name from the comma separated list of package names PACKAGES
+
+(stack dot) --flag  ::  PACKAGE:[-]FLAG
+Override flags set in stack.yaml (applies to local packages and extra-deps)
+
+(stack dot) --test  ::  
+Consider dependencies of test components
+
+(stack dot) --bench  ::  
+Consider dependencies of benchmark components
+
+(stack dot) --global-hints  ::  
+Do not require an install GHC; instead, use a hints file for global packages
+
+(stack dot) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack dot) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack dot) --help  ::  
+Show this help text
+
+
+
+
+(stack ghc) --ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-ghc) --no-ghc-package-path  ::  
+(stack ghc) --no-ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-ghc) --stack-exe  ::  
+(stack ghc) --stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-ghc) --no-stack-exe  ::  
+(stack ghc) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-ghc) --package  ::  PACKAGE(S)
+(stack ghc) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-ghc) --rts-options  ::  RTSFLAG
+(stack ghc) --rts-options  ::  RTSFLAG
 Explicit RTS options to pass to application
 
-(stack-ghc) --cwd  ::  DIR
+(stack ghc) --cwd  ::  DIR
 Sets the working directory before executing
 
-(stack-ghc) --setup-info-yaml  ::  URL
+(stack ghc) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-ghc) --snapshot-location-base  ::  URL
+(stack ghc) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-ghc) --help  ::  
+(stack ghc) --help  ::  
 Show this help text
 
 
 
 
-(stack-hoogle) --setup  ::  
+(stack hoogle) --setup  ::  
 Enable/disable If needed: install hoogle, build haddocks and generate a hoogle database (default: enabled)
 
-(stack-hoogle) --no-setup  ::  
+(stack hoogle) --no-setup  ::  
 Enable/disable If needed: install hoogle, build haddocks and generate a hoogle database (default: enabled)
 
-(stack-hoogle) --rebuild  ::  
+(stack hoogle) --rebuild  ::  
 Rebuild the hoogle database
 
-(stack-hoogle) --server  ::  
+(stack hoogle) --server  ::  
 Start local Hoogle server
 
-(stack-hoogle) --setup-info-yaml  ::  URL
+(stack hoogle) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-hoogle) --snapshot-location-base  ::  URL
+(stack hoogle) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-hoogle) --help  ::  
+(stack hoogle) --help  ::  
 Show this help text
 
 
 
 
-(stack-exec) --ghc-package-path  ::  
+(stack exec) --ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-exec) --no-ghc-package-path  ::  
+(stack exec) --no-ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-exec) --stack-exe  ::  
+(stack exec) --stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-exec) --no-stack-exe  ::  
+(stack exec) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-exec) --package  ::  PACKAGE(S)
+(stack exec) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-exec) --rts-options  ::  RTSFLAG
+(stack exec) --rts-options  ::  RTSFLAG
 Explicit RTS options to pass to application
 
-(stack-exec) --cwd  ::  DIR
+(stack exec) --cwd  ::  DIR
 Sets the working directory before executing
 
-(stack-exec) --setup-info-yaml  ::  URL
+(stack exec) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-exec) --snapshot-location-base  ::  URL
+(stack exec) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-exec) --help  ::  
+(stack exec) --help  ::  
 Show this help text
 
 
 
 
-(stack-run) --ghc-package-path  ::  
+(stack run) --ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-run) --no-ghc-package-path  ::  
+(stack run) --no-ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-run) --stack-exe  ::  
+(stack run) --stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-run) --no-stack-exe  ::  
+(stack run) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-run) --package  ::  PACKAGE(S)
+(stack run) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-run) --rts-options  ::  RTSFLAG
+(stack run) --rts-options  ::  RTSFLAG
 Explicit RTS options to pass to application
 
-(stack-run) --cwd  ::  DIR
+(stack run) --cwd  ::  DIR
 Sets the working directory before executing
 
-(stack-run) --setup-info-yaml  ::  URL
+(stack run) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-run) --snapshot-location-base  ::  URL
+(stack run) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-run) --help  ::  
+(stack run) --help  ::  
 Show this help text
 
 
 
 
-(stack-ghci) --pedantic  ::  
+(stack ghci) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-ghci) --ghci-options  ::  OPTIONS
+(stack ghci) --ghci-options  ::  OPTIONS
 Additional options passed to GHCi
 
-(stack-ghci) --ghc-options  ::  OPTIONS
+(stack ghci) --ghc-options  ::  OPTIONS
 Additional options passed to both GHC and GHCi
 
-(stack-ghci) --flag  ::  PACKAGE:[-]FLAG
+(stack ghci) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-ghci) --with-ghc  ::  GHC
+(stack ghci) --with-ghc  ::  GHC
 Use this GHC to run GHCi
 
-(stack-ghci) --load  ::  
+(stack ghci) --load  ::  
 Enable/disable load modules on start-up (default: enabled)
 
-(stack-ghci) --no-load  ::  
+(stack ghci) --no-load  ::  
 Enable/disable load modules on start-up (default: enabled)
 
-(stack-ghci) --package  ::  PACKAGE(S)
+(stack ghci) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-ghci) --main-is  ::  TARGET
+(stack ghci) --main-is  ::  TARGET
 Specify which target should contain the main module to load, such as for an executable for test suite or benchmark.
 
-(stack-ghci) --load-local-deps  ::  
+(stack ghci) --load-local-deps  ::  
 Load all local dependencies of your targets
 
-(stack-ghci) --package-hiding  ::  
+(stack ghci) --package-hiding  ::  
 Enable/disable package hiding
 
-(stack-ghci) --no-package-hiding  ::  
+(stack ghci) --no-package-hiding  ::  
 Enable/disable package hiding
 
-(stack-ghci) --only-main  ::  
+(stack ghci) --only-main  ::  
 Only load and import the main module. If no main module, no modules will be loaded.
 
-(stack-ghci) --trace  ::  
+(stack ghci) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-ghci) --profile  ::  
+(stack ghci) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-ghci) --no-strip  ::  
+(stack ghci) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-ghci) --test  ::  
+(stack ghci) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-ghci) --no-test  ::  
+(stack ghci) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-ghci) --bench  ::  
+(stack ghci) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-ghci) --no-bench  ::  
+(stack ghci) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-ghci) --setup-info-yaml  ::  URL
+(stack ghci) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-ghci) --snapshot-location-base  ::  URL
+(stack ghci) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-ghci) --help  ::  
+(stack ghci) --help  ::  
 Show this help text
 
 
 
 
-(stack-repl) --pedantic  ::  
+(stack repl) --pedantic  ::  
 Turn on -Wall and -Werror
 
-(stack-repl) --ghci-options  ::  OPTIONS
+(stack repl) --ghci-options  ::  OPTIONS
 Additional options passed to GHCi
 
-(stack-repl) --ghc-options  ::  OPTIONS
+(stack repl) --ghc-options  ::  OPTIONS
 Additional options passed to both GHC and GHCi
 
-(stack-repl) --flag  ::  PACKAGE:[-]FLAG
+(stack repl) --flag  ::  PACKAGE:[-]FLAG
 Override flags set in stack.yaml (applies to local packages and extra-deps)
 
-(stack-repl) --with-ghc  ::  GHC
+(stack repl) --with-ghc  ::  GHC
 Use this GHC to run GHCi
 
-(stack-repl) --load  ::  
+(stack repl) --load  ::  
 Enable/disable load modules on start-up (default: enabled)
 
-(stack-repl) --no-load  ::  
+(stack repl) --no-load  ::  
 Enable/disable load modules on start-up (default: enabled)
 
-(stack-repl) --package  ::  PACKAGE(S)
+(stack repl) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-repl) --main-is  ::  TARGET
+(stack repl) --main-is  ::  TARGET
 Specify which target should contain the main module to load, such as for an executable for test suite or benchmark.
 
-(stack-repl) --load-local-deps  ::  
+(stack repl) --load-local-deps  ::  
 Load all local dependencies of your targets
 
-(stack-repl) --package-hiding  ::  
+(stack repl) --package-hiding  ::  
 Enable/disable package hiding
 
-(stack-repl) --no-package-hiding  ::  
+(stack repl) --no-package-hiding  ::  
 Enable/disable package hiding
 
-(stack-repl) --only-main  ::  
+(stack repl) --only-main  ::  
 Only load and import the main module. If no main module, no modules will be loaded.
 
-(stack-repl) --trace  ::  
+(stack repl) --trace  ::  
 Enable profiling in libraries, executables, etc. for all expressions and generate a backtrace on exception
 
-(stack-repl) --profile  ::  
+(stack repl) --profile  ::  
 profiling in libraries, executables, etc. for all expressions and generate a profiling report in tests or benchmarks
 
-(stack-repl) --no-strip  ::  
+(stack repl) --no-strip  ::  
 Disable DWARF debugging symbol stripping in libraries, executables, etc. for all expressions, producing larger executables but allowing the use of standard debuggers/profiling tools/other utilities that use debugging symbols.
 
-(stack-repl) --test  ::  
+(stack repl) --test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-repl) --no-test  ::  
+(stack repl) --no-test  ::  
 Enable/disable testing the package(s) in this directory/configuration (default: disabled)
 
-(stack-repl) --bench  ::  
+(stack repl) --bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-repl) --no-bench  ::  
+(stack repl) --no-bench  ::  
 Enable/disable benchmarking the package(s) in this directory/configuration (default: disabled)
 
-(stack-repl) --setup-info-yaml  ::  URL
+(stack repl) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-repl) --snapshot-location-base  ::  URL
+(stack repl) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-repl) --help  ::  
+(stack repl) --help  ::  
 Show this help text
 
 
 
 
-(stack-runghc) --ghc-package-path  ::  
+(stack runghc) --ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-runghc) --no-ghc-package-path  ::  
+(stack runghc) --no-ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-runghc) --stack-exe  ::  
+(stack runghc) --stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-runghc) --no-stack-exe  ::  
+(stack runghc) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-runghc) --package  ::  PACKAGE(S)
+(stack runghc) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-runghc) --rts-options  ::  RTSFLAG
+(stack runghc) --rts-options  ::  RTSFLAG
 Explicit RTS options to pass to application
 
-(stack-runghc) --cwd  ::  DIR
+(stack runghc) --cwd  ::  DIR
 Sets the working directory before executing
 
-(stack-runghc) --setup-info-yaml  ::  URL
+(stack runghc) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-runghc) --snapshot-location-base  ::  URL
+(stack runghc) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-runghc) --help  ::  
+(stack runghc) --help  ::  
 Show this help text
 
 
 
 
-(stack-runhaskell) --ghc-package-path  ::  
+(stack runhaskell) --ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-runhaskell) --no-ghc-package-path  ::  
+(stack runhaskell) --no-ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-runhaskell) --stack-exe  ::  
+(stack runhaskell) --stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-runhaskell) --no-stack-exe  ::  
+(stack runhaskell) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-runhaskell) --package  ::  PACKAGE(S)
+(stack runhaskell) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-runhaskell) --rts-options  ::  RTSFLAG
+(stack runhaskell) --rts-options  ::  RTSFLAG
 Explicit RTS options to pass to application
 
-(stack-runhaskell) --cwd  ::  DIR
+(stack runhaskell) --cwd  ::  DIR
 Sets the working directory before executing
 
-(stack-runhaskell) --setup-info-yaml  ::  URL
+(stack runhaskell) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-runhaskell) --snapshot-location-base  ::  URL
+(stack runhaskell) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-runhaskell) --help  ::  
+(stack runhaskell) --help  ::  
 Show this help text
 
 
 
 
-(stack-script) --package  ::  PACKAGE(S)
+(stack script) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-script) --compile  ::  
+(stack script) --compile  ::  
 Compile the script without optimization and run the executable
 
-(stack-script) --optimize  ::  
+(stack script) --optimize  ::  
 Compile the script with optimization and run the executable
 
-(stack-script) --ghc-options  ::  OPTIONS
+(stack script) --ghc-options  ::  OPTIONS
 Additional options passed to GHC
 
-(stack-script) --extra-dep  ::  PACKAGE-VERSION
+(stack script) --extra-dep  ::  PACKAGE-VERSION
 Extra dependencies to be added to the snapshot
 
-(stack-script) --no-run  ::  
+(stack script) --no-run  ::  
 Don't run, just compile.
 
-(stack-script) --setup-info-yaml  ::  URL
+(stack script) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-script) --snapshot-location-base  ::  URL
+(stack script) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-script) --help  ::  
+(stack script) --help  ::  
 Show this help text
 
 
 
 
-(stack-eval) --ghc-package-path  ::  
+(stack eval) --ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-eval) --no-ghc-package-path  ::  
+(stack eval) --no-ghc-package-path  ::  
 Enable/disable setting the GHC_PACKAGE_PATH variable for the subprocess (default: enabled)
 
-(stack-eval) --stack-exe  ::  
+(stack eval) --stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-eval) --no-stack-exe  ::  
+(stack eval) --no-stack-exe  ::  
 Enable/disable setting the STACK_EXE environment variable to the path for the stack executable (default: enabled)
 
-(stack-eval) --package  ::  PACKAGE(S)
+(stack eval) --package  ::  PACKAGE(S)
 Additional package(s) that must be installed
 
-(stack-eval) --rts-options  ::  RTSFLAG
+(stack eval) --rts-options  ::  RTSFLAG
 Explicit RTS options to pass to application
 
-(stack-eval) --cwd  ::  DIR
+(stack eval) --cwd  ::  DIR
 Sets the working directory before executing
 
-(stack-eval) --setup-info-yaml  ::  URL
+(stack eval) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-eval) --snapshot-location-base  ::  URL
+(stack eval) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-eval) --help  ::  
+(stack eval) --help  ::  
 Show this help text
 
 
 
 
-(stack-clean) --full  ::  
+(stack clean) --full  ::  
 Delete the project’s stack working directories (.stack-work by default).
 
-(stack-clean) --setup-info-yaml  ::  URL
+(stack clean) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-clean) --snapshot-location-base  ::  URL
+(stack clean) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-clean) --help  ::  
+(stack clean) --help  ::  
 Show this help text
 
 
 
 
-(stack-purge) --setup-info-yaml  ::  URL
+(stack purge) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-purge) --snapshot-location-base  ::  URL
+(stack purge) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-purge) --help  ::  
+(stack purge) --help  ::  
 Show this help text
 
 
 
 
-(stack-query) --setup-info-yaml  ::  URL
+(stack query) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-query) --snapshot-location-base  ::  URL
+(stack query) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-query) --help  ::  
+(stack query) --help  ::  
 Show this help text
 
 
 
 
-(stack-list) --setup-info-yaml  ::  URL
+(stack list) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-list) --snapshot-location-base  ::  URL
+(stack list) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-list) --help  ::  
+(stack list) --help  ::  
 Show this help text
 
 
 
 
-(stack-ide) --setup-info-yaml  ::  URL
+(stack ide) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-ide) --snapshot-location-base  ::  URL
+(stack ide) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-ide) --help  ::  
+(stack ide) --help  ::  
 Show this help text
 
 
 
 
-(stack-docker) --setup-info-yaml  ::  URL
+(stack ide)
+packages                  (List all available local loadable packages)
+targets                   (List all available stack targets)
+
+
+
+(stack ide packages) --stdout  ::  
+Send output to stdout instead of the default, stderr
+
+(stack ide packages) --cabal-files  ::  
+Print paths to package cabal-files instead of package names
+
+(stack ide packages) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-docker) --snapshot-location-base  ::  URL
+(stack ide packages) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-docker) --help  ::  
+(stack ide packages) --help  ::  
 Show this help text
 
 
 
 
-(stack-config) --setup-info-yaml  ::  URL
+(stack ide targets) --stdout  ::  
+Send output to stdout instead of the default, stderr
+
+(stack ide targets) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-config) --snapshot-location-base  ::  URL
+(stack ide targets) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-config) --help  ::  
+(stack ide targets) --help  ::  
 Show this help text
 
 
 
 
-(stack-hpc) --setup-info-yaml  ::  URL
+(stack docker) --setup-info-yaml  ::  URL
 Alternate URL or relative / absolute path for stack dependencies
 
-(stack-hpc) --snapshot-location-base  ::  URL
+(stack docker) --snapshot-location-base  ::  URL
 The base location of LTS/Nightly snapshots
 
-(stack-hpc) --help  ::  
+(stack docker) --help  ::  
+Show this help text
+
+
+
+
+(stack docker)
+pull                      (Pull latest version of Docker image from registry)
+reset                     (Reset the Docker sandbox)
+
+
+
+(stack docker pull) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack docker pull) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack docker pull) --help  ::  
+Show this help text
+
+
+
+
+(stack docker reset) --keep-home  ::  
+Do not delete sandbox's home directory
+
+(stack docker reset) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack docker reset) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack docker reset) --help  ::  
+Show this help text
+
+
+
+
+(stack config) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack config) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack config) --help  ::  
+Show this help text
+
+
+
+
+(stack config)
+set                       (Sets a field in the project's stack.yaml to value)
+env                       (Print environment variables for use in a shell)
+
+
+
+(stack config set) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack config set) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack config set) --help  ::  
+Show this help text
+
+
+
+
+(stack config env) --locals  ::  
+Enable/disable include local package information (default: enabled)
+
+(stack config env) --no-locals  ::  
+Enable/disable include local package information (default: enabled)
+
+(stack config env) --ghc-package-path  ::  
+Enable/disable set GHC_PACKAGE_PATH variable (default: enabled)
+
+(stack config env) --no-ghc-package-path  ::  
+Enable/disable set GHC_PACKAGE_PATH variable (default: enabled)
+
+(stack config env) --stack-exe  ::  
+Enable/disable set STACK_EXE environment variable (default: enabled)
+
+(stack config env) --no-stack-exe  ::  
+Enable/disable set STACK_EXE environment variable (default: enabled)
+
+(stack config env) --locale-utf8  ::  
+Enable/disable set the GHC_CHARENC environment variable to UTF8 (default: disabled)
+
+(stack config env) --no-locale-utf8  ::  
+Enable/disable set the GHC_CHARENC environment variable to UTF8 (default: disabled)
+
+(stack config env) --keep-ghc-rts  ::  
+Enable/disable keep any GHC_RTS environment variables (default: disabled)
+
+(stack config env) --no-keep-ghc-rts  ::  
+Enable/disable keep any GHC_RTS environment variables (default: disabled)
+
+(stack config env) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack config env) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack config env) --help  ::  
+Show this help text
+
+
+
+
+(stack hpc) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack hpc) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack hpc) --help  ::  
+Show this help text
+
+
+
+
+(stack hpc)
+report                    (Generate unified HPC coverage report from tix files)
+
+
+
+(stack hpc report) --all  ::  
+Use results from all packages and components involved in previous --coverage run
+
+(stack hpc report) --destdir  ::  DIR
+Output directory for HTML report
+
+(stack hpc report) --open  ::  
+Open the report in the browser
+
+(stack hpc report) --setup-info-yaml  ::  URL
+Alternate URL or relative / absolute path for stack dependencies
+
+(stack hpc report) --snapshot-location-base  ::  URL
+The base location of LTS/Nightly snapshots
+
+(stack hpc report) --help  ::  
 Show this help text
 

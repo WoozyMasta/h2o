@@ -7,6 +7,7 @@ Show the conda version number and exit.
 
 
 
+(conda)
 clean                     (Remove unused packages and caches.)
 compare                   (Compare packages between conda environments.)
 config                    (Modify configuration values in .condarc. This is modeled)
@@ -26,837 +27,837 @@ upgrade                   (Alias for conda update.)
 
 
 
-(conda-clean) -h --help  ::  
+(conda clean) -h --help  ::  
 Show this help message and exit.
 
-(conda-clean) -a --all  ::  
+(conda clean) -a --all  ::  
 Remove index cache, lock files, unused cache packages, and tarballs.
 
-(conda-clean) -i --index-cache  ::  
+(conda clean) -i --index-cache  ::  
 Remove index cache.
 
-(conda-clean) -p --packages  ::  
+(conda clean) -p --packages  ::  
 Remove unused packages from writable package caches. WARNING: This does not check for packages installed using symlinks back to the package cache.
 
-(conda-clean) -t --tarballs  ::  
+(conda clean) -t --tarballs  ::  
 Remove cached package tarballs.
 
-(conda-clean) -f --force-pkgs-dirs  ::  
+(conda clean) -f --force-pkgs-dirs  ::  
 Remove *all* writable package caches. This option is not included with the --all flag. WARNING: This will break environments with packages installed using symlinks back to the package cache.
 
-(conda-clean) -c --tempfiles  ::  TEMPFILES [TEMPFILES ...]
+(conda clean) -c --tempfiles  ::  TEMPFILES [TEMPFILES ...]
 Remove temporary files that could not be deleted earlier due to being in-use. Argument is path(s) to prefix(es) where files should be found and removed.
 
-(conda-clean) -d --dry-run  ::  
+(conda clean) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-clean) --json  ::  
+(conda clean) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-clean) -q --quiet  ::  
+(conda clean) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-clean) -v --verbose  ::  
+(conda clean) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-clean) -y --yes  ::  
+(conda clean) -y --yes  ::  
 Do not ask for confirmation.
 
 
 
 
-(conda-compare) -h --help  ::  
+(conda compare) -h --help  ::  
 Show this help message and exit.
 
-(conda-compare) --json  ::  
+(conda compare) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-compare) -v --verbose  ::  
+(conda compare) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-compare) -q --quiet  ::  
+(conda compare) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-compare) -n --name  ::  ENVIRONMENT
+(conda compare) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-compare) -p --prefix  ::  PATH
+(conda compare) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
 
 
 
-(conda-config) -h --help  ::  
+(conda config) -h --help  ::  
 Show this help message and exit.
 
-(conda-config) --json  ::  
+(conda config) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-config) -v --verbose  ::  
+(conda config) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-config) -q --quiet  ::  
+(conda config) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-config) --system  ::  
+(conda config) --system  ::  
 Write to the system .condarc file at '/home/vierbein/miniconda3/.condarc'.
 
-(conda-config) --env  ::  
+(conda config) --env  ::  
 Write to the active conda environment .condarc file (/home/vierbein/miniconda3). If no environment is active, write to the user config file (/home/vierbein/.condarc).
 
-(conda-config) --file  ::  FILE
+(conda config) --file  ::  FILE
 Write to the given file.
 
-(conda-config) --show  ::  [SHOW ...]
+(conda config) --show  ::  [SHOW ...]
 Display configuration values as calculated and compiled. If no arguments given, show information for all configuration values.
 
-(conda-config) --show-sources  ::  
+(conda config) --show-sources  ::  
 Display all identified configuration sources.
 
-(conda-config) --validate  ::  
+(conda config) --validate  ::  
 Validate all configuration sources.
 
-(conda-config) --describe  ::  [DESCRIBE ...]
+(conda config) --describe  ::  [DESCRIBE ...]
 Describe given configuration parameters. If no arguments given, show information for all configuration parameters.
 
-(conda-config) --write-default  ::  
+(conda config) --write-default  ::  
 Write the default configuration to a file. Equivalent to `conda config --describe > ~/.condarc`.
 
-(conda-config) --get  ::  [KEY ...]
+(conda config) --get  ::  [KEY ...]
 Get a configuration value.
 
-(conda-config) --append  ::  KEY VALUE
+(conda config) --append  ::  KEY VALUE
 Add one configuration value to the end of a list key.
 
-(conda-config) --prepend --add  ::  KEY VALUE
+(conda config) --prepend --add  ::  KEY VALUE
 Add one configuration value to the beginning of a list key.
 
-(conda-config) --set  ::  KEY VALUE
+(conda config) --set  ::  KEY VALUE
 Set a boolean or string key
 
-(conda-config) --remove  ::  KEY VALUE
+(conda config) --remove  ::  KEY VALUE
 Remove a configuration value from a list key. This removes all instances of the value.
 
-(conda-config) --remove-key  ::  KEY
+(conda config) --remove-key  ::  KEY
 Remove a configuration key (and all its values).
 
-(conda-config) --stdin  ::  
+(conda config) --stdin  ::  
 Apply configuration information given in yaml format piped through stdin.
 
 
 
 
-(conda-create) -h --help  ::  
+(conda create) -h --help  ::  
 Show this help message and exit.
 
-(conda-create) --clone  ::  ENV
+(conda create) --clone  ::  ENV
 Path to (or name of) existing local environment.
 
-(conda-create) --file  ::  FILE
+(conda create) --file  ::  FILE
 Read package versions from the given file. Repeated file specifications can be passed (e.g. --file=file1 --file=file2).
 
-(conda-create) --dev  ::  
+(conda create) --dev  ::  
 Use `sys.executable -m conda` in wrapper scripts instead of CONDA_EXE. This is mainly for use during tests where we test new conda source against old Python versions.
 
-(conda-create) -n --name  ::  ENVIRONMENT
+(conda create) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-create) -p --prefix  ::  PATH
+(conda create) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-create) -c --channel  ::  CHANNEL
+(conda create) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-create) --use-local  ::  
+(conda create) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-create) --override-channels  ::  
+(conda create) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-create) --repodata-fn  ::  REPODATA_FNS
+(conda create) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-create) --strict-channel-priority  ::  
+(conda create) --strict-channel-priority  ::  
 Packages in lower priority channels are not considered if a package with the same name appears in a higher priority channel.
 
-(conda-create) --no-channel-priority  ::  
+(conda create) --no-channel-priority  ::  
 Package version takes precedence over channel priority. Overrides the value given by `conda config --show channel_priority`.
 
-(conda-create) --no-deps  ::  
+(conda create) --no-deps  ::  
 Do not install, update, remove, or change dependencies. This WILL lead to broken environments and inconsistent behavior. Use at your own risk.
 
-(conda-create) --only-deps  ::  
+(conda create) --only-deps  ::  
 Only install dependencies.
 
-(conda-create) --no-pin  ::  
+(conda create) --no-pin  ::  
 Ignore pinned file.
 
-(conda-create) --no-default-packages  ::  
+(conda create) --no-default-packages  ::  
 Ignore create_default_packages in the .condarc file.
 
-(conda-create) --copy  ::  
+(conda create) --copy  ::  
 Install all packages using copies instead of hard- or soft-linking.
 
-(conda-create) -C --use-index-cache  ::  
+(conda create) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-create) -k --insecure  ::  
+(conda create) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-create) --offline  ::  
+(conda create) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-create) -d --dry-run  ::  
+(conda create) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-create) --json  ::  
+(conda create) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-create) -q --quiet  ::  
+(conda create) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-create) -v --verbose  ::  
+(conda create) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-create) -y --yes  ::  
+(conda create) -y --yes  ::  
 Do not ask for confirmation.
 
-(conda-create) --download-only  ::  
+(conda create) --download-only  ::  
 Solve an environment and ensure package caches are populated, but exit prior to unlinking and linking packages into the prefix.
 
-(conda-create) --show-channel-urls  ::  
+(conda create) --show-channel-urls  ::  
 Show channel urls. Overrides the value given by `conda config --show show_channel_urls`.
 
 
 
 
-(conda-help) -h --help  ::  
+(conda help) -h --help  ::  
 Show this help message and exit.
 
 
 
 
-(conda-info) -h --help  ::  
+(conda info) -h --help  ::  
 Show this help message and exit.
 
-(conda-info) -a --all  ::  
+(conda info) -a --all  ::  
 Show all information.
 
-(conda-info) --base  ::  
+(conda info) --base  ::  
 Display base environment path.
 
-(conda-info) -e --envs  ::  
+(conda info) -e --envs  ::  
 List all known conda environments.
 
-(conda-info) -s --system  ::  
+(conda info) -s --system  ::  
 List environment variables.
 
-(conda-info) --unsafe-channels  ::  
+(conda info) --unsafe-channels  ::  
 Display list of channels with tokens exposed.
 
-(conda-info) --json  ::  
+(conda info) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-info) -v --verbose  ::  
+(conda info) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-info) -q --quiet  ::  
+(conda info) -q --quiet  ::  
 Do not display progress bar.
 
 
 
 
-(conda-init) -h --help  ::  
+(conda init) -h --help  ::  
 Show this help message and exit.
 
-(conda-init) --all  ::  
+(conda init) --all  ::  
 Initialize all currently available shells.
 
-(conda-init) -d --dry-run  ::  
+(conda init) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-init) --reverse  ::  
+(conda init) --reverse  ::  
 Undo past effects of conda init.
 
-(conda-init) --json  ::  
+(conda init) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-init) -v --verbose  ::  
+(conda init) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-init) -q --quiet  ::  
+(conda init) -q --quiet  ::  
 Do not display progress bar.
 
 
 
 
-(conda-install) -h --help  ::  
+(conda install) -h --help  ::  
 Show this help message and exit.
 
-(conda-install) --revision  ::  REVISION
+(conda install) --revision  ::  REVISION
 Revert to the specified REVISION.
 
-(conda-install) --file  ::  FILE
+(conda install) --file  ::  FILE
 Read package versions from the given file. Repeated file specifications can be passed (e.g. --file=file1 --file=file2).
 
-(conda-install) --dev  ::  
+(conda install) --dev  ::  
 Use `sys.executable -m conda` in wrapper scripts instead of CONDA_EXE. This is mainly for use during tests where we test new conda source against old Python versions.
 
-(conda-install) -n --name  ::  ENVIRONMENT
+(conda install) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-install) -p --prefix  ::  PATH
+(conda install) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-install) -c --channel  ::  CHANNEL
+(conda install) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-install) --use-local  ::  
+(conda install) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-install) --override-channels  ::  
+(conda install) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-install) --repodata-fn  ::  REPODATA_FNS
+(conda install) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-install) --strict-channel-priority  ::  
+(conda install) --strict-channel-priority  ::  
 Packages in lower priority channels are not considered if a package with the same name appears in a higher priority channel.
 
-(conda-install) --no-channel-priority  ::  
+(conda install) --no-channel-priority  ::  
 Package version takes precedence over channel priority. Overrides the value given by `conda config --show channel_priority`.
 
-(conda-install) --no-deps  ::  
+(conda install) --no-deps  ::  
 Do not install, update, remove, or change dependencies. This WILL lead to broken environments and inconsistent behavior. Use at your own risk.
 
-(conda-install) --only-deps  ::  
+(conda install) --only-deps  ::  
 Only install dependencies.
 
-(conda-install) --no-pin  ::  
+(conda install) --no-pin  ::  
 Ignore pinned file.
 
-(conda-install) --force-reinstall  ::  
+(conda install) --force-reinstall  ::  
 Ensure that any user-requested package for the current operation is uninstalled and reinstalled, even if that package already exists in the environment.
 
-(conda-install) --freeze-installed --no-update-deps  ::  
+(conda install) --freeze-installed --no-update-deps  ::  
 Do not update or change already-installed dependencies.
 
-(conda-install) --update-deps  ::  
+(conda install) --update-deps  ::  
 Update dependencies.
 
-(conda-install) -S --satisfied-skip-solve  ::  
+(conda install) -S --satisfied-skip-solve  ::  
 Exit early and do not run the solver if the requested specs are satisfied. Also skips aggressive updates as configured by 'aggressive_update_packages'. Similar to the default behavior of 'pip install'.
 
-(conda-install) --update-all --all  ::  
+(conda install) --update-all --all  ::  
 Update all installed packages in the environment.
 
-(conda-install) --update-specs  ::  
+(conda install) --update-specs  ::  
 Update based on provided specifications.
 
-(conda-install) --copy  ::  
+(conda install) --copy  ::  
 Install all packages using copies instead of hard- or soft-linking.
 
-(conda-install) -m --mkdir  ::  
+(conda install) -m --mkdir  ::  
 Create the environment directory if necessary.
 
-(conda-install) --clobber  ::  
+(conda install) --clobber  ::  
 Allow clobbering of overlapping file paths within packages, and suppress related warnings.
 
-(conda-install) -C --use-index-cache  ::  
+(conda install) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-install) -k --insecure  ::  
+(conda install) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-install) --offline  ::  
+(conda install) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-install) -d --dry-run  ::  
+(conda install) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-install) --json  ::  
+(conda install) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-install) -q --quiet  ::  
+(conda install) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-install) -v --verbose  ::  
+(conda install) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-install) -y --yes  ::  
+(conda install) -y --yes  ::  
 Do not ask for confirmation.
 
-(conda-install) --download-only  ::  
+(conda install) --download-only  ::  
 Solve an environment and ensure package caches are populated, but exit prior to unlinking and linking packages into the prefix.
 
-(conda-install) --show-channel-urls  ::  
+(conda install) --show-channel-urls  ::  
 Show channel urls. Overrides the value given by `conda config --show show_channel_urls`.
 
 
 
 
-(conda-list) -h --help  ::  
+(conda list) -h --help  ::  
 Show this help message and exit.
 
-(conda-list) --show-channel-urls  ::  
+(conda list) --show-channel-urls  ::  
 Show channel urls. Overrides the value given by `conda config --show show_channel_urls`.
 
-(conda-list) -c --canonical  ::  
+(conda list) -c --canonical  ::  
 Output canonical names of packages only. Implies --nopip.
 
-(conda-list) -f --full-name  ::  
+(conda list) -f --full-name  ::  
 Only search for full names, i.e., ^<regex>$.
 
-(conda-list) --explicit  ::  
+(conda list) --explicit  ::  
 List explicitly all installed conda packaged with URL (output may be used by conda create --file).
 
-(conda-list) --md5  ::  
+(conda list) --md5  ::  
 Add MD5 hashsum when using --explicit
 
-(conda-list) -e --export  ::  
+(conda list) -e --export  ::  
 Output requirement string only (output may be used by conda create --file).
 
-(conda-list) -r --revisions  ::  
+(conda list) -r --revisions  ::  
 List the revision history and exit.
 
-(conda-list) --no-pip  ::  
+(conda list) --no-pip  ::  
 Do not include pip-only installed packages.
 
-(conda-list) -n --name  ::  ENVIRONMENT
+(conda list) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-list) -p --prefix  ::  PATH
+(conda list) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-list) --json  ::  
+(conda list) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-list) -v --verbose  ::  
+(conda list) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-list) -q --quiet  ::  
+(conda list) -q --quiet  ::  
 Do not display progress bar.
 
 
 
 
-(conda-package) -h --help  ::  
+(conda package) -h --help  ::  
 Show this help message and exit.
 
-(conda-package) -w --which  ::  PATH [PATH ...]
+(conda package) -w --which  ::  PATH [PATH ...]
 Given some PATH print which conda package the file came from.
 
-(conda-package) -r --reset  ::  
+(conda package) -r --reset  ::  
 Remove all untracked files and exit.
 
-(conda-package) -u --untracked  ::  
+(conda package) -u --untracked  ::  
 Display all untracked files and exit.
 
-(conda-package) --pkg-name  ::  PKG_NAME
+(conda package) --pkg-name  ::  PKG_NAME
 Package name of the created package.
 
-(conda-package) --pkg-version  ::  PKG_VERSION
+(conda package) --pkg-version  ::  PKG_VERSION
 Package version of the created package.
 
-(conda-package) --pkg-build  ::  PKG_BUILD
+(conda package) --pkg-build  ::  PKG_BUILD
 Package build number of the created package.
 
-(conda-package) -n --name  ::  ENVIRONMENT
+(conda package) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-package) -p --prefix  ::  PATH
+(conda package) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
 
 
 
-(conda-remove) -h --help  ::  
+(conda remove) -h --help  ::  
 Show this help message and exit.
 
-(conda-remove) --dev  ::  
+(conda remove) --dev  ::  
 Use `sys.executable -m conda` in wrapper scripts instead of CONDA_EXE. This is mainly for use during tests where we test new conda source against old Python versions.
 
-(conda-remove) -n --name  ::  ENVIRONMENT
+(conda remove) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-remove) -p --prefix  ::  PATH
+(conda remove) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-remove) -c --channel  ::  CHANNEL
+(conda remove) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-remove) --use-local  ::  
+(conda remove) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-remove) --override-channels  ::  
+(conda remove) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-remove) --repodata-fn  ::  REPODATA_FNS
+(conda remove) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-remove) --all  ::  
+(conda remove) --all  ::  
 Remove all packages, i.e., the entire environment.
 
-(conda-remove) --features  ::  
+(conda remove) --features  ::  
 Remove features (instead of packages).
 
-(conda-remove) --force-remove --force  ::  
+(conda remove) --force-remove --force  ::  
 Forces removal of a package without removing packages that depend on it. Using this option will usually leave your environment in a broken and inconsistent state.
 
-(conda-remove) --no-pin  ::  
+(conda remove) --no-pin  ::  
 Ignore pinned file.
 
-(conda-remove) -C --use-index-cache  ::  
+(conda remove) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-remove) -k --insecure  ::  
+(conda remove) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-remove) --offline  ::  
+(conda remove) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-remove) -d --dry-run  ::  
+(conda remove) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-remove) --json  ::  
+(conda remove) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-remove) -q --quiet  ::  
+(conda remove) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-remove) -v --verbose  ::  
+(conda remove) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-remove) -y --yes  ::  
+(conda remove) -y --yes  ::  
 Do not ask for confirmation.
 
 
 
 
-(conda-uninstall) -h --help  ::  
+(conda uninstall) -h --help  ::  
 Show this help message and exit.
 
-(conda-uninstall) --dev  ::  
+(conda uninstall) --dev  ::  
 Use `sys.executable -m conda` in wrapper scripts instead of CONDA_EXE. This is mainly for use during tests where we test new conda source against old Python versions.
 
-(conda-uninstall) -n --name  ::  ENVIRONMENT
+(conda uninstall) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-uninstall) -p --prefix  ::  PATH
+(conda uninstall) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-uninstall) -c --channel  ::  CHANNEL
+(conda uninstall) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-uninstall) --use-local  ::  
+(conda uninstall) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-uninstall) --override-channels  ::  
+(conda uninstall) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-uninstall) --repodata-fn  ::  REPODATA_FNS
+(conda uninstall) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-uninstall) --all  ::  
+(conda uninstall) --all  ::  
 Uninstall all packages, i.e., the entire environment.
 
-(conda-uninstall) --features  ::  
+(conda uninstall) --features  ::  
 Uninstall features (instead of packages).
 
-(conda-uninstall) --force-remove --force  ::  
+(conda uninstall) --force-remove --force  ::  
 Forces removal of a package without removing packages that depend on it. Using this option will usually leave your environment in a broken and inconsistent state.
 
-(conda-uninstall) --no-pin  ::  
+(conda uninstall) --no-pin  ::  
 Ignore pinned file.
 
-(conda-uninstall) -C --use-index-cache  ::  
+(conda uninstall) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-uninstall) -k --insecure  ::  
+(conda uninstall) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-uninstall) --offline  ::  
+(conda uninstall) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-uninstall) -d --dry-run  ::  
+(conda uninstall) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-uninstall) --json  ::  
+(conda uninstall) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-uninstall) -q --quiet  ::  
+(conda uninstall) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-uninstall) -v --verbose  ::  
+(conda uninstall) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-uninstall) -y --yes  ::  
+(conda uninstall) -y --yes  ::  
 Do not ask for confirmation.
 
 
 
 
-(conda-run) -h --help  ::  
+(conda run) -h --help  ::  
 Show this help message and exit.
 
-(conda-run) -v --verbose  ::  
+(conda run) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-run) --dev  ::  
+(conda run) --dev  ::  
 Sets `CONDA_EXE` to `python -m conda`, assuming the CWD contains the root of conda development sources. This is mainly for use during tests where we test new conda source against old Python versions.
 
-(conda-run) --debug-wrapper-scripts  ::  
+(conda run) --debug-wrapper-scripts  ::  
 When this is set, where implemented, the shell wrapper scriptswill echo to stderr a lot of debugging information.
 
-(conda-run) --cwd  ::  CWD
+(conda run) --cwd  ::  CWD
 Current working directory for command to run in. Defaults to cwd
 
-(conda-run) --no-capture-output  ::  
+(conda run) --no-capture-output  ::  
 Don't capture stdout/stderr
 
-(conda-run) --live-stream  ::  
+(conda run) --live-stream  ::  
 Display the output for the subprocess stdout and stderr on real time.
 
-(conda-run) -n --name  ::  ENVIRONMENT
+(conda run) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-run) -p --prefix  ::  PATH
+(conda run) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
 
 
 
-(conda-search) -h --help  ::  
+(conda search) -h --help  ::  
 Show this help message and exit.
 
-(conda-search) --envs  ::  
+(conda search) --envs  ::  
 Search all of the current user's environments. If run as Administrator (on Windows) or UID 0 (on unix), search all known environments on the system.
 
-(conda-search) -i --info  ::  
+(conda search) -i --info  ::  
 Provide detailed information about each package.
 
-(conda-search) --subdir --platform  ::  SUBDIR
+(conda search) --subdir --platform  ::  SUBDIR
 Search the given subdir. Should be formatted like 'osx-64', 'linux-32', 'win-64', and so on. The default is to search the current platform.
 
-(conda-search) -c --channel  ::  CHANNEL
+(conda search) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-search) --use-local  ::  
+(conda search) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-search) --override-channels  ::  
+(conda search) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-search) --repodata-fn  ::  REPODATA_FNS
+(conda search) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-search) -C --use-index-cache  ::  
+(conda search) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-search) -k --insecure  ::  
+(conda search) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-search) --offline  ::  
+(conda search) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-search) --json  ::  
+(conda search) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-search) -v --verbose  ::  
+(conda search) -v --verbose  ::  
 Use once for info, twice for debug, three times for trace.
 
-(conda-search) -q --quiet  ::  
+(conda search) -q --quiet  ::  
 Do not display progress bar.
 
 
 
 
-(conda-update) -h --help  ::  
+(conda update) -h --help  ::  
 Show this help message and exit.
 
-(conda-update) --file  ::  FILE
+(conda update) --file  ::  FILE
 Read package versions from the given file. Repeated file specifications can be passed (e.g. --file=file1 --file=file2).
 
-(conda-update) -n --name  ::  ENVIRONMENT
+(conda update) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-update) -p --prefix  ::  PATH
+(conda update) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-update) -c --channel  ::  CHANNEL
+(conda update) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-update) --use-local  ::  
+(conda update) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-update) --override-channels  ::  
+(conda update) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-update) --repodata-fn  ::  REPODATA_FNS
+(conda update) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-update) --strict-channel-priority  ::  
+(conda update) --strict-channel-priority  ::  
 Packages in lower priority channels are not considered if a package with the same name appears in a higher priority channel.
 
-(conda-update) --no-channel-priority  ::  
+(conda update) --no-channel-priority  ::  
 Package version takes precedence over channel priority. Overrides the value given by `conda config --show channel_priority`.
 
-(conda-update) --no-deps  ::  
+(conda update) --no-deps  ::  
 Do not install, update, remove, or change dependencies. This WILL lead to broken environments and inconsistent behavior. Use at your own risk.
 
-(conda-update) --only-deps  ::  
+(conda update) --only-deps  ::  
 Only install dependencies.
 
-(conda-update) --no-pin  ::  
+(conda update) --no-pin  ::  
 Ignore pinned file.
 
-(conda-update) --force-reinstall  ::  
+(conda update) --force-reinstall  ::  
 Ensure that any user-requested package for the current operation is uninstalled and reinstalled, even if that package already exists in the environment.
 
-(conda-update) --freeze-installed --no-update-deps  ::  
+(conda update) --freeze-installed --no-update-deps  ::  
 Do not update or change already-installed dependencies.
 
-(conda-update) --update-deps  ::  
+(conda update) --update-deps  ::  
 Update dependencies.
 
-(conda-update) -S --satisfied-skip-solve  ::  
+(conda update) -S --satisfied-skip-solve  ::  
 Exit early and do not run the solver if the requested specs are satisfied. Also skips aggressive updates as configured by 'aggressive_update_packages'. Similar to the default behavior of 'pip install'.
 
-(conda-update) --update-all --all  ::  
+(conda update) --update-all --all  ::  
 Update all installed packages in the environment.
 
-(conda-update) --update-specs  ::  
+(conda update) --update-specs  ::  
 Update based on provided specifications.
 
-(conda-update) --copy  ::  
+(conda update) --copy  ::  
 Install all packages using copies instead of hard- or soft-linking.
 
-(conda-update) --clobber  ::  
+(conda update) --clobber  ::  
 Allow clobbering of overlapping file paths within packages, and suppress related warnings.
 
-(conda-update) -C --use-index-cache  ::  
+(conda update) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-update) -k --insecure  ::  
+(conda update) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-update) --offline  ::  
+(conda update) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-update) -d --dry-run  ::  
+(conda update) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-update) --json  ::  
+(conda update) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-update) -q --quiet  ::  
+(conda update) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-update) -v --verbose  ::  
+(conda update) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-update) -y --yes  ::  
+(conda update) -y --yes  ::  
 Do not ask for confirmation.
 
-(conda-update) --download-only  ::  
+(conda update) --download-only  ::  
 Solve an environment and ensure package caches are populated, but exit prior to unlinking and linking packages into the prefix.
 
-(conda-update) --show-channel-urls  ::  
+(conda update) --show-channel-urls  ::  
 Show channel urls. Overrides the value given by `conda config --show show_channel_urls`.
 
 
 
 
-(conda-upgrade) -h --help  ::  
+(conda upgrade) -h --help  ::  
 Show this help message and exit.
 
-(conda-upgrade) --file  ::  FILE
+(conda upgrade) --file  ::  FILE
 Read package versions from the given file. Repeated file specifications can be passed (e.g. --file=file1 --file=file2).
 
-(conda-upgrade) -n --name  ::  ENVIRONMENT
+(conda upgrade) -n --name  ::  ENVIRONMENT
 Name of environment.
 
-(conda-upgrade) -p --prefix  ::  PATH
+(conda upgrade) -p --prefix  ::  PATH
 Full path to environment location (i.e. prefix).
 
-(conda-upgrade) -c --channel  ::  CHANNEL
+(conda upgrade) -c --channel  ::  CHANNEL
 Additional channel to search for packages. These are URLs searched in the order they are given (including local directories using the 'file://' syntax or simply a path like '/home/conda/mychan' or '../mychan'). Then, the defaults or channels from .condarc are searched (unless --override-channels is given). You can use 'defaults' to get the default packages for conda. You can also use any name and the .condarc channel_alias value will be prepended. The default channel_alias is http://conda.anaconda.org/.
 
-(conda-upgrade) --use-local  ::  
+(conda upgrade) --use-local  ::  
 Use locally built packages. Identical to '-c local'.
 
-(conda-upgrade) --override-channels  ::  
+(conda upgrade) --override-channels  ::  
 Do not search default or .condarc channels. Requires --channel.
 
-(conda-upgrade) --repodata-fn  ::  REPODATA_FNS
+(conda upgrade) --repodata-fn  ::  REPODATA_FNS
 Specify name of repodata on remote server. Conda will try whatever you specify, but will ultimately fall back to repodata.json if your specs are not satisfiable with what you specify here. This is used to employ repodata that is reduced in time scope. You may pass this flag more than once. Leftmost entries are tried first, and the fallback to repodata.json is added for you automatically.
 
-(conda-upgrade) --strict-channel-priority  ::  
+(conda upgrade) --strict-channel-priority  ::  
 Packages in lower priority channels are not considered if a package with the same name appears in a higher priority channel.
 
-(conda-upgrade) --no-channel-priority  ::  
+(conda upgrade) --no-channel-priority  ::  
 Package version takes precedence over channel priority. Overrides the value given by `conda config --show channel_priority`.
 
-(conda-upgrade) --no-deps  ::  
+(conda upgrade) --no-deps  ::  
 Do not install, update, remove, or change dependencies. This WILL lead to broken environments and inconsistent behavior. Use at your own risk.
 
-(conda-upgrade) --only-deps  ::  
+(conda upgrade) --only-deps  ::  
 Only install dependencies.
 
-(conda-upgrade) --no-pin  ::  
+(conda upgrade) --no-pin  ::  
 Ignore pinned file.
 
-(conda-upgrade) --force-reinstall  ::  
+(conda upgrade) --force-reinstall  ::  
 Ensure that any user-requested package for the current operation is uninstalled and reinstalled, even if that package already exists in the environment.
 
-(conda-upgrade) --freeze-installed --no-update-deps  ::  
+(conda upgrade) --freeze-installed --no-update-deps  ::  
 Do not update or change already-installed dependencies.
 
-(conda-upgrade) --update-deps  ::  
+(conda upgrade) --update-deps  ::  
 Update dependencies.
 
-(conda-upgrade) -S --satisfied-skip-solve  ::  
+(conda upgrade) -S --satisfied-skip-solve  ::  
 Exit early and do not run the solver if the requested specs are satisfied. Also skips aggressive updates as configured by 'aggressive_update_packages'. Similar to the default behavior of 'pip install'.
 
-(conda-upgrade) --update-all --all  ::  
+(conda upgrade) --update-all --all  ::  
 Update all installed packages in the environment.
 
-(conda-upgrade) --update-specs  ::  
+(conda upgrade) --update-specs  ::  
 Update based on provided specifications.
 
-(conda-upgrade) --copy  ::  
+(conda upgrade) --copy  ::  
 Install all packages using copies instead of hard- or soft-linking.
 
-(conda-upgrade) --clobber  ::  
+(conda upgrade) --clobber  ::  
 Allow clobbering of overlapping file paths within packages, and suppress related warnings.
 
-(conda-upgrade) -C --use-index-cache  ::  
+(conda upgrade) -C --use-index-cache  ::  
 Use cache of channel index files, even if it has expired.
 
-(conda-upgrade) -k --insecure  ::  
+(conda upgrade) -k --insecure  ::  
 Allow conda to perform "insecure" SSL connections and transfers. Equivalent to setting 'ssl_verify' to 'false'.
 
-(conda-upgrade) --offline  ::  
+(conda upgrade) --offline  ::  
 Offline mode. Don't connect to the Internet.
 
-(conda-upgrade) -d --dry-run  ::  
+(conda upgrade) -d --dry-run  ::  
 Only display what would have been done.
 
-(conda-upgrade) --json  ::  
+(conda upgrade) --json  ::  
 Report all output as json. Suitable for using conda programmatically.
 
-(conda-upgrade) -q --quiet  ::  
+(conda upgrade) -q --quiet  ::  
 Do not display progress bar.
 
-(conda-upgrade) -v --verbose  ::  
+(conda upgrade) -v --verbose  ::  
 Can be used multiple times. Once for INFO, twice for DEBUG, three times for TRACE.
 
-(conda-upgrade) -y --yes  ::  
+(conda upgrade) -y --yes  ::  
 Do not ask for confirmation.
 
-(conda-upgrade) --download-only  ::  
+(conda upgrade) --download-only  ::  
 Solve an environment and ensure package caches are populated, but exit prior to unlinking and linking packages into the prefix.
 
-(conda-upgrade) --show-channel-urls  ::  
+(conda upgrade) --show-channel-urls  ::  
 Show channel urls. Overrides the value given by `conda config --show show_channel_urls`.
 
