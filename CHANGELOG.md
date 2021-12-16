@@ -1,3 +1,8 @@
+## 0.2.0 (2021-12-16)
+- Support multi-level subcommands
+    - [NOTE] bash/zsh/fish outputs are unsupported yet
+- Switch to GHC 9.0.1
+
 ## 0.1.19 (2021-10-20)
 Tune-ups
 
