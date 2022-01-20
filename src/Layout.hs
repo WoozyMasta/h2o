@@ -342,11 +342,13 @@ toConsecutiveRangeQuartets xs ys =
     xsRes = Set.fromList [(x1, x2) | (x1, x2, _, _) <- res]
     dropped = filter (`Set.notMember` xsRes) xRanges
 
--- | Make pairs of ranges such that
--- when two ranges (x1, x2) and (y1, y2) overlaps,
--- they always satisfy   x1 <= y1 <= x2 <= y2
--- As a special case, x2 == y1 is considered as "overlap"
+-- | Make pairs of overlapping ranges
+--
+-- When two ranges (x1, x2) and (y1, y2) overlap,
+-- they must satisfy x1 <= y1 <= x2 <= y2.
+-- When x2 == y1, its still treated as "overlap"
 -- although [x1, x2) and [y1, y2) have empty intersection.
+--
 makeRanges :: [Int] -> [Int] -> ([(Int, Int)], [(Int, Int)])
 makeRanges xs ys =
   (xRanges, yRanges)
@@ -365,8 +367,10 @@ mergeRanges :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
 mergeRanges xs ys = [(x1, x2, y1, y2) | (x1, x2) <- xs, (y1, y2) <- ys, x1 <= y1 && y1 <= x2 && x2 <= y2]
 
 -- | Create quartets (x1, x2, y1, y2) as overlapping boundaries
+--
 -- [Note] As a special case, x2 == y1 is considered as a overlap
--- although [x1, x2) and [y1, y2) have empty intersection.
+-- although [x1, x2) and [y1, y2) have empty intersection.treatedd
+--
 mergeRangesFast :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int, Int, Int)]
 mergeRangesFast _ [] = []
 mergeRangesFast [] _ = []
@@ -385,6 +389,7 @@ mergeRangesFast ((x1, x2) : xs) ((y1, y2) : ys)
 --  ...xxxxx
 --  ...xxxxx
 --  ........
+--
 extractRectangleToRight :: (Int, Int) -> Int -> [String] -> String
 extractRectangleToRight (rowFrom, rowTo) idxCol xs =
   unwords zs
@@ -405,25 +410,34 @@ getHeadingIndices xs
     indentations' = filter (/= minval) indentations
     secondMinval = List.minimum indentations'
 
+
+-- | Split text by top-level headers
+-- where headers are recognized by the least indentations
+-- NOTE: the top-level headers are **excluded** in the output
 splitByHeaders :: [String] -> [[String]]
 splitByHeaders xs
-  | any Utils.startsWithLongOption headings || any Utils.startsWithShortOrOldOption headings = [xs]
+  | any Utils.startsWithLongOption headings = [xs]
+  | any Utils.startsWithShortOrOldOption headings = [xs]
   | otherwise = map tail $ filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs headingIndices
   where
     headingIndices = debugMsg "headingIndices: " (getHeadingIndices xs)
     headings = map (xs !!) headingIndices
 
+
+-- | Parse (option-and-argument, description) pairs from text by applying
+-- preprocessAll to each header-based block.
 preprocessBlockwise :: String -> [(String, String)]
 preprocessBlockwise content = trace decoratedMsg $ concatMap preprocessAll contents
   where
     xs = lines content
     contents = map unlines $ splitByHeaders xs
     msg
-      | null contents = "[warn] Found no block containing options!"
-      | length contents == 1 = "[info] Found a single block with options"
-      | otherwise = printf "[info] Block-wise processing (#blocks = %d)" (length contents)
+      | null contents = "[warn] Found no header-based block!"
+      | otherwise = printf "[info] Found %d header-based blocks" (length contents)
     decoratedMsg = "\n-------------------------------------------\n" ++ msg ++ "\n-------------------------------------------\n"
 
+
+-- | Parse options from text
 parseBlockwise :: String -> [Opt]
 parseBlockwise "" = []
 parseBlockwise s = List.nub . concat $ results
@@ -436,6 +450,8 @@ parseBlockwise s = List.nub . concat $ results
           (optStr, descStr) /= ("", "")
       ]
 
+
+-- |  Parse (option-and-argument, description) pairs from text
 preprocessAll :: String -> [(String, String)]
 preprocessAll content = map (\(opt, desc) -> (trim opt, unwords $ words $ trim desc)) res
   where
@@ -454,6 +470,8 @@ preprocessAll content = map (\(opt, desc) -> (trim opt, unwords $ words $ trim d
           \===============================================\n"
           $ preprocessAllFallback content
 
+
+-- | Deprecated. Parse options without header-based splitting of input text
 parseMany :: String -> [Opt]
 parseMany "" = []
 parseMany s = List.nub . concat $ results

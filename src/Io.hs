@@ -196,6 +196,7 @@ toNativeTextRec path cmd@(Command name _ _ subCmds) =
     rest = concatMap (toNativeTextRec (path ++ [name])) subCmds
 
 -- | Scans over command and subcommands
+--
 -- `name` is the name of the command.
 -- `skipMan` sets weather to read man pages in subsequent scans.
 -- `content` is the top-level text to be scanned.
@@ -218,6 +219,7 @@ pageToCommandIO name skipMan content = do
         mapM (\(Subcommand subname subdesc) -> getCommandRec 1 useMan [name, subname] subdesc (T.pack content)) candidates
 
 -- | Scan subcommand recursively for its options and sub-sub commands
+--
 -- Arguments:
 --   extraDepth is the number of extra depths to scan sub-sub..commands. Set 0 to avoid scanning sub-sub commands.
 --   useMan carries information weather man page is used as the information source.
