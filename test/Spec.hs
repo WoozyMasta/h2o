@@ -17,7 +17,7 @@ import Layout (makeRanges, mergeRanges, mergeRangesFast, parseMany)
 import qualified Postprocess
 import Subcommand (firstTwoWordsLoc)
 import System.FilePath (takeBaseName)
-import Test.Tasty
+import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.ExpectedFailure
 import Test.Tasty.Golden (goldenVsString)
 import Test.Tasty.HUnit
