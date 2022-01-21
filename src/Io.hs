@@ -251,11 +251,12 @@ getCommandRec extraDepth useMan cmdSeq desc upperContent = do
 -- | scan `content` for a list of possible subcommand
 getSubcmdCandidates :: String -> [Subcommand]
 getSubcmdCandidates content =
-  infoMsg "subcommand candidates : \n" $ uniqSubcommands (parseSubcommand content)
+  infoMsg "subcommand candidates : \n" $ removeHelp . uniqSubcommands . parseSubcommand $ content
   where
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
     uniqSubcommands = map pair2sub . OMap.assocs . OMap.fromList . map sub2pair
+    removeHelp = filter (\(Subcommand name _) -> name /= "help")
 
 -- | Checks if man page is available
 isManAvailableIO :: String -> IO Bool

@@ -12,7 +12,6 @@ clean                     (Remove unused packages and caches.)
 compare                   (Compare packages between conda environments.)
 config                    (Modify configuration values in .condarc. This is modeled)
 create                    (Create a new conda environment from a list of specified)
-help                      (Displays a list of available conda commands and their help)
 info                      (Display information about current conda install.)
 init                      (Initialize conda for shell interaction. [Experimental])
 install                   (Installs a list of packages into a specified conda)
@@ -227,12 +226,6 @@ Solve an environment and ensure package caches are populated, but exit prior to 
 
 (conda create) --show-channel-urls  ::  
 Show channel urls. Overrides the value given by `conda config --show show_channel_urls`.
-
-
-
-
-(conda help) -h --help  ::  
-Show this help message and exit.
 
 
 
