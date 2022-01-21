@@ -101,7 +101,7 @@ getHelpTemplate name (args : argsBag) = do
 
 fetchHelpInfo :: String -> [String] -> IO (Maybe Text)
 fetchHelpInfo name args = do
-  (exitCode, stdout, stderr) <- Process.readProcess (Process.shell $ unwords (name : args))
+  (exitCode, stdout, stderr) <- Process.readProcess (Process.shell $ unwords (name : args) ++ removeColorPostfix)
   let stdoutText = TL.toStrict . TLE.decodeUtf8 $ stdout
   let stderrText = TL.toStrict . TLE.decodeUtf8 $ stderr
   let res
@@ -110,6 +110,8 @@ fetchHelpInfo name args = do
         | mayContainUseful stderrText = Utils.debugTrace ("Using stderr: " ++ unwords (name : args)) $ Just stderrText
         | otherwise = Nothing
   return res
+  where
+    removeColorPostfix = " | sed -r \"s/.\b//g\""
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> Text -> Bool
 isCommandNotFound _ exitCode _ =
