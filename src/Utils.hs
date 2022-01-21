@@ -210,7 +210,7 @@ dropUsage text
 
 -- | A speculative criteria for non-critical purposes
 mayContainUseful :: Text -> Bool
-mayContainUseful text = length xs >= 4 && (mayContainOptions xs || mayContainSubcommands xs)
+mayContainUseful text = length xs >= 3
   where
     xs = filter (not . ("error" `T.isPrefixOf`) . T.toLower . T.stripStart) . T.lines $ dropUsage text
 

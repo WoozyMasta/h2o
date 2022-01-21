@@ -1519,6 +1519,12 @@ Show this help text
 
 
 
+(stack ls snapshots)
+remote                    (View remote snapshot)
+local                     (View local snapshot)
+
+
+
 (stack ls dependencies) --separator  ::  SEP
 Separator between package name and package version. (default: " ")
 
@@ -2348,6 +2354,37 @@ Alternate URL or relative / absolute path for stack dependencies
 The base location of LTS/Nightly snapshots
 
 (stack config set) --help  ::  
+Show this help text
+
+
+
+
+(stack config set)
+resolver                  (Change the resolver of the current project. See)
+system-ghc                (Configure whether stack should use a system GHC)
+install-ghc               (Configure whether stack should automatically install)
+
+
+
+(stack config set resolver) -h --help  ::  
+Show this help text
+
+
+
+
+(stack config set system-ghc) --global  ::  
+Modify the global configuration (typically at "~/.stack/config.yaml") instead of the project stack.yaml.
+
+(stack config set system-ghc) -h --help  ::  
+Show this help text
+
+
+
+
+(stack config set install-ghc) --global  ::  
+Modify the global configuration (typically at "~/.stack/config.yaml") instead of the project stack.yaml.
+
+(stack config set install-ghc) -h --help  ::  
 Show this help text
 
 
