@@ -326,6 +326,8 @@ parseWithOptPart optStr descStr
 
 preprocessAllFallback :: String -> [(String, String)]
 preprocessAllFallback "" = []
-preprocessAllFallback s = case readP_to_S (preprocessor <++ fallback) s of
-  [] -> []
-  (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAllFallback rest
+preprocessAllFallback s = filter (\pair -> pair /= ("", "")) result
+  where
+    result = case readP_to_S (preprocessor <++ fallback) s of
+      [] -> []
+      (pair, rest) : moreMatches -> (pair : map fst moreMatches) ++ preprocessAllFallback rest
