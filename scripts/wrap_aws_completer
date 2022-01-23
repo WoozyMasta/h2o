@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+export COMP_LINE="$@"
+aws_completer
+unset COMP_LINE
