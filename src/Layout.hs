@@ -21,6 +21,20 @@ type Location = (Int, Int)
 -- [TODO] memoise the calls
 -- https://stackoverflow.com/questions/3208258/memoization-in-haskell
 
+-- | Get location right before '-' in the head of a line
+--
+-- λ> getOptionLocations " \n\n          --option here\n  --baba"
+-- [(2, 10), (3, 2)]
+getOptionLocations :: String -> [Location]
+getOptionLocations = _getNonblankLocationTemplate Utils.startsWithDash
+
+-- | Get locations of lines NOT starting with dash
+--
+-- λ> getNonoptLocations " \n\n          --option here\n  --baba"
+-- [(0, 1), (1, 0)]
+getNonoptLocations :: String -> [Location]
+getNonoptLocations = _getNonblankLocationTemplate (not . Utils.startsWithDash)
+
 -- | a helper function
 _getNonblankLocationTemplate :: (String -> Bool) -> String -> [Location]
 _getNonblankLocationTemplate f s = [(i, getHorizOffset x) | (i, x) <- enumLines, f x]
@@ -28,24 +42,6 @@ _getNonblankLocationTemplate f s = [(i, getHorizOffset x) | (i, x) <- enumLines,
     enumLines = zip [(0 :: Int) ..] (lines s)
     getHorizOffset = length . takeWhile (== ' ')
 
--- | Get location that starts with '-'
--- λ> getOptionLocations " \n\n  \t  --option here"
--- [(2, 10)]
-getOptionLocations :: String -> [Location]
-getOptionLocations = _getNonblankLocationTemplate Utils.startsWithDash
-
--- | Get locations of lines NOT starting with dash
-getNonoptLocations :: String -> [Location]
-getNonoptLocations = _getNonblankLocationTemplate (not . Utils.startsWithDash)
-
-_getOffsetHelper :: (String -> [Location]) -> String -> Maybe Int
-_getOffsetHelper getLocs s = traceMessage res
-  where
-    locs = getLocs s
-    xs = map snd locs
-    res = getMostFrequent xs
-    droppedOptionLinesInfo = unlines [(printf "[info] layout: dropped lines: (%03d) %s" r (lines s !! r) :: String) | (r, c) <- locs, Just c /= res]
-    traceMessage = trace droppedOptionLinesInfo
 
 -- | get presumed horizontal offsets of options lines
 -- Here the number is plural as the short options and the long options
@@ -71,18 +67,28 @@ getLongOptionLocations = _getNonblankLocationTemplate Utils.startsWithDoubleDash
 getShortOptionLocations :: String -> [Location]
 getShortOptionLocations = _getNonblankLocationTemplate Utils.startsWithSingleDash
 
--- | get presumed horizontal offset of long options
+-- | get estimated horizontal offset of long options
 getLongOptionOffset :: String -> Maybe Int
 getLongOptionOffset = _getOffsetHelper getLongOptionLocations
 
--- | get presumed horizontal offset of long options
+-- | get estimated horizontal offset of long options
 getShortOptionOffset :: String -> Maybe Int
 getShortOptionOffset = _getOffsetHelper getShortOptionLocations
+
+-- | helper: get a frequency-based estimate of horizontal offset
+_getOffsetHelper :: (String -> [Location]) -> String -> Maybe Int
+_getOffsetHelper getLocs s = traceMessage res
+  where
+    locs = getLocs s
+    offsets = map snd locs
+    res = getMostFrequent offsets
+    droppedOptionLinesInfo = unlines [(printf "[info] layout: dropped lines: (%03d) %s" r (lines s !! r) :: String) | (r, c) <- locs, Just c /= res]
+    traceMessage = trace droppedOptionLinesInfo
 
 ----------------------------------------
 
 -- There are two independent ways to guess the horizontal offset of descriptions
---   1) A description line may be simply offset by space
+--   1) A description line may be simply indented by space
 --   2) A description line may appear following an option
 --      	... from the pattern that the description and the options+args
 --      	may be separated by 3 or more spaces
@@ -164,9 +170,11 @@ descOffsetWithCountInOptionLines s optLocs =
 isSpacesOnly :: String -> Bool
 isSpacesOnly s = not (null s) && all (' ' ==) s
 
-isWordStartingAtOffsetAfterBlank :: Int -> String -> Bool
-isWordStartingAtOffsetAfterBlank _ "" = False
-isWordStartingAtOffsetAfterBlank n x =
+-- | Check if a word starting with space indentation
+--
+isWordStartingWithIndentation :: Int -> String -> Bool
+isWordStartingWithIndentation _ "" = False
+isWordStartingWithIndentation n x =
   assert ('\n' `notElem` x && '\t' `notElem` x) $
     condBefore && condAfter
   where
@@ -174,6 +182,9 @@ isWordStartingAtOffsetAfterBlank n x =
     condBefore = isSpacesOnly before
     condAfter = not (null after) && head after /= ' '
 
+-- | Check if a word starting at the horizontal position
+-- [NOTE] Assume word delimiter is a whitespace
+--
 isWordStartingAtOffset :: Int -> String -> Bool
 isWordStartingAtOffset _ "" = False
 isWordStartingAtOffset 0 (c : _) = c /= ' '
@@ -183,6 +194,9 @@ isWordStartingAtOffset n x =
   where
     (before, after) = splitAt n x
 
+-- | Check if a word starting around the horizontal position.
+-- Ambiguity is set by margin value.
+--
 isWordStartingAround :: Int -> Int -> String -> Bool
 isWordStartingAround _ _ "" = False
 isWordStartingAround margin idx x =
@@ -195,20 +209,12 @@ isWordStartingAround margin idx x =
       where
         (before, after) = splitAt i x
 
-isSeparatedAtOffset :: Int -> String -> String -> Bool
-isSeparatedAtOffset _ _ "" = False
-isSeparatedAtOffset n sep x
-  | n <= w || length x <= w = False
-  | otherwise =
-    assert ('\n' `notElem` x && '\t' `notElem` x) $
-      sep `List.isSuffixOf` before && (not (null after) && head after /= ' ')
-  where
-    w = length sep
-    (before, after) = splitAt n x
 
 -- ================================================
 -- ============== Main stuff ======================
 
+--
+--
 getDescriptionOffsetOptLineNumsPair :: String -> Maybe (Int, [Int])
 getDescriptionOffsetOptLineNumsPair s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
@@ -242,7 +248,7 @@ getOptionDescriptionPairsFromLayout s
     descLineNumsWithoutOption =
       debugMsg
         "descLineNumsWithoutOption"
-        [ idx | (idx, x) <- zip [0 ..] xs, isWordStartingAtOffsetAfterBlank offset x, idx `Set.notMember` optLineNumsSet
+        [ idx | (idx, x) <- zip [0 ..] xs, isWordStartingWithIndentation offset x, idx `Set.notMember` optLineNumsSet
         ]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
     descriptionLineWidthTop10Percent = infoMsg "descriptionLineLength at 93%: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths
