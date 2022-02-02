@@ -150,6 +150,17 @@ descOffsetWithCountSimple s optLocs
       ]
     res = getMostFrequentWithCount cols
 
+
+-- | Get empty line numbers
+--       Here an empty line inclues line filled with whitespaces
+getEmptyLineNums :: String -> [Int]
+getEmptyLineNums s = res
+  where
+    xs = lines s
+    numLinePairs = zip [0..] xs
+    (res, _) = unzip $ filter (\(_, x) -> null . trim $ x) numLinePairs
+
+
 -- | Estimate offset of description part from the lines with options
 -- | Returns Just (offset size, match count) if matches
 descOffsetWithCountInOptionLines :: String -> [Location] -> Maybe (Int, Int)
@@ -223,6 +234,8 @@ getDescriptionOffsetOptLineNumsPair s
   where
     optionOffsets = infoMsg "layout: Option offsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
+
+    -- Split the option locations by wheather the horizontal offset matched the most frequent one
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
     optLineNums = debugShow "layout: optLocsExcluded:" optLocsExcluded $ infoMsg "optLineNums" $ map fst optLocs
 
@@ -230,8 +243,10 @@ getDescriptionOffsetOptLineNumsPair s
     offset = infoMsg "layout: Description offset:" $ Maybe.fromJust descriptionOffsetMay
     optLineNumsFixed = infoMsg "layout: optLineNumsFixed" $ filter (`notElem` map fst optLocsRemoved) optLineNums
 
+
 getDescriptionOffset :: String -> Maybe Int
 getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
+
 
 -- | Returns option-description pairs based on layouts AND also returns the dropped
 -- line index ranges that is uncaught in the process.
