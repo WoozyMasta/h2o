@@ -61,8 +61,13 @@ argWordNumber = do
 
 argWordBracketedHelper :: Char -> Char -> ReadP String
 argWordBracketedHelper bra ket = do
-  (consumed, _) <- gather $ between (char bra) (char ket) (many1 (argWordBracketedHelper bra ket +++ nonBracketLettersForSure))
-  return consumed
+  s <- look
+  let n = length $ filter (== bra) s
+  if n > 8
+    then pfail
+    else do
+      (consumed, _) <- gather $ between (char bra) (char ket) (many1 (argWordBracketedHelper bra ket <++ nonBracketLettersForSure))
+      return consumed
   where
     nonBracketLettersForSure = munch1 (`notElem` ['\n', bra, ket])
 
