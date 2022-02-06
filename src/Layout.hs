@@ -4,6 +4,7 @@
 module Layout where
 
 import Control.Exception (assert)
+import qualified Data.Bifunctor as Bifunctor
 import qualified Data.List as List
 import Data.List.Extra (nubSort, trim, trimEnd, splitOn)
 import qualified Data.Maybe as Maybe
@@ -98,18 +99,18 @@ _getOffsetHelper getLocs s = traceMessage res
 --      	may be separated by 3 or more spaces
 -- Returns Nothing if 1 and 2 disagrees, or no information in 1 and 2
 --
-getDescriptionOffsetFromOptionLocs :: String -> [Location] -> (Maybe Int, [Location])
-getDescriptionOffsetFromOptionLocs s optLocs =
-  case descOffsetWithCountSimple s optLocs of
+getDescriptionOffsetFromOptionLocs :: Int -> String -> [Location] -> (Maybe Int, [Location])
+getDescriptionOffsetFromOptionLocs lineIdxBase s optLocs =
+  case descOffsetWithCountSimple lineIdxBase s optLocs of
     (Nothing, optLocsRemoved) ->
-      case descOffsetWithCountInOptionLines s (filter (`notElem` optLocsRemoved) optLocs) of
+      case descOffsetWithCountInOptionLines lineIdxBase s (filter (`notElem` optLocsRemoved) optLocs) of
         Nothing -> trace "[info] Retrieved absolutely zero information" (Nothing, optLocsRemoved)
         Just (x2, c2) ->
           if isAlignedMoreThan80Percent c2
             then Utils.infoTrace "Descriptions always appear in the lines with options" (Just x2, optLocsRemoved)
             else Utils.infoTrace "Retrieved nothing from layout" (Nothing, optLocsRemoved)
     (Just (x1, c1), optLocsRemoved) ->
-      case descOffsetWithCountInOptionLines s (filter (`notElem` optLocsRemoved) optLocs) of
+      case descOffsetWithCountInOptionLines lineIdxBase s (filter (`notElem` optLocsRemoved) optLocs) of
         Nothing -> trace "[info] Descriptions never appear in the lines with options" (Just x1, optLocsRemoved)
         Just (x2, c2)
           | x1 == x2 -> (Just x1, optLocsRemoved)
@@ -128,17 +129,19 @@ getDescriptionOffsetFromOptionLocs s optLocs =
 
 -- | Estimate offset of description part from non-option lines.
 --   Returns (Just (offset size, match count), [removed option locations]) if matches
-descOffsetWithCountSimple :: String -> [Location] -> (Maybe (Int, Int), [Location])
-descOffsetWithCountSimple s optLocs
+descOffsetWithCountSimple :: Int -> String -> [Location] -> (Maybe (Int, Int), [Location])
+descOffsetWithCountSimple lineIdxBase s optLocs
   | null offsetOverlaps = (res, [])
   | otherwise = (res, optLocsRemoved)
   where
-    descLocs = infoMsg "descLocs: " $ takeHangingDesc optLocs $ getNonoptLocations s
+    descLocs = infoMsg (printf "descLocs (line+%d): lineIdxBase" lineIdxBase) $
+      takeHangingDesc lineIdxBase optLocs $ getNonoptLocations s
     (_, descOffsets) = unzip descLocs
     (optLineNums, optOffsets) = unzip optLocs
     offsetOverlaps = Set.toList $ Set.intersection (Set.fromList optOffsets) (Set.fromList descOffsets)
     (optOffsets', optOffsetsRemoved) = span (<10) optOffsets
-    optLocsRemoved = infoMsg "optLocsRemoved: " $ filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
+    optLocsRemoved = infoMsg (printf "optLocsRemoved (line+%d): " lineIdxBase) $
+      filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
     indentations =  infoMsg "descIndentations:" $
       [ x | (r, x) <- descLocs,
             -- description's offset is equal (rare case!) or greater than option's
@@ -172,20 +175,21 @@ descOffsetWithCountSimple s optLocs
 --    Something blah                           <--- NOT hanging
 --      more blah...                           <--- NOT hanging
 --
-takeHangingDesc :: [Location] -> [Location] -> [Location]
-takeHangingDesc optLocs descLocs = descLocSelected
+takeHangingDesc :: Int -> [Location] -> [Location] -> [Location]
+takeHangingDesc lineIdxBase optLocs descLocs = descLocSelected
   where
     (optLineNums, _) = unzip optLocs
     (descLineNums, _) = unzip descLocs
-    cueDescLocs = infoMsg "cueDescLocs:" $ [(descLineNum, descIndentation) |
-      (i, (descLineNum, descIndentation)) <- zip [0..] descLocs,
-      (descLineNum - 1) `elem` optLineNums,
-      let optIndentation = head [c | (r, c) <- optLocs, r == (descLineNum - 1)],
-      descIndentation >= optIndentation,
-      descIndentation > optIndentation ||
-        (descLineNum - 2) `notElem` descLineNums ||
-        i == 0 ||
-        snd (descLocs !! (i - 1)) /= optIndentation
+    cueDescLocs = infoMsg (printf "cueDescLocs (line+%d):" lineIdxBase) $
+      [ (descLineNum, descIndentation) |
+        (i, (descLineNum, descIndentation)) <- zip [0..] descLocs,
+        (descLineNum - 1) `elem` optLineNums,
+        let optIndentation = head [c | (r, c) <- optLocs, r == (descLineNum - 1)],
+        descIndentation >= optIndentation,
+        descIndentation > optIndentation ||
+          (descLineNum - 2) `notElem` descLineNums ||
+          i == 0 ||
+          snd (descLocs !! (i - 1)) /= optIndentation
       ]
     (cueLineNums, _) = unzip cueDescLocs
     descLocChunks = Utils.toFstContiguousChunks descLocs
@@ -209,8 +213,8 @@ getEmptyLineNums s = res
 
 -- | Estimate offset of description part from the lines with options
 -- | Returns Just (offset size, match count) if matches
-descOffsetWithCountInOptionLines :: String -> [Location] -> Maybe (Int, Int)
-descOffsetWithCountInOptionLines s optLocs =
+descOffsetWithCountInOptionLines :: Int -> String -> [Location] -> Maybe (Int, Int)
+descOffsetWithCountInOptionLines _ s optLocs =
   assert ('\t' `notElem` s) res
   where
     sep = "   " -- hardcoded as 3 spaces for now
@@ -272,43 +276,47 @@ isWordStartingAround margin idx x =
 
 --
 --
-getDescriptionOffsetOptLineNumsPair :: String -> Maybe (Int, [Int])
-getDescriptionOffsetOptLineNumsPair s
+getDescriptionOffsetOptLineNumsPair :: Int -> String -> Maybe (Int, [Int])
+getDescriptionOffsetOptLineNumsPair lineIdxBase s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
-  | offset <= 3 || null optLineNumsFixed = Nothing
-  | otherwise = Just (offset, optLineNumsFixed)
+  | descOffset <= 3 || null optLineNumsFixed = Nothing
+  | otherwise = Just (descOffset , optLineNumsFixed)
   where
     optionOffsets = infoMsg "layout:optionOffsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
 
     -- Split the option locations by wheather the horizontal offset matched the most frequent one
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
-    optLineNums = debugShow "layout: optLocsExcluded:" optLocsExcluded $ infoMsg "optLineNums" $ map fst optLocs
-
-    (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs s $ infoMsg "optLocs" optLocs
-    offset = infoMsg "layout: Description offset:" $ Maybe.fromJust descriptionOffsetMay
-    optLineNumsFixed = infoMsg "layout: optLineNumsFixed" $ filter (`notElem` map fst optLocsRemoved) optLineNums
+    optLineNums = debugShow (printf "layout:optLocsExcluded: (line+%d)" lineIdxBase)
+      optLocsExcluded $
+      infoMsg (printf "optLineNums (+%d)" lineIdxBase) $
+      map fst optLocs
+    (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs lineIdxBase s $
+      infoMsg (printf "optLocs (line+%d)" lineIdxBase) optLocs
+    descOffset = infoMsg "layout:descOffset:" $ Maybe.fromJust descriptionOffsetMay
+    optLineNumsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
+      filter (`notElem` map fst optLocsRemoved) optLineNums
 
 
 getDescriptionOffset :: String -> Maybe Int
-getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair s
+getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair 0 s
 
 
 -- | Returns option-description pairs based on layouts AND also returns the dropped
 -- line index ranges that is uncaught in the process.
-getOptionDescriptionPairsFromLayout :: String -> Maybe ([(String, String)], [(Int, Int)])
-getOptionDescriptionPairsFromLayout s
+getOptionDescriptionPairsFromLayout :: Int -> String -> Maybe ([(String, String)], [(Int, Int)])
+getOptionDescriptionPairsFromLayout lineIdxBase s
   | Maybe.isNothing tupMay || null res = Nothing
-  | otherwise = Just $ infoShow "Dropped option indices:" dropped (res, dropped)
+  | otherwise = Just $ infoShow (printf "Dropped option indices (line+%d): " lineIdxBase) dropped (res, dropped)
   where
-    tupMay = getDescriptionOffsetOptLineNumsPair s
+    tupMay = getDescriptionOffsetOptLineNumsPair lineIdxBase s
     (offset, optLineNums) = Maybe.fromJust tupMay
     xs = lines s
     optLineNumsSet = Set.fromList optLineNums
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption =
       debugMsg
-        "descLineIndicesWithoutOption"
+        (printf "descLineIndicesWithoutOption (line+%d)" lineIdxBase)
         [ idx | (idx, x) <- zip [0 ..] xs
         ,   isWordStartingWithIndentation offset x
         ,   idx `Set.notMember` optLineNumsSet
@@ -334,10 +342,11 @@ getOptionDescriptionPairsFromLayout s
 
     descLineNumsWithOption =
       infoMsg
-        "descLineNumsWithOption"
+        (printf "descLineNumsWithOption (line+%d)" lineIdxBase)
         [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
         ]
-    descLineNums = infoMsg "descLineNums" $ nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
+    descLineNums = infoMsg (printf "descLineNums (line+%d)" lineIdxBase) $
+      nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
     (quartets, dropped) = toConsecutiveRangeQuartets optLineNums descLineNums
     quartetsMod = infoMsg "quartets" $ [(a, b, updateDescFrom xs offset a c, d) | (a, b, c, d) <- quartets] -- [(optFrom, optTo, descFrom, descTo)]
@@ -482,27 +491,30 @@ getHeadingIndices xs
 
 -- | Split text by top-level headers
 -- where headers are recognized by the least indentations
--- NOTE: the top-level headers are **excluded** in the output
-splitByHeaders :: [String] -> [[String]]
+-- NOTE: the top-level headers are **excluded** from the output
+--       this is not exclude headings starting with "- Hey this is heading!"
+splitByHeaders :: [String] -> ([Int], [String])
 splitByHeaders xs
-  | any Utils.startsWithLongOption headings = [xs]
-  | any Utils.startsWithShortOrOldOption headings = [xs]
-  | otherwise = map tail $ filter (\lines_ -> length lines_ > 1 && any Utils.startsWithDash lines_) $ Utils.splitsAt xs headingIndices
+  | any Utils.startsWithLongOption headings = ([0], [unlines xs])
+  | any Utils.startsWithShortOrOldOption headings = ([0], [unlines xs])
+  | otherwise = unzip chunks
   where
-    headingIndices = debugMsg "headingIndices: " (getHeadingIndices xs)
+    headingIndices = debugMsg "headingIndices: " $ getHeadingIndices xs
+    chunkIndice = map (+1) headingIndices  -- compensating missing header lines and the very top line
     headings = map (xs !!) headingIndices
+    chunks = map (Bifunctor.second (unlines . tail)) $
+      filter (\(_, lines_) -> length lines_ > 1 && any Utils.startsWithDash lines_) $
+      zip chunkIndice (Utils.splitsAt xs headingIndices)
 
 
 -- | Parse (option-and-argument, description) pairs from text by applying
 -- preprocessAll to each header-based block.
 preprocessBlockwise :: String -> [(String, String)]
-preprocessBlockwise content = trace decoratedMsg $ concatMap preprocessAll contents
+preprocessBlockwise content = trace decoratedMsg $ concatMap (uncurry preprocessAll) (zip indexBases contentsWoHeader)
   where
     xs = lines content
-    contents = map unlines $ splitByHeaders xs
-    msg
-      | null contents = "[warn] Found no header-based block!"
-      | otherwise = printf "[info] Found %d header-based blocks" (length contents)
+    (indexBases, contentsWoHeader) = splitByHeaders xs
+    msg = printf "[info] Found %d header-based blocks" (length contentsWoHeader)
     decoratedMsg = "\n-------------------------------------------\n" ++ msg ++ "\n-------------------------------------------\n"
 
 
@@ -521,11 +533,12 @@ parseBlockwise s = List.nub . concat $ results
 
 
 -- |  Parse (option-and-argument, description) pairs from text
-preprocessAll :: String -> [(String, String)]
-preprocessAll content = filter (/= ("", "")) $ map (\(opt, desc) -> (trim opt, (unwords . words) desc)) res
+--
+preprocessAll :: Int -> String -> [(String, String)]
+preprocessAll lineIdxBase content = filter (/= ("", "")) $ map (\(opt, desc) -> (trim opt, (unwords . words) desc)) res
   where
     xs = lines content
-    may = getOptionDescriptionPairsFromLayout content
+    may = getOptionDescriptionPairsFromLayout lineIdxBase content
     res = case may of
       Just (layoutResults, droppedIdxRanges) ->
         layoutResults ++ fallbackResults
@@ -545,7 +558,7 @@ parseMany :: String -> [Opt]
 parseMany "" = []
 parseMany s = List.nub . concat $ results
   where
-    pairs = preprocessAll s
+    pairs = preprocessAll 0 s
     results =
       [ (\xs -> if null xs then warnShow "Failed pair:" (optStr, descStr) xs else xs) $
           parseWithOptPart optStr descStr
