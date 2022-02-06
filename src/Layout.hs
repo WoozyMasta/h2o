@@ -37,7 +37,12 @@ getNonoptLocations = _getNonblankLocationTemplate (not . Utils.startsWithDash)
 
 -- | a helper function
 _getNonblankLocationTemplate :: (String -> Bool) -> String -> [Location]
-_getNonblankLocationTemplate f s = [(i, getHorizOffset x) | (i, x) <- enumLines, f x]
+_getNonblankLocationTemplate f s =
+  [(i, getHorizOffset x) |
+    (i, x) <- enumLines,
+    (not . null . trim) x,
+    f x
+  ]
   where
     enumLines = zip [(0 :: Int) ..] (lines s)
     getHorizOffset = length . takeWhile (== ' ')
@@ -123,32 +128,71 @@ getDescriptionOffsetFromOptionLocs s optLocs =
     isAlignedMoreThan80Percent c = c * 10 >= 8 * length optLocs
 
 -- | Estimate offset of description part from non-option lines.
--- | Returns Just (offset size, match count) if matches
+--   Returns (Just (offset size, match count), [removed option locations]) if matches
 descOffsetWithCountSimple :: String -> [Location] -> (Maybe (Int, Int), [Location])
 descOffsetWithCountSimple s optLocs
   | null offsetOverlaps = (res, [])
   | otherwise = (res, optLocsRemoved)
   where
-    descLocs = getNonoptLocations s
+    descLocs = infoMsg "descLocs: " $ takeHangingDesc optLocs $ getNonoptLocations s
     (_, descOffsets) = unzip descLocs
     (optLineNums, optOffsets) = unzip optLocs
     offsetOverlaps = Set.toList $ Set.intersection (Set.fromList optOffsets) (Set.fromList descOffsets)
-    descOverlapCounts = map (\overlap -> length . filter (== overlap) $ descOffsets) offsetOverlaps
-    optOverlapCounts = map (\overlap -> length . filter (== overlap) $ optOffsets) offsetOverlaps
-    optOffsetsRemoved =
-      [ offset | (offset, optCount, descCount) <- zip3 offsetOverlaps optOverlapCounts descOverlapCounts, optCount <= descCount, 10 <= offset
-      ]
-    optOffsets' = filter (`notElem` optOffsetsRemoved) optOffsets
-    optLocsRemoved = infoMsg "[info] optLocsRemoved: " $ filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
-    cols =
+    (optOffsets', optOffsetsRemoved) = span (<10) optOffsets
+    optLocsRemoved = infoMsg "optLocsRemoved: " $ filter (\(_, c) -> c `elem` optOffsetsRemoved) optLocs
+    indentations =  infoMsg "descIndentations:" $
       [ x | (r, x) <- descLocs,
             -- description's offset is equal (rare case!) or greater than option's
-            null optOffsets' || (List.maximum optOffsets' < x),
+            null optOffsets' || (List.maximum optOffsets' <= x),
             -- description can exist only around option lines
             head optLineNums < r, r < last optLineNums + 5
             -- previous line cannot be blank
       ]
-    res = getMostFrequentWithCount cols
+    res = infoMsg "descOffsetWithCount: " $ getMostFrequentWithCount indentations
+
+
+-- | Take description locations that follow option lines
+--
+--  Consider follwing empty-line delimited patterns:
+--
+--    Heading                                                       <--- NOT hanging
+--      --option arg   description
+--                     continued description                        <--- hanging
+--
+--    Another heading                                               <--- NOT hanging
+--      --option arg
+--           description                                            <--- hanging
+--
+--      --option (arg) Somehow explanation immediately follows
+--      and it's continued to the next lines without indentation.   <--- hanging
+--
+--      Some descriptions are  not tied to particular options, yet show    <--- NOT hanging
+--      --option in the middle of the sentences. This case should be
+--      excluded from description statistics.                              <--- NOT hanging
+--
+takeHangingDesc :: [Location] -> [Location] -> [Location]
+takeHangingDesc optLocs descLocs = descLocSelected
+  where
+    (optLineNums, _) = unzip optLocs
+    (descLineNums, _) = unzip descLocs
+    cueDescLocs = [(descLineNum, descIndentation) |
+      (i, (descLineNum, descIndentation)) <- zip [0..] descLocs,
+      (descLineNum - 1) `elem` optLineNums,
+      let optIndentation = head [c | (r, c) <- optLocs, r == (descLineNum - 1)],
+      descIndentation >= optIndentation,
+      descIndentation > optIndentation ||
+        (descLineNum - 2) `notElem` descLineNums ||
+        i == 0 ||
+        snd (descLocs !! (i - 1)) /= optIndentation
+      ]
+    (cueLineNums, _) = unzip cueDescLocs
+    descLocChunks = Utils.toFstContiguousChunks descLocs
+    descLocChunks' = filter (\chunk -> not (null chunk) && fst (head chunk) `elem` cueLineNums) descLocChunks
+    descLocSelected =
+      concatMap
+      (\chunk -> takeWhile (\(_, c) -> c == snd (head chunk)) chunk)
+      descLocChunks'
+
 
 
 -- | Get empty line numbers
@@ -239,7 +283,7 @@ getDescriptionOffsetOptLineNumsPair s
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
     optLineNums = debugShow "layout: optLocsExcluded:" optLocsExcluded $ infoMsg "optLineNums" $ map fst optLocs
 
-    (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs s optLocs
+    (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs s $ infoMsg "optLocs" optLocs
     offset = infoMsg "layout: Description offset:" $ Maybe.fromJust descriptionOffsetMay
     optLineNumsFixed = infoMsg "layout: optLineNumsFixed" $ filter (`notElem` map fst optLocsRemoved) optLineNums
 

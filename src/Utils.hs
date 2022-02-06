@@ -268,3 +268,28 @@ bracketPairs =
     ('[', ']'),
     ('(', ')')
   ]
+
+
+-- | Split increasing integers into contiguous chunks
+--
+-- >>> toContiguousChunks [2, 3, 4, 8, 10, 11]
+-- [[2, 3, 4], [8], [10, 11]]
+--
+toContiguousChunks :: [Int] -> [[Int]]
+toContiguousChunks = List.unfoldr f
+  where
+    f :: [Int] -> Maybe ([Int], [Int])
+    f [] = Nothing
+    f xs = Just $ splitAt (n + 1) xs
+      where
+        n = length $ takeWhile (== 1) $ map (\(x, xNext) -> xNext - x) $ zip xs (tail xs)
+
+
+toFstContiguousChunks :: [(Int, a)] -> [[(Int, a)]]
+toFstContiguousChunks = List.unfoldr f
+  where
+    f :: [(Int, a)] -> Maybe ([(Int, a)], [(Int, a)])
+    f [] = Nothing
+    f xs = Just $ splitAt (n + 1) xs
+      where
+        n = length $ takeWhile (== 1) $ map (\(x, xNext) -> fst xNext - fst x) $ zip xs (tail xs)

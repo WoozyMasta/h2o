@@ -25,7 +25,7 @@ import Test.Tasty.Hedgehog (testProperty)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.Printf (printf)
 import Type (Opt (..), OptName (..), OptNameType (..))
-import Utils (convertTabsToSpaces, getMostFrequent)
+import Utils (convertTabsToSpaces, getMostFrequent, toContiguousChunks, toRanges)
 
 main :: IO ()
 main =
@@ -469,6 +469,10 @@ miscTests =
           @?= (3, 20),
       testCase "getMostFrequent [1, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] == Just (-4)" $
         getMostFrequent [1 :: Int, -4, 2, 9, 1, -4, -3, 7, -4, -4, 1] @?= Just (-4 :: Int),
+      testCase "toContiguousChunks [2, 3, 4, 8, 10, 11] == [[2, 3, 4], [8], [10, 11]]" $
+        toContiguousChunks [2, 3, 4, 8, 10, 11] @?= [[2, 3, 4], [8], [10, 11]],
+      testCase "toRanges [2, 3, 4, 8, 10, 11] == [(2, 5), (8, 9), (10, 12)]" $
+        toRanges [2, 3, 4, 8, 10, 11] @?= [(2, 5), (8, 9), (10, 12)],
       testCase "truncateAfterPeriod 1" $
         truncateAfterPeriod "hello, i.e. good bye!" @?= "hello, i.e. good bye!",
       testCase "truncateAfterPeriod 2" $
