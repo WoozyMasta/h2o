@@ -94,7 +94,12 @@ score (Opt names arg desc) =
     descScore :: Text -> Int
     descScore t
       | T.null t = -10
+      | T.pack "[-" `T.isPrefixOf` t = -5
+      | T.pack "(-" `T.isPrefixOf` t = -5
+      | T.pack "((-" `T.isPrefixOf` t = -5
+      | T.pack "(((" `T.isPrefixOf` t = -5
       | length (T.words t) == 1 = -4
+      | T.pack "-" `T.isPrefixOf` t = -4
       | Char.isLower (T.head t) = -1
       | (T.length . head . T.split (== '.')) t > 80 = -1
       | T.last t == '.' = 1
