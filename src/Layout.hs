@@ -38,10 +38,9 @@ getNonoptLocations = _getNonblankLocationTemplate (not . Utils.startsWithDash)
 -- | a helper function
 _getNonblankLocationTemplate :: (String -> Bool) -> String -> [Location]
 _getNonblankLocationTemplate f s =
-  [(i, getHorizOffset x) |
-    (i, x) <- enumLines,
-    (not . null . trim) x,
-    f x
+  [ (i, getHorizOffset x) | (i, x) <- enumLines
+  ,  (not . null . trim) x
+  ,  f x
   ]
   where
     enumLines = zip [(0 :: Int) ..] (lines s)
@@ -170,12 +169,15 @@ descOffsetWithCountSimple s optLocs
 --      --option in the middle of the sentences. This case should be
 --      excluded from description statistics.                              <--- NOT hanging
 --
+--    Something blah                           <--- NOT hanging
+--      more blah...                           <--- NOT hanging
+--
 takeHangingDesc :: [Location] -> [Location] -> [Location]
 takeHangingDesc optLocs descLocs = descLocSelected
   where
     (optLineNums, _) = unzip optLocs
     (descLineNums, _) = unzip descLocs
-    cueDescLocs = [(descLineNum, descIndentation) |
+    cueDescLocs = infoMsg "cueDescLocs:" $ [(descLineNum, descIndentation) |
       (i, (descLineNum, descIndentation)) <- zip [0..] descLocs,
       (descLineNum - 1) `elem` optLineNums,
       let optIndentation = head [c | (r, c) <- optLocs, r == (descLineNum - 1)],
@@ -276,7 +278,7 @@ getDescriptionOffsetOptLineNumsPair s
   | offset <= 3 || null optLineNumsFixed = Nothing
   | otherwise = Just (offset, optLineNumsFixed)
   where
-    optionOffsets = infoMsg "layout: Option offsets:" $ getOptionOffsets s
+    optionOffsets = infoMsg "layout:optionOffsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
 
     -- Split the option locations by wheather the horizontal offset matched the most frequent one
@@ -306,8 +308,10 @@ getOptionDescriptionPairsFromLayout s
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption =
       debugMsg
-        "descLineNumsWithoutOption"
-        [ idx | (idx, x) <- zip [0 ..] xs, isWordStartingWithIndentation offset x, idx `Set.notMember` optLineNumsSet
+        "descLineIndicesWithoutOption"
+        [ idx | (idx, x) <- zip [0 ..] xs
+        ,   isWordStartingWithIndentation offset x
+        ,   idx `Set.notMember` optLineNumsSet
         ]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
     descriptionLineWidthTop10Percent = infoMsg "descriptionLineLength at 93%: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths

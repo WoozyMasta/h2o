@@ -11,7 +11,7 @@ module Utils where
 import qualified Data.Foldable as Foldable
 import Data.Function (on)
 import qualified Data.List as List
-import Data.List.Extra (nubSort)
+import Data.List.Extra (nubSort, trimStart)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -137,9 +137,9 @@ getParagraph xs range = unlines $ map (xs !!) indices
 
 -- | check if the string starts with non-space char `c`
 startsWithChar :: Char -> String -> Bool
-startsWithChar c s = not (null ss) && head ss == c
+startsWithChar c s = (not . null) ss && head ss == c
   where
-    ss = dropWhile (`elem` (" \t" :: String)) s
+    ss = trimStart s
 
 -- | check if the string starts with dash - possibly after spaces and tabs
 startsWithDash :: String -> Bool
@@ -152,7 +152,7 @@ startsWithDoubleDash s = case ss of
   [_] -> False
   c1 : c2 : _ -> c1 == '-' && c2 == '-'
   where
-    ss = dropWhile (== ' ') s
+    ss = trimStart s
 
 startsWithSingleDash :: String -> Bool
 startsWithSingleDash s = case ss of
@@ -160,17 +160,17 @@ startsWithSingleDash s = case ss of
   [_] -> False
   c1 : c2 : _ -> c1 == '-' && c2 /= '-'
   where
-    ss = dropWhile (== ' ') s
+    ss = trimStart s
 
 startsWithLongOption :: String -> Bool
 startsWithLongOption s = startsWithDoubleDash s && length ss >= 3 && ss !! 2 /= ' '
   where
-    ss = dropWhile (== ' ') s
+    ss = trimStart s
 
 startsWithShortOrOldOption :: String -> Bool
 startsWithShortOrOldOption s = startsWithDash s && length ss >= 2 && ss !! 1 /= ' '
   where
-    ss = dropWhile (== ' ') s
+    ss = trimStart s
 
 -- | A speculative criteria for non-critical purposes
 mayContainOptions :: [Text] -> Bool
@@ -200,9 +200,7 @@ splitByTopHeaders text
     headingsStr = map T.unpack headings
 
 dropUsage :: Text -> Text
-dropUsage text
-  | null rest = text
-  | otherwise = T.concat rest
+dropUsage text = T.concat rest
   where
     xs = splitByTopHeaders text
     isUsageBlock = ("usage" `T.isPrefixOf`) . T.toLower . T.stripStart
@@ -215,9 +213,13 @@ mayContainUseful text = length xs >= 3
     xs = filter (not . ("error" `T.isPrefixOf`) . T.toLower . T.stripStart) . T.lines $ dropUsage text
 
 -- | splitsAt ... like Data.List.splitAt but multiple indices
+--
+-- >>> splitsAt [0, 2, 4, 6, 8, 10] [0, 3, 5]
+-- [[0, 2, 4], [6, 8], [10]]
 splitsAt :: [a] -> [Int] -> [[a]]
-splitsAt xs ns = reverse $ filter (not . null) $ List.unfoldr f (xs, reverse ns)
+splitsAt xs ns = reverse $ filter (not . null) $ List.unfoldr f (xs, reverse ns')
   where
+    ns' = List.sort ns
     f :: ([a], [Int]) -> Maybe ([a], ([a], [Int]))
     f ([], _) = Nothing
     f (ys, []) = Just (ys, ([], []))
