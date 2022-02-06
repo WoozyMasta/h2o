@@ -111,7 +111,7 @@ fetchHelpInfo name args = do
         | otherwise = Nothing
   return res
   where
-    removeColorPostfix = " | sed -r 's/.\x08//g'"
+    removeColorPostfix = " | sed -r 's/.\x08//g' | sed -r 's/\x1B\\[(([0-9]{1,2})?(;)?([0-9]{1,2})?)?[m,K,H,f,J]//g'"
 
 isCommandNotFound :: String -> System.Exit.ExitCode -> Text -> Bool
 isCommandNotFound _ exitCode _ =
