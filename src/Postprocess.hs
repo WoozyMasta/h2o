@@ -23,8 +23,10 @@ fixOptName arg_ (OptName raw t) =
     else OptName raw t
 
 -- | Fix short option followed by argument without space as disguised as an old option
---     example) For option names ["-Ttagsfile", "--tag-file"] with arg "tagsfile",
---              it's highly likely that the correct names are ["-T", "--tag-file"].
+--
+-- Example: For option names ["-Ttagsfile", "--tag-file"] with arg "tagsfile",
+-- it's highly likely that the correct names are ["-T", "--tag-file"].
+--
 fixShortOptWithArgWithoutSpace :: Opt -> Opt
 fixShortOptWithArgWithoutSpace (Opt names arg desc) = optFixed
   where

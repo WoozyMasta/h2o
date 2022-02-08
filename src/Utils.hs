@@ -128,12 +128,10 @@ fromRanges :: [(Int, Int)] -> [Int]
 fromRanges = nubSort . concatMap fromRange
 
 fromRange :: (Int, Int) -> [Int]
-fromRange (a, b) = take (b - a) [a, a + 1 ..]
+fromRange (a, b) = [a, (a + 1) .. (b - 1)]
 
 getParagraph :: [String] -> (Int, Int) -> String
-getParagraph xs range = unlines $ map (xs !!) indices
-  where
-    indices = fromRange range
+getParagraph xs range = unlines $ map (xs !!) (fromRange range)
 
 -- | check if the string starts with non-space char `c`
 startsWithChar :: Char -> String -> Bool
