@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
 import Type (Opt)
-import Utils (debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, getParagraph, infoMsg, infoShow, smartUnwords, warnShow)
+import Utils (debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, infoMsg, infoShow, smartUnwords, warnShow)
 import qualified Utils
 
 -- | Location is defined by (row, col) order
@@ -273,49 +273,50 @@ isWordStartingAround margin idx x =
 
 -- | Returns option line's (consensus indentation, 0-based line numbers)
 --
-getDescriptionOffsetOptLineNumsPair :: Int -> String -> Maybe (Int, [Int])
+getDescriptionOffsetOptLineNumsPair :: Int -> String -> Maybe (Int, [(Int, Int)])
 getDescriptionOffsetOptLineNumsPair lineIdxBase s
   | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
-  | descOffset <= 3 || null optLineNumsFixed = Nothing
-  | otherwise = Just (descOffset , optLineNumsFixed)
+  | descOffset <= 3 || null optLocsFixed = Nothing
+  | otherwise = Just (descOffset , optLocsFixed)
   where
     optionOffsets = infoMsg "layout:optionOffsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
 
     -- Split the option locations by wheather the horizontal offset matched the most frequent one
     (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
-    optLineNums = debugShow (printf "layout:optLocsExcluded: (line+%d)" lineIdxBase)
-      optLocsExcluded $
+    optLineNums = debugShow (printf "layout:optLocsExcluded: (line+%d)" lineIdxBase) optLocsExcluded $
       infoMsg (printf "optLineNums (+%d)" lineIdxBase) $
       map fst optLocs
     (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs lineIdxBase s $
       infoMsg (printf "optLocs (line+%d)" lineIdxBase) optLocs
     descOffset = infoMsg "layout:descOffset:" $ Maybe.fromJust descriptionOffsetMay
-    optLineNumsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
-      filter (`notElem` map fst optLocsRemoved) optLineNums
-
+    -- optLineNumsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
+    --   filter (`notElem` map fst optLocsRemoved) optLineNums
+    optLocsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
+      filter (`notElem` optLocsRemoved) optLocs
 
 getDescriptionOffset :: String -> Maybe Int
 getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair 0 s
 
 
--- | Returns option-description pairs based on layouts AND also returns the dropped
--- line index ranges that is uncaught in the process.
+-- | Returns option-description pairs based on layouts
+-- AND the option locations uncaught in the process.
 getOptionDescriptionPairsFromLayout :: Int -> String -> Maybe ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout lineIdxBase s
   | Maybe.isNothing tupMay || null res = Nothing
-  | otherwise = Just $ infoShow (printf "Dropped option ranges (line+%d): " lineIdxBase) droppedOptRanges (res, droppedOptRanges)
+  | otherwise = Just $ infoShow (printf "droppedOptLocs (line+%d): " lineIdxBase) droppedOptLocs (res, droppedOptLocs)
   where
     tupMay = getDescriptionOffsetOptLineNumsPair lineIdxBase s
-    (offset, optLineNums) = Maybe.fromJust tupMay
+    (descOffset, optLocs) = Maybe.fromJust tupMay
     xs = lines s
+    optLineNums = map fst optLocs
     optLineNumsSet = Set.fromList optLineNums
     -- More accomodating description line matching seems to work better...
     descLineNumsWithoutOption =
       debugMsg
         (printf "descLineNumsWithoutOption (line+%d)" lineIdxBase)
         [ idx | (idx, x) <- zip [0 ..] xs
-        ,   isWordStartingWithIndentation offset x
+        ,   isWordStartingWithIndentation descOffset x
         ,   idx `Set.notMember` optLineNumsSet
         ]
     linewidths = map (length . (xs !!)) descLineNumsWithoutOption
@@ -329,25 +330,26 @@ getOptionDescriptionPairsFromLayout lineIdxBase s
       | otherwise =
         (not (isOptionLine (idx + 1)) && not (isDescriptionOnly (idx + 1)))
           || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descLineWidthTop10Percentile))
-          || isOptionLine (idx + 1) && offset >= 2 && last optSegment == ' ' && length (words descSegment) >= 2 -- [FIXME] too heuristic
+          || isOptionLine (idx + 1) && descOffset >= 2 && last optSegment == ' ' && length (words descSegment) >= 2 -- [FIXME] too heuristic
           || isParsedAsOptDescLine && (length (xs !! idx) + 25 > descLineWidthTop10Percentile)
       where
         isOptionLine i = i `Set.member` optLineNumsSet
         isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
-        (optSegment, descSegment) = splitAt offset (xs !! idx)
+        (optSegment, descSegment) = splitAt descOffset (xs !! idx)
         isParsedAsOptDescLine = not . null . parseLine $ (xs !! idx)
 
     descLineNumsWithOption =
       infoMsg
         (printf "descLineNumsWithOption (line+%d)" lineIdxBase)
-        [ idx | idx <- optLineNums, isWordStartingAround 2 offset (xs !! idx), isOptionAndDescriptionLine idx
+        [ idx | idx <- optLineNums, isWordStartingAround 2 descOffset (xs !! idx), isOptionAndDescriptionLine idx
         ]
     descLineNums = infoMsg (printf "descLineNums (line+%d)" lineIdxBase) $
       nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
 
-    (quartets, droppedOptRanges) = toConsecutiveRangeQuartets optLineNums descLineNums
-    quartetsMod = infoMsg "quartets" $ [(a, b, updateDescFrom xs offset a c, d) | (a, b, c, d) <- quartets] -- [(optFrom, optTo, descFrom, descTo)]
-    res = concatMap (handleQuartet xs offset) quartetsMod
+    (quartets, droppedOptLineNums) = toConsecutiveRangeQuartets optLineNums descLineNums
+    droppedOptLocs = filter (\(x, _) -> x `elem` droppedOptLineNums) optLocs
+    quartetsMod = infoMsg "quartets" $ [(a, b, updateDescFrom xs descOffset a c, d) | (a, b, c, d) <- quartets] -- [(optFrom, optTo, descFrom, descTo)]
+    res = concatMap (handleQuartet xs descOffset) quartetsMod
 
 -- | Returns option-description pairs based on description's offset value + quartet
 -- lineStr :: [String]
@@ -407,15 +409,17 @@ updateDescFrom xs offset optFrom descFrom
     ys = takeWhile (\i -> isWordStartingAround 2 offset (xs !! i)) indices
     res = last ys
 
--- | Returns (optFrom, optTo, descFrom, descTo) quartets AND dropped indices xs
-toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [(Int, Int)])
+-- | Returns (optFrom, optTo, descFrom, descTo) quartets
+-- AND the dropped line indices in xs
+--
+toConsecutiveRangeQuartets :: [Int] -> [Int] -> ([(Int, Int, Int, Int)], [Int])
 toConsecutiveRangeQuartets xs ys =
-  (res, dropped)
+  (res, droppedOptLineNums)
   where
     (xRanges, yRanges) = makeRanges xs ys
     res = mergeRangesFast xRanges yRanges
     resXRanges = [(x1, x2) | (x1, x2, _, _) <- res]
-    dropped = filter (`Set.notMember` Set.fromList resXRanges) xRanges
+    droppedOptLineNums = filter (not . Utils.contains resXRanges) xs
 
 -- | Make pairs of overlapping ranges.
 --
@@ -423,6 +427,8 @@ toConsecutiveRangeQuartets xs ys =
 -- they must satisfy x1 <= y1 <= x2 <= y2.
 -- When x2 == y1, its still treated as "overlap"
 -- although [x1, x2) and [y1, y2) have empty intersection.
+--
+-- [NOTE] this can drop some items in xs (after `last yEnds)
 --
 makeRanges :: [Int] -> [Int] -> ([(Int, Int)], [(Int, Int)])
 makeRanges xs ys =
@@ -537,10 +543,14 @@ preprocessAll lineIdxBase content = filter (/= ("", "")) $ map (Bifunctor.bimap 
     xs = lines content
     may = getOptionDescriptionPairsFromLayout lineIdxBase content
     res = case may of
-      Just (layoutResults, droppedIdxRanges) ->
+      Just (layoutResults, droppedOptLocs) ->
         layoutResults ++ fallbackResults
         where
-          paragraphs = map (getParagraph xs) droppedIdxRanges
+          descLineNumsExtra = map fst $ takeHangingDesc lineIdxBase droppedOptLocs $ getNonoptLocations content
+          droppedOptLineNums = map fst droppedOptLocs
+          lineNums = List.sort $ droppedOptLineNums ++ descLineNumsExtra
+          rangeForFallback = infoMsg (printf "rangeForFallback (line+%d)" lineIdxBase) $ Utils.toRanges lineNums
+          paragraphs = map (Utils.getParagraph xs) rangeForFallback
           fallbackResults = infoMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
       Nothing ->
         trace

@@ -130,6 +130,9 @@ fromRanges = nubSort . concatMap fromRange
 fromRange :: (Int, Int) -> [Int]
 fromRange (a, b) = [a, (a + 1) .. (b - 1)]
 
+contains :: [(Int, Int)] -> Int -> Bool
+contains ranges x = any (\(a, b) -> a <= x && x < b) ranges
+
 getParagraph :: [String] -> (Int, Int) -> String
 getParagraph xs range = unlines $ map (xs !!) (fromRange range)
 
