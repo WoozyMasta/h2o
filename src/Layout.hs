@@ -10,11 +10,11 @@ import Data.List.Extra (nubSort, trim, trimEnd, splitOn)
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Debug.Trace (trace)
-import HelpParser (parseLine, parseWithOptPart, preprocessAllFallback)
 import Text.Printf (printf)
 import Type (Opt)
-import Utils (debugMsg, debugShow, getMostFrequent, getMostFrequentWithCount, infoMsg, infoShow, smartUnwords, warnShow)
+import Utils (debugMsg, getMostFrequent, getMostFrequentWithCount, infoMsg, infoShow, smartUnwords, warnShow)
 import qualified Utils
+import qualified HelpParser
 
 -- | Location is defined by (row, col) order
 type Location = (Int, Int)
@@ -283,15 +283,10 @@ getDescriptionOffsetOptLineNumsPair lineIdxBase s
     optLocsCandidates = getOptionLocations s
 
     -- Split the option locations by wheather the horizontal offset matched the most frequent one
-    (optLocs, optLocsExcluded) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
-    optLineNums = debugShow (printf "layout:optLocsExcluded: (line+%d)" lineIdxBase) optLocsExcluded $
-      infoMsg (printf "optLineNums (+%d)" lineIdxBase) $
-      map fst optLocs
+    (optLocs, _) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
     (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs lineIdxBase s $
       infoMsg (printf "optLocs (line+%d)" lineIdxBase) optLocs
     descOffset = infoMsg "layout:descOffset:" $ Maybe.fromJust descriptionOffsetMay
-    -- optLineNumsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
-    --   filter (`notElem` map fst optLocsRemoved) optLineNums
     optLocsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
       filter (`notElem` optLocsRemoved) optLocs
 
@@ -336,7 +331,7 @@ getOptionDescriptionPairsFromLayout lineIdxBase s
         isOptionLine i = i `Set.member` optLineNumsSet
         isDescriptionOnly i = i `Set.member` descLineNumsWithoutOptionSet
         (optSegment, descSegment) = splitAt descOffset (xs !! idx)
-        isParsedAsOptDescLine = not . null . parseLine $ (xs !! idx)
+        isParsedAsOptDescLine = not . null . HelpParser.parseLine $ (xs !! idx)
 
     descLineNumsWithOption =
       infoMsg
@@ -529,16 +524,15 @@ parseBlockwise s = List.nub . concat $ results
     pairs = preprocessBlockwise s
     results =
       [ (\xs -> if null xs then warnShow "Failed pair:" (optStr, descStr) xs else xs) $
-          parseWithOptPart optStr descStr
+          HelpParser.parseWithOptPart optStr descStr
         | (optStr, descStr) <- pairs,
           (optStr, descStr) /= ("", "")
       ]
 
 
--- |  Parse (option-and-argument, description) pairs from text
---
-preprocessAll :: Int -> String -> [(String, String)]
-preprocessAll lineIdxBase content = filter (/= ("", "")) $ map (Bifunctor.bimap trim (unwords . words)) res
+
+preprocessMeta :: (Int -> String -> [(String, String)]) -> Int -> String -> [(String, String)]
+preprocessMeta fallbackFunc lineIdxBase content = filter (/= ("", "")) $ map (Bifunctor.bimap trim (unwords . words)) res
   where
     xs = lines content
     may = getOptionDescriptionPairsFromLayout lineIdxBase content
@@ -551,14 +545,23 @@ preprocessAll lineIdxBase content = filter (/= ("", "")) $ map (Bifunctor.bimap 
           lineNums = List.sort $ droppedOptLineNums ++ descLineNumsExtra
           rangeForFallback = infoMsg (printf "rangeForFallback (line+%d)" lineIdxBase) $ Utils.toRanges lineNums
           paragraphs = map (Utils.getParagraph xs) rangeForFallback
-          fallbackResults = infoMsg "opt-desc pairs from the fallback\n" $ concatMap preprocessAllFallback paragraphs
+          indices = map fst rangeForFallback
+          fallbackResults = infoMsg "opt-desc pairs from the fallback\n" $ concatMap (uncurry fallbackFunc) (zip indices paragraphs)
       Nothing ->
         trace
           "\n===============================================\n\
           \[warn] ignore layout: processing with fallback \n\
           \===============================================\n"
-          $ preprocessAllFallback content
+          $ HelpParser.preprocessAllFallback content
 
+
+-- |  Parse (option-and-argument, description) pairs from text
+--
+preprocessAll :: Int -> String -> [(String, String)]
+preprocessAll = preprocessMeta preprocessSecondAttempt
+
+preprocessSecondAttempt :: Int -> String -> [(String, String)]
+preprocessSecondAttempt = preprocessMeta (\_ s -> HelpParser.preprocessAllFallback s)
 
 -- | Deprecated. Parse options without header-based splitting of input text
 parseMany :: String -> [Opt]
@@ -568,7 +571,7 @@ parseMany s = List.nub . concat $ results
     pairs = preprocessAll 0 s
     results =
       [ (\xs -> if null xs then warnShow "Failed pair:" (optStr, descStr) xs else xs) $
-          parseWithOptPart optStr descStr
+          HelpParser.parseWithOptPart optStr descStr
         | (optStr, descStr) <- pairs,
           (optStr, descStr) /= ("", "")
       ]
