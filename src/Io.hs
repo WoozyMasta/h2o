@@ -35,8 +35,8 @@ run :: ConfigOrVersion -> IO Text
 -- Just return version
 run Version = return (T.concat ["h2o ", Constants.versionStr, "\n"])
 -- Or, do some utility work
-run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly isShallowOnly))
-  | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False isShallowOnly))
+run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcommands isPreprocessOnly depth))
+  | isExportingJSON = Utils.warnTrace "io: Deprecated: Use --format json instead" $ run (C_ (Config input Json False False False False depth))
   | isConvertingTabsToSpaces = infoTrace "io: Converting tags to spaces...\n" T.pack <$> getInputContent input
   | isListingSubcommands = infoTrace "io: Listing subcommands...\n" $ T.unlines <$> listSubcommandsIO input
   | isPreprocessOnly = infoTrace "io: processing (option+arg, description) splitting only" $ T.pack . formatStringPairs . preprocessBlockwise <$> getInputContent input
@@ -44,17 +44,15 @@ run (C_ (Config input _ isExportingJSON isConvertingTabsToSpaces isListingSubcom
     formatStringPairs = unlines . map (\(a, b) -> unlines [a, b])
 
 -- Or, process the input file in text
-run (C_ (Config input@(FileInput f skipMan) format _ _ _ _ isShallowOnly))
-  | isShallowOnly = infoTrace "io: processing just the file" $ toScript format . pageToCommandSimple name <$> contentIO
-  | otherwise = infoTrace "io: processing the file and more" $ toScript format <$> (pageToCommandIO name skipMan =<< contentIO)
+run (C_ (Config input@(FileInput f skipMan) format _ _ _ _ depth)) =
+  toScript format <$> (pageToCommandIO name skipMan depth =<< contentIO)
   where
     name = takeBaseName f
     contentIO = getInputContent input
 
 -- Or, process with command name
-run (C_ (Config input@(CommandInput name skipMan) format _ _ _ _ isShallowOnly))
-  | isShallowOnly = toScript format . pageToCommandSimple name <$> contentIO
-  | otherwise = toScript format <$> (pageToCommandIO name skipMan =<< contentIO)
+run (C_ (Config input@(CommandInput name skipMan) format _ _ _ _ depth)) =
+  toScript format <$> (pageToCommandIO name skipMan depth =<< contentIO)
   where
     contentIO = getInputContent input
 
@@ -202,23 +200,15 @@ toNativeTextRec path cmd@(Command name _ _ subCmds) =
 -- `name` is the name of the command.
 -- `skipMan` sets weather to read man pages in subsequent scans.
 -- `content` is the top-level text to be scanned.
-pageToCommandIO :: String -> Bool -> String -> IO Command
-pageToCommandIO name skipMan content = do
-  subcommands <- subcommandsM
-  if null rootOptions && null subcommands
-    then error ("Failed to extract information for a Command: " ++ name)
-    else return $ Postprocess.fixCommand $ Command name name rootOptions subcommands
-  where
-    -- get command options from `content`
-    rootOptions = parseBlockwise content
-    candidates = getSubcmdCandidates content
-    -- scan over subcommand candidates
-    subcommandsM =
-      map fst . filter snd <$> do
-        !isManAvailable <- isManAvailableIO name
-        let useMan = not skipMan && isManAvailable
-        -- [FIXME] Currently hardcoding to limit scan to sub-sub-sub command level.
-        mapM (\(Subcommand subname subdesc) -> getCommandRec 2 useMan [name, subname] subdesc (T.pack content)) candidates
+pageToCommandIO :: String -> Bool -> Int -> String -> IO Command
+pageToCommandIO name skipMan depth content = do
+  !isManAvailable <- isManAvailableIO name
+  let useMan = not skipMan && isManAvailable
+  (cmd, status) <- getCommandRec depth useMan [name] name "placeholder" content
+  if status && ((not . null . _options) cmd || (not . null. _subcommands) cmd)
+    then return $ Postprocess.fixCommand cmd
+    else error ("Failed to extract information for a Command: " ++ name)
+
 
 -- | Scan subcommand recursively for its options and sub-sub commands
 --
@@ -229,16 +219,18 @@ pageToCommandIO name skipMan content = do
 --   desc is description of the subcommand obtained from the upper-level source.
 --   upperContent is the text scanned in the upper level. This information is needed because
 --     "foo bar --help" sometimes returns the identical result as "foo --help".
-getCommandRec :: Int -> Bool -> [String] -> String -> Text -> IO (Command, Bool)
-getCommandRec extraDepth useMan cmdSeq desc upperContent = do
-  page <- Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> readFunc cmdSeq
-  let isSuccess = not (T.null page) && page /= upperContent
+getCommandRec :: Int -> Bool -> [String] -> String -> Text -> String -> IO (Command, Bool)
+getCommandRec extraDepth useMan cmdSeq desc upperContent givenPage = do
+  page <- if null givenPage
+            then Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> readFunc cmdSeq
+            else return (T.pack givenPage)
   let content = T.unpack page
+  let isSuccess = not (T.null page) && page /= upperContent
   let subCandidates = if extraDepth <= 0 then [] else getSubcmdCandidates content
   let subCommandCandidsM =
         mapM
         (\(Subcommand subName subDesc) ->
-          getCommandRec (extraDepth - 1) useMan (cmdSeq ++ [subName]) subDesc page)
+          getCommandRec (extraDepth - 1) useMan (cmdSeq ++ [subName]) subDesc page "")
         subCandidates
   let subCommandsM = map fst . filter snd <$> subCommandCandidsM
   let opts = parseBlockwise content
@@ -247,6 +239,7 @@ getCommandRec extraDepth useMan cmdSeq desc upperContent = do
   return (result, infoMsg ("getCommandRec isSuccess: " ++ unwords cmdSeq) isSuccess)
   where
     readFunc = if useMan then getManSub else getHelpSub
+
 
 -- | scan `content` for a list of possible subcommand
 getSubcmdCandidates :: String -> [Subcommand]
@@ -277,7 +270,7 @@ pageToCommandSimple name content =
     rootOptions = parseBlockwise content
 
 listSubcommandsIO :: Input -> IO [Text]
-listSubcommandsIO input = getSubnames <$> (pageToCommandIO name skipMan =<< getInputContent input)
+listSubcommandsIO input = getSubnames <$> (pageToCommandIO name skipMan 1 =<< getInputContent input)
   where
     name = getName input
     skipMan = getSkipMan input

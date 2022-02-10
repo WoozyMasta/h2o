@@ -586,7 +586,7 @@ integratedGoldenTestsCommandInput =
   where
     commands = ["h2o", "conda", "stack"]
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf name = C_ (Config (CommandInput name True) Native False False False False False)
+    conf name = C_ (Config (CommandInput name True) Native False False False False 4)
     runWithCommand name = toLazyByteString <$> run (conf name)
     toTestTree name =
       goldenVsString
@@ -606,7 +606,7 @@ integratedGoldenTestsFileInput =
     triples = zip3 commandNames inputFiles outputFiles
 
     toLazyByteString = TLE.encodeUtf8 . TL.fromStrict
-    conf filepath = C_ (Config (FileInput filepath True) Native False False False False False)
+    conf filepath = C_ (Config (FileInput filepath True) Native False False False False 4)
     runWithCommand filepath = toLazyByteString <$> run (conf filepath)
     toTestTree (_, inputFile, outputFile) =
       goldenVsString

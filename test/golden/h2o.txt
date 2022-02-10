@@ -28,8 +28,8 @@ List subcommands
 --debug  ::  
 [Test only] Run preprocessing only (for debugging)
 
---shallow  ::  
-Don't scan subcommands. Applies for either command-name or file input.
+--depth  ::  <int>
+Set upper bound of the depth of subcommand level. (default: 4)
 
 --version  ::  
 Show version

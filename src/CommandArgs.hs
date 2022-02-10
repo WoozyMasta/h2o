@@ -23,7 +23,7 @@ data Config = Config
     _isConvertingTabsToSpaces :: Bool,
     _isListingSubcommands :: Bool,
     _isPreprocessOnly :: Bool,
-    _isShallowOnly :: Bool
+    _depth :: Int
   }
 
 data ConfigOrVersion = Version | C_ Config
@@ -51,6 +51,7 @@ subcommandInput =
       )
     <*> switch
       ( long "skip-man"
+          <> hidden
           <> help "Skip scanning manpage and focus on help text. Does not apply if input source is a file."
       )
 
@@ -125,9 +126,12 @@ config =
               ( long "debug"
                   <> help "[Test only] Run preprocessing only (for debugging)"
               )
-            <*> switch
-              ( long "shallow"
-                  <> help "Don't scan subcommands. Applies for either command-name or file input."
+            <*> option auto
+              ( long "depth"
+                  <> metavar "<int>"
+                  <> showDefault
+                  <> value 4
+                  <> help "Set upper bound of the depth of subcommand level."
               )
         )
 
