@@ -10,6 +10,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Printf (printf)
 import Type (Command (..), Opt (..), OptName (..), OptNameType (..), Subcommand (..), asSubcommand)
+import qualified Data.List as List
 
 -- https://unix.stackexchange.com/questions/296141/how-to-use-a-special-character-as-a-normal-one-in-unix-shells
 escapeSpecialSymbols :: Text -> Text
@@ -80,7 +81,7 @@ makeFishLineRootOption cmd subcmds (Opt names arg desc) = line
 makeFishLineSubcommand :: String -> Subcommand -> Text
 makeFishLineSubcommand cmd (Subcommand subcmd desc) = line
   where
-    template = "complete -c %s -n __fish_use_subcommand -x -a %s -d '%s'"
+    template = "complete -k -c %s -n __fish_use_subcommand -x -a %s -d '%s'"
     quotedDesc = T.replace "'" "\\'" (T.pack desc)
     line = T.pack $printf template cmd subcmd quotedDesc
 
@@ -102,8 +103,11 @@ genFishScriptRootOptions :: String -> [String] -> [Opt] -> Text
 genFishScriptRootOptions name subnames opts = T.unlines . nubOrd $ [makeFishLineRootOption name subnames opt | opt <- opts]
 
 -- | Generate fish completion script for subcommand names
+--
+-- [NOTE] The order is reversed because of fish's complete -k specification; the last line comes the first.
+--
 genFishScriptSubcommands :: String -> [Subcommand] -> Text
-genFishScriptSubcommands name subcmds = T.unlines . nubOrd $ [makeFishLineSubcommand name sub | sub <- subcmds]
+genFishScriptSubcommands name subcmds = T.unlines . nubOrd $ [makeFishLineSubcommand name sub | sub <- List.reverse subcmds]
 
 -- | Generate fish completion script for options under a subcommand
 genFishScriptSubcommandOptions :: String -> Command -> Text
