@@ -514,7 +514,7 @@ shellCompTests =
       "#compdef nanachi\n\n\
       \# Auto-generated with h2o\n\n\
       \args=(\n\
-      \    '(-o --output)'{-o,--output}'[Specify the filename to save]:file:_files'\n\
+      \    {-o,--output}'[Specify the filename to save]':file:_files\n\
       \    '--help[Help here.]'\n\
       \)\n\n\
       \_arguments -s $args\n"

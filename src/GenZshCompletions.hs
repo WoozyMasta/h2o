@@ -30,18 +30,17 @@ quote = T.replace "]" "\\]" . T.replace "[" "\\[" . T.replace "'" "'\\''"
 
 getOptAsText :: Opt -> Text
 getOptAsText (Opt optnames arg desc)
-  | isArgAboutFile = T.concat ["'", formatted, ":file:_files", "'"]
-  | otherwise = T.concat ["'", formatted, "'"]
+  | isArgAboutFile = T.concat [formatted, ":file:_files"]
+  | otherwise = formatted
   where
     argUppercase = T.toUpper (T.pack arg)
     isArgAboutFile = any (`T.isInfixOf` argUppercase) ["FILE", "PATH", "DIR"]
     raws = map _raw optnames
-    exclusionList = unwords raws
     optionNames = List.intercalate "," raws
     quotedDesc = quote . T.pack $ desc
     formatted = case raws of
-      [raw] -> T.pack $ printf "%s[%s]" raw quotedDesc
-      _ -> T.pack $ printf "(%s)'{%s}'[%s]" exclusionList optionNames quotedDesc
+      [raw] -> T.pack $ printf "'%s[%s]'" raw quotedDesc
+      _ -> T.pack $ printf "{%s}'[%s]'" optionNames quotedDesc
 
 getSubcommandAsText :: Subcommand -> Text
 getSubcommandAsText (Subcommand name desc) =
@@ -74,8 +73,7 @@ genZshBodyRootOptions _ opts isSubcmdsNull =
       ]
     linesSuffix
       | isSubcmdsNull =
-        [ "        '1: :_commands' \\",
-          "        '*: :_files'",
+        [ "        '*: :_files'",
           ""
         ]
       | otherwise =
