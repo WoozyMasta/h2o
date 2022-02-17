@@ -497,12 +497,16 @@ splitByHeaders xs
   | any Utils.startsWithShortOrOldOption headings = ([0], [unlines xs])
   | otherwise = unzip chunks
   where
-    headingIndices = debugMsg "headingIndices: " $ getHeadingIndices xs
-    chunkIndice = map (+1) headingIndices  -- compensating missing header lines and the very top line
-    headings = map (xs !!) headingIndices
+    sepIndices = getHeadingIndices xs  -- separater indices
+    blockIndicesRaw =
+      if null sepIndices || 0 `notElem` sepIndices
+        then 0 : sepIndices
+        else sepIndices
+    blockIndices = map (+1) blockIndicesRaw  -- compensating missing header lines and the very top line
+    headings = map (xs !!) blockIndicesRaw
     chunks = map (Bifunctor.second (unlines . tail)) $
       filter (\(_, lines_) -> length lines_ > 1 && any Utils.startsWithDash lines_) $
-      zip chunkIndice (Utils.splitsAt xs headingIndices)
+      zip blockIndices $ Utils.splitsAt xs blockIndicesRaw
 
 
 -- | Parse (option-and-argument, description) pairs from text by applying
