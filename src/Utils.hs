@@ -164,14 +164,16 @@ startsWithSingleDash s = case ss of
     ss = trimStart s
 
 startsWithLongOption :: String -> Bool
-startsWithLongOption s = startsWithDoubleDash s && length ss >= 3 && ss !! 2 /= ' '
+startsWithLongOption s = startsWithDoubleDash s && length ss >= 3 && c `notElem` [' ', '-']
   where
     ss = trimStart s
+    _:_:c:_ = ss
 
 startsWithShortOrOldOption :: String -> Bool
-startsWithShortOrOldOption s = startsWithDash s && length ss >= 2 && ss !! 1 /= ' '
+startsWithShortOrOldOption s = startsWithDash s && length ss >= 2 && c `notElem` [' ', '-']
   where
     ss = trimStart s
+    _:c:_ = ss
 
 -- | A speculative criteria for non-critical purposes
 mayContainOptions :: [Text] -> Bool

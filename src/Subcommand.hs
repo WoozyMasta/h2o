@@ -1,12 +1,15 @@
 module Subcommand where
 
 import Control.Monad (liftM2)
+import Data.List.Extra (trim)
 import qualified Data.Maybe as Maybe
 import HelpParser (alphanumChars, newline, singleSpace, skip, word)
 import Layout (getDescriptionOffset)
 import Text.ParserCombinators.ReadP
 import Type (Subcommand (..))
-import Utils (getMostFrequent, infoMsg, startsWithChar)
+import Utils (infoMsg)
+import qualified Utils
+import qualified Data.List as List
 
 type Layout = (Int, Int)
 
@@ -29,18 +32,20 @@ getLayoutMaybe xs offset = liftM2 (,) first second
     pairs =
       infoMsg "subcommand: first two word locations:" $
         filter (\(a, b) -> a > 0 && b >= a + 6 && a < offset) $ map firstTwoWordsLoc xs
-    second = getMostFrequent [b | (_, b) <- pairs]
-    first = getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
+    second = Utils.getMostFrequent [b | (_, b) <- pairs]
+    first = Utils.getMostFrequent [a | (a, _) <- pairs, a < Maybe.fromMaybe 50 second]
 
 getAlignedLines :: String -> [String]
-getAlignedLines s = case layoutMay of
-  Just lay -> filter (\line -> firstTwoWordsLoc line == lay) xs
-  _ -> []
-  where
-    offsetMay = getDescriptionOffset s
-    offset = infoMsg "subcommand: offset: " $ Maybe.fromMaybe 50 offsetMay
-    xs = filter removeOptionLine (lines s)
-    layoutMay = infoMsg "subcommand: layout: " $ getLayoutMaybe xs offset
+getAlignedLines s =
+  case layoutMay of
+    Just lay -> filter (\line -> firstTwoWordsLoc line == lay) xs
+    _ -> []
+    where
+      xs = filter removeJunkDashLine (lines s)
+      offsetMay = getDescriptionOffset (unlines xs)
+      offset = infoMsg "subcommand: offset: " $ Maybe.fromMaybe 50 offsetMay
+      ys = filter removeJunkLine (lines s)
+      layoutMay = infoMsg "subcommand: layout: " $ getLayoutMaybe ys offset
 
 lowercase :: String
 lowercase = "abcdefghijklmnopqrstuvwxyz"
@@ -80,12 +85,20 @@ subcommandSep = colonBased <++ spaceBased
       skipSpaces
       return s
 
-removeOptionLine :: String -> Bool
-removeOptionLine s =
-  not (null s)
-    && (head s == ' ')
-    && (not . startsWithChar '-' $ s)
-    && (not . startsWithChar '[' $ s)
+removeJunkDashLine :: String -> Bool
+removeJunkDashLine s =
+  (not . List.isPrefixOf "- " $ ss)
+  && (not . List.isPrefixOf "-- " $ ss)
+  && (not . List.isPrefixOf "---" $ ss)
+  where
+    ss = trim s
+
+removeJunkLine :: String -> Bool
+removeJunkLine s =
+  (not . null . trim $ s)
+  && (not . Utils.startsWithLongOption $ s)
+  && (not . Utils.startsWithShortOrOldOption $ s)
+  && (not . Utils.startsWithChar '[' $ s)
 
 parseSubcommand :: String -> [Subcommand]
 parseSubcommand content = infoMsg "parseSubcommand" results
