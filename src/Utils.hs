@@ -196,8 +196,6 @@ splitByTopHeaders text = map T.unlines $ splitsAt xs headingIndices
   where
     xs = T.lines text
     headingIndices = getTopLevelHeadingIndices xs
-    headings = map (xs !!) headingIndices
-    headingsStr = map T.unpack headings
 
 dropUsage :: Text -> Text
 dropUsage text = T.concat rest

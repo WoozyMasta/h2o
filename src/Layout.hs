@@ -517,7 +517,7 @@ preprocessBlockwise content = Utils.infoTrace decoratedMsg $ concatMap (uncurry 
     xs = lines content
     (indexBases, contentsWoHeader) = splitByHeaders xs
     msg = printf "Found %d header-based blocks" (length contentsWoHeader)
-    decoratedMsg = "\n-------------------------------------------\n" ++ msg ++ "\n-------------------------------------------\n"
+    decoratedMsg = "-------- " ++ msg ++ " --------"
 
 
 -- | Parse options from text
