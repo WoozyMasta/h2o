@@ -192,10 +192,7 @@ getTopLevelHeadingIndices xs
     minval = List.minimum indentations
 
 splitByTopHeaders :: Text -> [Text]
-splitByTopHeaders text
-  | T.null text = []
-  | any startsWithLongOption headingsStr || any startsWithShortOrOldOption headingsStr = [text]
-  | otherwise = map T.unlines $ splitsAt xs headingIndices
+splitByTopHeaders text = map T.unlines $ splitsAt xs headingIndices
   where
     xs = T.lines text
     headingIndices = getTopLevelHeadingIndices xs
