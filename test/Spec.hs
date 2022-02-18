@@ -600,7 +600,9 @@ integratedGoldenTestsFileInput =
     "Integrated tests"
     (map toTestTree triples)
   where
-    commandNames = ["rsync", "grep"] :: [String]
+    -- [note] bcftools-mpileup is marginal and parsing give incomplete results
+    --        such marginal example is a good at catching unexpected behviors.
+    commandNames = ["rsync", "grep", "bcftools-stats", "bcftools-mpileup"] :: [String]
     inputFiles = [printf "test/golden/%s-input.txt" name | name <- commandNames]
     outputFiles = [printf "test/golden/%s.txt" name | name <- commandNames]
     triples = zip3 commandNames inputFiles outputFiles
