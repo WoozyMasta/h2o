@@ -165,15 +165,15 @@ toSubcommandOptionsText nameSeq (Command subname _ opts _) =
 
 getInputContent :: Input -> IO String
 getInputContent (SubcommandInput name subname skipMan) =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader [name, subname]
+  T.unpack . Utils.convertTabsToSpaces 8 <$> reader [name, subname]
   where
     reader = if skipMan then getHelpSub else getManAndHelpSub
 getInputContent (CommandInput name skipMan) =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 <$> reader name
+  T.unpack . Utils.convertTabsToSpaces 8 <$> reader name
   where
     reader = if skipMan then getHelp else getManAndHelp
 getInputContent (FileInput f _) =
-  T.unpack . Utils.dropUsage . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
+  T.unpack . Utils.convertTabsToSpaces 8 . T.pack <$> readFile f
 getInputContent (JsonInput f) = readFile f
 
 toScript :: OutputFormat -> Command -> Text
