@@ -6,7 +6,7 @@ module Layout where
 import Control.Exception (assert)
 import qualified Data.Bifunctor as Bifunctor
 import qualified Data.List as List
-import Data.List.Extra (nubSort, trim, trimEnd, splitOn)
+import Data.List.Extra (nubSort, trim, trimEnd, breakOnEnd)
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import Debug.Trace (trace)
@@ -215,17 +215,17 @@ getEmptyLineNums s = res
 -- Returns Just (offset size, match count) if matches
 descOffsetWithCountInOptionLines :: Int -> String -> [Location] -> Maybe (Int, Int)
 descOffsetWithCountInOptionLines _ s optLocs =
-  assert ('\t' `notElem` s) res
+  infoMsg "descOffsetWithCountInOptionLines: " res
   where
     sep = "   " -- hardcoded as 3 spaces for now
     xs = lines s
-    n = length sep
-    -- reversed to handle spacing not multiples of 3
-    -- for example `splitOn sep "--opt     desc"` == ["--opt", "  desc"]`
-    -- but I don't want spaces at the beginning of the description
-    optLineNums = map fst optLocs
-    xss = map (List.intercalate sep . tail . splitOn sep . reverse . trimEnd . (xs !!)) optLineNums
-    res = getMostFrequentWithCount $ map ((n +) . length) $ filter (not . null . trim) xss
+    optLines = map ((xs !!) . fst) optLocs
+    xss = map (fst . breakOnEnd sep . trimEnd) $
+      optLines
+    res = getMostFrequentWithCount $
+      map length $
+      Utils.debugMsg "descOffsetWithCountInOptionLines:entries:" $
+      filter (not . null . trim) xss
 
 
 -- | Check if a word starting with space indentation.
