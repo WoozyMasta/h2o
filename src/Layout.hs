@@ -224,7 +224,6 @@ descOffsetWithCountInOptionLines _ s optLocs =
       optLines
     res = getMostFrequentWithCount $
       map length $
-      Utils.debugMsg "descOffsetWithCountInOptionLines:entries:" $
       filter (not . null . trim) xss
 
 
@@ -325,13 +324,13 @@ getOptionDescriptionPairsFromLayout lineIdxBase s
     descLineWidthTop10Percentile = infoMsg "descLineWidthTop10Percentile: " $ if null linewidths then 80 else Utils.topTenPercentile linewidths
     descLineNumsWithoutOptionSet = Set.fromList descLineNumsWithoutOption
 
-    -- The line must be long when description starts at the option line and continues to the next line.
-    -- Here I mean "long" by the
+    -- The line must be long when description starts at the same line
+    -- the option and continues to the next line.
     isOptionAndDescriptionLine idx
       | not (isOptionLine idx) = False
       | otherwise =
         (not (isOptionLine (idx + 1)) && not (isDescriptionOnly (idx + 1)))
-          || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 5 > descLineWidthTop10Percentile))
+          || (isDescriptionOnly (idx + 1) && (length (xs !! idx) + 6 > descLineWidthTop10Percentile))
           || isOptionLine (idx + 1) && descOffset >= 2 && last optSegment == ' ' && length (words descSegment) >= 2 -- [FIXME] too heuristic
           || isParsedAsOptDescLine && (length (xs !! idx) + 25 > descLineWidthTop10Percentile)
       where
@@ -343,7 +342,9 @@ getOptionDescriptionPairsFromLayout lineIdxBase s
     descLineNumsWithOption =
       infoMsg
         (printf "descLineNumsWithOption (line+%d)" lineIdxBase)
-        [ idx | idx <- optLineNums, isWordStartingAround 2 descOffset (xs !! idx), isOptionAndDescriptionLine idx
+        [ idx | idx <- optLineNums
+        , isWordStartingAround 2 descOffset (xs !! idx)
+        , isOptionAndDescriptionLine idx
         ]
     descLineNums = infoMsg (printf "descLineNums (line+%d)" lineIdxBase) $
       nubSort (descLineNumsWithoutOption ++ descLineNumsWithOption)
