@@ -115,9 +115,9 @@ getDescOffsetEstimate lineIdxBase s optLocs =
         Nothing -> Utils.infoTrace "Descriptions never appear in the lines with options" (Just x1, optLocsRemoved)
         Just (x2, c2)
           | x1 == x2 -> (Just x1, optLocsRemoved)
-          | c1 <= 3 && 3 < c2 && isAlignedMoreThan80Percent c2 -> (debug Just x2, optLocsRemoved)
+          | c1 <= 3 && 3 < c2 && isAlignedMoreThan75Percent c2 -> (debug Just x2, optLocsRemoved)
           | c2 <= 3 && 3 < c1 -> (debug Just x1, optLocsRemoved)
-          | 0 < x1 - x2 && x1 - x2 < 5 && isAlignedMoreThan80Percent c2 -> (debug (Just x2), optLocsRemoved) -- sometimes continued lines are indented.
+          | 0 < x1 - x2 && x1 - x2 < 5 && isAlignedMoreThan75Percent c2 -> (debug (Just x2), optLocsRemoved) -- sometimes continued lines are indented.
           | otherwise -> (debug Nothing, optLocsRemoved)
           where
             msg =
@@ -126,7 +126,7 @@ getDescOffsetEstimate lineIdxBase s optLocs =
               \   option+description-line offset %d (with count %d)\n"
             debug = Utils.warnTrace (printf msg x1 c1 x2 c2 :: String)
   where
-    isAlignedMoreThan80Percent c = c * 10 >= 8 * length optLocs
+    isAlignedMoreThan75Percent c = c * 100 >= 75 * length optLocs
 
 -- | Estimate offset of description in non-option lines.
 --   Returns (Just (description offset, match count), [removed option locations]) if matches
