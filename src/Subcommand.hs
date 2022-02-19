@@ -101,7 +101,7 @@ removeJunkLine s =
   && (not . Utils.startsWithChar '[' $ s)
 
 parseSubcommand :: String -> [Subcommand]
-parseSubcommand content = infoMsg "parseSubcommand" results
+parseSubcommand content = infoMsg "subcommand: parseSubcommand" results
   where
     xs = getAlignedLines content
     results = (map (fst . last) . filter (not . null)) [readP_to_S subcommand x | x <- xs]

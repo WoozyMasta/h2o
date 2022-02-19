@@ -90,23 +90,24 @@ _getOffsetHelper getLocs s = traceMessage res
     droppedOptionLinesInfo = unlines [(printf "layout: dropped lines: (%03d) %s" r (lines s !! r) :: String) | (r, c) <- locs, Just c /= res]
     traceMessage = Utils.infoTrace droppedOptionLinesInfo
 
-----------------------------------------
 
--- There are two independent ways to guess the horizontal offset of descriptions
+-- | Returns the estimate of description offset after looking at all lines
+-- AND option locations that failed to satisfy the layout.
+-- There are two independent ways to guess the horizontal offset of descriptions:
 --   1) A description line may be simply indented by space
 --   2) A description line may appear following an option
 --      	... from the pattern that the description and the options+args
 --      	may be separated by 3 or more spaces
 -- Returns Nothing if 1 and 2 disagrees, or no information in 1 and 2
 --
-getDescriptionOffsetFromOptionLocs :: Int -> String -> [Location] -> (Maybe Int, [Location])
-getDescriptionOffsetFromOptionLocs lineIdxBase s optLocs =
-  case descOffsetWithCountSimple lineIdxBase s optLocs of
+getDescOffsetEstimate :: Int -> String -> [Location] -> (Maybe Int, [Location])
+getDescOffsetEstimate lineIdxBase s optLocs =
+  case descOffsetWithCountInNonoptLines lineIdxBase s optLocs of
     (Nothing, optLocsRemoved) ->
       case descOffsetWithCountInOptionLines lineIdxBase s (filter (`notElem` optLocsRemoved) optLocs) of
         Nothing -> Utils.infoTrace "Retrieved absolutely zero information" (Nothing, optLocsRemoved)
         Just (x2, c2) ->
-          if isAlignedMoreThan80Percent c2
+          if isAlignedMoreThan75Percent c2
             then Utils.infoTrace "Descriptions always appear in the lines with options" (Just x2, optLocsRemoved)
             else Utils.infoTrace "Retrieved nothing from layout" (Nothing, optLocsRemoved)
     (Just (x1, c1), optLocsRemoved) ->
@@ -127,10 +128,10 @@ getDescriptionOffsetFromOptionLocs lineIdxBase s optLocs =
   where
     isAlignedMoreThan80Percent c = c * 10 >= 8 * length optLocs
 
--- | Estimate offset of description part from non-option lines.
---   Returns (Just (offset size, match count), [removed option locations]) if matches
-descOffsetWithCountSimple :: Int -> String -> [Location] -> (Maybe (Int, Int), [Location])
-descOffsetWithCountSimple lineIdxBase s optLocs
+-- | Estimate offset of description in non-option lines.
+--   Returns (Just (description offset, match count), [removed option locations]) if matches
+descOffsetWithCountInNonoptLines :: Int -> String -> [Location] -> (Maybe (Int, Int), [Location])
+descOffsetWithCountInNonoptLines lineIdxBase s optLocs
   | null offsetOverlaps = (res, [])
   | otherwise = (res, optLocsRemoved)
   where
@@ -150,7 +151,7 @@ descOffsetWithCountSimple lineIdxBase s optLocs
             head optLineNums < r, r < last optLineNums + 5
             -- previous line cannot be blank
       ]
-    res = infoMsg "descOffsetWithCount: " $ getMostFrequentWithCount indentations
+    res = infoMsg "descOffsetWithCountInNonoptLines: " $ getMostFrequentWithCount indentations
 
 
 -- | Take description locations that hangs an option line
@@ -271,38 +272,44 @@ isWordStartingAround margin idx x =
 -- ================================================
 -- ============== Main stuff ======================
 
--- | Returns option line's (consensus indentation, 0-based line numbers)
+-- | Returns option line's (1) consensus beginning of description
+-- and (2) option locations [(row, col)]. All in 0-based indexing.
 --
-getDescriptionOffsetOptLineNumsPair :: Int -> String -> Maybe (Int, [(Int, Int)])
-getDescriptionOffsetOptLineNumsPair lineIdxBase s
-  | null optionOffsets || Maybe.isNothing descriptionOffsetMay = Nothing
-  | descOffset <= 3 || null optLocsFixed = Nothing
-  | otherwise = Just (descOffset , optLocsFixed)
+-- [FIXME] Should attempt more when descriptionOffsetMay is Nothing.
+--
+getDescOffsetOptLocsPair :: Int -> String -> (Maybe Int, [(Int, Int)])
+getDescOffsetOptLocsPair lineIdxBase s
+  | null optionOffsets = Utils.infoTrace "optionOffsets is null" (Nothing, [])
+  | null optLocsFixed = Utils.infoTrace "optLocsFixed is null" (Nothing, [])
+  | Maybe.isNothing descriptionOffsetMay = Utils.infoTrace "getDescOffsetOptLocsPair: descriptionOffsetMay is Nothing" (Nothing, optLocsFixed)
+  | descOffset <= 3 = Utils.infoTrace "getDescOffsetOptLocsPair: descOffset too small" (Nothing, optLocsFixed)
+  | otherwise = Utils.infoMsg "getDescOffsetOptLocsPair: " (Just descOffset, optLocsFixed)
   where
     optionOffsets = infoMsg "layout:optionOffsets:" $ getOptionOffsets s
     optLocsCandidates = getOptionLocations s
 
-    -- Split the option locations by wheather the horizontal offset matched the most frequent one
+    -- Split the option locations by comparing the horizontal offsets with the most frequent one
     (optLocs, _) = List.partition (\(_, c) -> c `elem` optionOffsets) optLocsCandidates
-    (descriptionOffsetMay, optLocsRemoved) = getDescriptionOffsetFromOptionLocs lineIdxBase s $
+    (descriptionOffsetMay, optLocsRemoved) = getDescOffsetEstimate lineIdxBase s $
       infoMsg (printf "optLocs (line+%d)" lineIdxBase) optLocs
     descOffset = infoMsg "layout:descOffset:" $ Maybe.fromJust descriptionOffsetMay
     optLocsFixed = infoMsg (printf "layout:optLineNumsFixed: (line+%d)" lineIdxBase) $
       filter (`notElem` optLocsRemoved) optLocs
 
 getDescriptionOffset :: String -> Maybe Int
-getDescriptionOffset s = fst <$> getDescriptionOffsetOptLineNumsPair 0 s
+getDescriptionOffset s = fst $ getDescOffsetOptLocsPair 0 s
 
 
 -- | Returns option-description pairs based on layouts
 -- AND the option locations uncaught in the process.
+--
 getOptionDescriptionPairsFromLayout :: Int -> String -> Maybe ([(String, String)], [(Int, Int)])
 getOptionDescriptionPairsFromLayout lineIdxBase s
-  | Maybe.isNothing tupMay || null res = Nothing
+  | Maybe.isNothing descOffsetMay || null res = Nothing
   | otherwise = Just $ infoShow (printf "droppedOptLocs (line+%d): " lineIdxBase) droppedOptLocs (res, droppedOptLocs)
   where
-    tupMay = getDescriptionOffsetOptLineNumsPair lineIdxBase s
-    (descOffset, optLocs) = Maybe.fromJust tupMay
+    (descOffsetMay, optLocs) = getDescOffsetOptLocsPair lineIdxBase s
+    descOffset = Maybe.fromJust descOffsetMay
     xs = lines s
     optLineNums = map fst optLocs
     optLineNumsSet = Set.fromList optLineNums

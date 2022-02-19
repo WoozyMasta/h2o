@@ -244,7 +244,7 @@ getCommandRec extraDepth useMan cmdSeq desc upperContent givenPage = do
 -- | scan `content` for a list of possible subcommand
 getSubcmdCandidates :: String -> [Subcommand]
 getSubcmdCandidates content =
-  infoMsg "subcommand candidates : \n" $ removeHelp . uniqSubcommands . parseSubcommand $ content
+  infoMsg "subcommand candidates: \n" $ removeHelp . uniqSubcommands . parseSubcommand $ content
   where
     sub2pair (Subcommand s1 s2) = (s1, s2)
     pair2sub = uncurry Subcommand
