@@ -1,3 +1,7 @@
+## 0.3.1 (2020-02-21)
+- Bugfixes
+- Parameter tuning
+
 ## 0.3.0 (2021-02-08)
 - Improve layout extraction
 - Fix the bug dropping rightly-placed options
